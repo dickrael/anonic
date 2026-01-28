@@ -41,12 +41,27 @@ class JSONStore:
     def __init__(self, path: str):
         self.path = path
         self._lock = asyncio.Lock()
-        self._data: Dict[str, Any] = {"users": {}, "blocks": {}, "connections": {}}
+        self._data: Dict[str, Any] = {
+            "users": {},
+            "blocks": {},
+            "pending_targets": {},  # One-time: {sender_id: {target_id}} - cleared after first msg
+            "messages": {}          # Reply routing: {bot_msg_id: {sender_id, receiver_id}}
+        }
 
         if not os.path.exists(path):
             self._save_sync()
         else:
             self._load_sync()
+            # Migrate old data structures
+            if "connections" in self._data:
+                del self._data["connections"]
+            if "sessions" in self._data:
+                del self._data["sessions"]
+            if "pending_targets" not in self._data:
+                self._data["pending_targets"] = {}
+            if "messages" not in self._data:
+                self._data["messages"] = {}
+            self._save_sync()
 
     def _load_sync(self) -> None:
         """Synchronously load data from file."""
@@ -131,7 +146,9 @@ class JSONStore:
             if user and not user.get('banned', False):
                 user['banned'] = True
                 user['ban_expires_at'] = (datetime.now(timezone.utc) + duration).isoformat() if duration else None
-                await self._end_connection_unlocked(telegram_id)
+                # Clear pending target if exists
+                if str(telegram_id) in self._data.get('pending_targets', {}):
+                    del self._data['pending_targets'][str(telegram_id)]
                 await self._save()
                 return True
             return False
@@ -264,67 +281,105 @@ class JSONStore:
         user = self._data['users'].get(user_id)
         return user.get('allowed_types', ["text"]) if user else ["text"]
 
-    # ----- Connection Management -----
+    # ----- Pending Target (One-Time Deep Link Routing) -----
 
-    async def start_connection(self, user_id: int, target_id: int) -> None:
-        """Start a bidirectional connection between two users."""
+    async def set_pending_target(self, sender_id: int, target_id: int) -> None:
+        """Set one-time pending target from deep link. Cleared after first message."""
         async with self._lock:
-            # End existing connections for both users
-            await self._end_connection_unlocked(user_id)
-            await self._end_connection_unlocked(target_id)
-            # Start new connection
             now = datetime.now(timezone.utc).isoformat()
-            self._data['connections'][str(user_id)] = {
+            if 'pending_targets' not in self._data:
+                self._data['pending_targets'] = {}
+            self._data['pending_targets'][str(sender_id)] = {
                 "target_id": str(target_id),
-                "message_count": 0,
-                "started_at": now
-            }
-            self._data['connections'][str(target_id)] = {
-                "target_id": str(user_id),
-                "message_count": 0,
-                "started_at": now
+                "created_at": now
             }
             # Update activity
-            for uid in [user_id, target_id]:
-                user = self._data['users'].get(str(uid))
-                if user:
-                    user['last_activity'] = now
+            user = self._data['users'].get(str(sender_id))
+            if user:
+                user['last_activity'] = now
             await self._save()
 
-    async def _end_connection_unlocked(self, user_id: int) -> None:
-        """End connection without acquiring lock (internal use only)."""
-        uid_str = str(user_id)
-        if uid_str in self._data['connections']:
-            del self._data['connections'][uid_str]
-        for uid, conn in list(self._data['connections'].items()):
-            if conn['target_id'] == uid_str:
-                del self._data['connections'][uid]
+    def get_pending_target(self, sender_id: int) -> Optional[int]:
+        """Get sender's pending target (one-time, from deep link)."""
+        pending = self._data.get('pending_targets', {}).get(str(sender_id))
+        if pending:
+            return int(pending['target_id'])
+        return None
 
-    async def end_connection(self, user_id: int) -> None:
-        """End connection for a user."""
+    async def clear_pending_target(self, sender_id: int) -> None:
+        """Clear sender's pending target after first message."""
         async with self._lock:
-            await self._end_connection_unlocked(user_id)
-            await self._save()
-
-    def get_connection(self, user_id: int) -> Optional[Dict[str, Any]]:
-        """Get connection data for user."""
-        return self._data['connections'].get(str(user_id))
-
-    async def increment_message_count(self, user_id: int) -> None:
-        """Increment message count for both connected users."""
-        async with self._lock:
-            conn = self._data['connections'].get(str(user_id))
-            if conn:
-                conn['message_count'] = conn.get('message_count', 0) + 1
-                target_conn = self._data['connections'].get(conn['target_id'])
-                if target_conn:
-                    target_conn['message_count'] = target_conn.get('message_count', 0) + 1
+            if str(sender_id) in self._data.get('pending_targets', {}):
+                del self._data['pending_targets'][str(sender_id)]
                 await self._save()
 
-    def get_message_count(self, user_id: int) -> int:
-        """Get message count for connection."""
-        conn = self.get_connection(user_id)
-        return conn.get('message_count', 0) if conn else 0
+    # ----- Message Tracking (for Reply Routing) -----
+
+    async def store_message(self, bot_msg_id: int, sender_id: int, receiver_id: int) -> None:
+        """Store message for reply routing.
+
+        When bot forwards a message to receiver, store the mapping so receiver
+        can reply back to the original sender.
+        """
+        async with self._lock:
+            self._data['messages'][str(bot_msg_id)] = {
+                "sender_id": str(sender_id),
+                "receiver_id": str(receiver_id),
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+            await self._save()
+
+    def get_message_sender(self, bot_msg_id: int) -> Optional[int]:
+        """Get original sender ID from bot's message ID (for reply routing)."""
+        msg_data = self._data.get('messages', {}).get(str(bot_msg_id))
+        if msg_data:
+            return int(msg_data['sender_id'])
+        return None
+
+    def get_message_data(self, bot_msg_id: int) -> Optional[Dict[str, Any]]:
+        """Get full message data for a bot message ID."""
+        return self._data.get('messages', {}).get(str(bot_msg_id))
+
+    async def cleanup_old_messages(self, max_age_hours: int = 24) -> int:
+        """Clean up messages older than max_age_hours. Returns count deleted."""
+        async with self._lock:
+            now = datetime.now(timezone.utc)
+            to_delete = []
+            for msg_id, msg_data in self._data.get('messages', {}).items():
+                try:
+                    timestamp = datetime.fromisoformat(msg_data['timestamp'])
+                    if (now - timestamp).total_seconds() / 3600 > max_age_hours:
+                        to_delete.append(msg_id)
+                except (ValueError, KeyError):
+                    to_delete.append(msg_id)
+
+            for msg_id in to_delete:
+                del self._data['messages'][msg_id]
+
+            if to_delete:
+                await self._save()
+            return len(to_delete)
+
+    # ----- Legacy Support (backward compatibility) -----
+
+    def get_session(self, sender_id: int) -> Optional[Dict[str, Any]]:
+        """Legacy: Get pending target as session-like dict."""
+        target_id = self.get_pending_target(sender_id)
+        if target_id:
+            return {"target_id": str(target_id)}
+        return None
+
+    async def clear_session(self, sender_id: int) -> None:
+        """Legacy: Clear pending target."""
+        await self.clear_pending_target(sender_id)
+
+    def get_connection(self, user_id: int) -> Optional[Dict[str, Any]]:
+        """Legacy: Alias for get_session."""
+        return self.get_session(user_id)
+
+    async def end_connection(self, user_id: int) -> None:
+        """Legacy: Alias for clear_session."""
+        await self.clear_session(user_id)
 
     # ----- Rate Limiting -----
 
@@ -353,28 +408,31 @@ class JSONStore:
 
     # ----- Inactivity Check -----
 
-    def get_inactive_users(self, timeout_minutes: int = 5) -> List[Dict[str, Any]]:
-        """Get users who have been inactive beyond timeout."""
-        inactive_users = []
+    def get_expired_pending_targets(self, timeout_minutes: int = 5) -> List[int]:
+        """Get pending targets that have expired (not used within timeout)."""
+        expired = []
         current_time = datetime.now(timezone.utc)
-        processed_users = set()
 
-        for uid, user in self._data['users'].items():
-            if user.get('banned', False) or self.is_banned(int(uid)):
-                continue
-            last_activity_str = user.get('last_activity')
-            if not last_activity_str:
-                continue
+        for uid, pending in self._data.get('pending_targets', {}).items():
             try:
-                last_activity = datetime.fromisoformat(last_activity_str)
-                if (current_time - last_activity).total_seconds() / 60 > timeout_minutes:
-                    if str(uid) in self._data['connections'] and uid not in processed_users:
-                        inactive_users.append({"user_id": int(uid), "user_data": user})
-                        processed_users.add(uid)
+                created_at = datetime.fromisoformat(pending.get('created_at', ''))
+                if (current_time - created_at).total_seconds() / 60 > timeout_minutes:
+                    expired.append(int(uid))
             except ValueError:
-                logger.error(f"Invalid last_activity format for user {uid}")
+                expired.append(int(uid))
 
-        return inactive_users
+        return expired
+
+    async def cleanup_expired_pending_targets(self, timeout_minutes: int = 5) -> int:
+        """Clean up expired pending targets. Returns count deleted."""
+        expired = self.get_expired_pending_targets(timeout_minutes)
+        async with self._lock:
+            for uid in expired:
+                if str(uid) in self._data.get('pending_targets', {}):
+                    del self._data['pending_targets'][str(uid)]
+            if expired:
+                await self._save()
+        return len(expired)
 
 
 # Global store instance - initialized in main

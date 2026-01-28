@@ -35,11 +35,6 @@ def register_blocking_handlers(app: Client) -> None:
             )
             return
 
-        # End active connection if any
-        if store.get_connection(uid):
-            logger.info(f"User {uid} requested blocked list with active connection, terminating")
-            await store.end_connection(uid)
-
         blocked_users = store.get_blocked_users(str(uid))
         if not blocked_users:
             await message.reply(await gstr("blocked_none", message), parse_mode=ParseMode.HTML)
@@ -86,21 +81,30 @@ def register_blocking_handlers(app: Client) -> None:
 
             sender_nickname = target_data['nickname']
 
-        # Priority 2: Block by reply to message
+        # Priority 2: Block by reply to message (using message tracking)
         elif message.reply_to_message:
-            lines = message.reply_to_message.caption or message.reply_to_message.text or ""
-            sender_nickname = extract_nickname_from_message(lines)
+            reply_msg_id = message.reply_to_message.id
+            original_sender_id = store.get_message_sender(reply_msg_id)
 
-            if sender_nickname:
-                target_id = store.find_user_by_nickname(sender_nickname)
-                if target_id:
-                    target_data = store.get_user(target_id)
+            if original_sender_id:
+                target_id = original_sender_id
+                target_data = store.get_user(target_id)
+                if target_data:
+                    sender_nickname = target_data['nickname']
+            else:
+                # Fallback: try to extract from message text
+                lines = message.reply_to_message.caption or message.reply_to_message.text or ""
+                sender_nickname = extract_nickname_from_message(lines)
+                if sender_nickname:
+                    target_id = store.find_user_by_nickname(sender_nickname)
+                    if target_id:
+                        target_data = store.get_user(target_id)
 
-        # Priority 3: Block current connection partner
+        # Priority 3: Block pending target (from deep link)
         if not target_id:
-            conn = store.get_connection(uid)
-            if conn:
-                target_id = int(conn['target_id'])
+            pending_target_id = store.get_pending_target(uid)
+            if pending_target_id:
+                target_id = pending_target_id
                 target_data = store.get_user(target_id)
                 if target_data:
                     sender_nickname = target_data['nickname']
@@ -117,10 +121,6 @@ def register_blocking_handlers(app: Client) -> None:
             await message.reply(await gstr("block_self", message), parse_mode=ParseMode.HTML)
             return
 
-        # End active connection
-        if store.get_connection(uid):
-            await store.end_connection(uid)
-
         # Check if already blocked
         if store.is_blocked(recipient, sender_nickname):
             logger.info(f"User {uid} tried to block already blocked: {sender_nickname}")
@@ -129,6 +129,11 @@ def register_blocking_handlers(app: Client) -> None:
                 parse_mode=ParseMode.HTML
             )
             return
+
+        # Clear pending target if blocking that user
+        pending_target_id = store.get_pending_target(uid)
+        if pending_target_id and pending_target_id == target_id:
+            await store.clear_pending_target(uid)
 
         # Block the user
         try:

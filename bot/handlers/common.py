@@ -4,20 +4,27 @@ import logging
 from typing import Tuple
 
 from pyrogram import Client
-from pyrogram.errors import UserIsBlocked, InputUserDeactivated, PeerIdInvalid
+from pyrogram.errors import (
+    UserIsBlocked, InputUserDeactivated, PeerIdInvalid,
+    UserDeactivated, UserDeactivatedBan
+)
 
 from ..store import get_store
 
 logger = logging.getLogger(__name__)
 
+# Frozen participant error messages
+FROZEN_ERRORS = ["FROZEN_PARTICIPANT_MISSING", "USER_DEACTIVATED", "USER_DEACTIVATED_BAN"]
 
-async def can_connect(client: Client, user_id: int, target_id: int) -> Tuple[bool, str]:
-    """Check if a connection can be established between two users.
+
+async def can_connect(client: Client, user_id: int, target_id: int, check_busy: bool = False) -> Tuple[bool, str]:
+    """Check if a message can be sent to the target user.
 
     Args:
         client: Pyrogram client
-        user_id: ID of user initiating connection
+        user_id: ID of user initiating message
         target_id: ID of target user
+        check_busy: Ignored (kept for backward compatibility)
 
     Returns:
         Tuple of (success, reason) where reason is empty on success
@@ -45,8 +52,14 @@ async def can_connect(client: Client, user_id: int, target_id: int) -> Tuple[boo
         return False, "blocked"
     except InputUserDeactivated:
         return False, "deactivated"
+    except (UserDeactivated, UserDeactivatedBan):
+        return False, "deactivated"
     except PeerIdInvalid:
         return False, "invalid_peer"
     except Exception as e:
+        error_msg = str(e)
+        # Check for frozen participant error
+        if any(err in error_msg for err in FROZEN_ERRORS):
+            return False, "frozen"
         logger.error(f"Failed to check connection for {target_id}: {type(e).__name__}: {e}")
         return False, "invalid_peer"

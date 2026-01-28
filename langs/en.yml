@@ -112,3 +112,7 @@ spam_report: |
   Target: {target_nickname}
   Messages in 1 minute: {message_count}
 spam_banned: "🚫 You have been banned for {duration} for spamming."
+start_busy: "⏳ <b>{nickname}</b> is currently in another conversation. Try again later."
+start_frozen: "❄️ Connection failed with <b>{nickname}</b>: account is frozen."
+anonymous_busy: "⏳ <b>{nickname}</b> is currently in another conversation."
+anonymous_frozen: "❄️ Connection terminated: user account is frozen."

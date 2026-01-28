@@ -57,28 +57,29 @@ def register_start_handlers(app: Client) -> None:
                     return
 
                 try:
+                    # Validate target is reachable
                     can_connect_result, reason = await can_connect(client, uid, target_id)
                     if not can_connect_result:
                         logger.warning(f"Connection blocked: {uid} -> {target_id}, reason: {reason}")
+                        nickname = target_data['nickname']
                         if reason == "banned":
                             await message.reply(
-                                (await gstr("start_connection_failed_frozen", message)).format(
-                                    nickname=target_data['nickname']
-                                ),
+                                (await gstr("start_connection_failed_frozen", message)).format(nickname=nickname),
                                 parse_mode=ParseMode.HTML
                             )
                         elif reason == "self_blocked":
                             await message.reply(
-                                (await gstr("start_self_blocked", message)).format(
-                                    nickname=target_data['nickname']
-                                ),
+                                (await gstr("start_self_blocked", message)).format(nickname=nickname),
                                 parse_mode=ParseMode.HTML
                             )
                         elif reason == "deactivated":
                             await message.reply(
-                                (await gstr("start_deactivated", message)).format(
-                                    nickname=target_data['nickname']
-                                ),
+                                (await gstr("start_deactivated", message)).format(nickname=nickname),
+                                parse_mode=ParseMode.HTML
+                            )
+                        elif reason == "frozen":
+                            await message.reply(
+                                (await gstr("start_frozen", message)).format(nickname=nickname),
                                 parse_mode=ParseMode.HTML
                             )
                         else:
@@ -88,22 +89,16 @@ def register_start_handlers(app: Client) -> None:
                             )
                         return
 
-                    old_connection = store.get_connection(uid)
-                    await store.start_connection(uid, target_id)
-                    logger.info(f"User {uid} connected to {target_id} ({target_data['nickname']})")
+                    # Set one-time pending target (cleared after first message)
+                    await store.set_pending_target(uid, target_id)
+                    logger.info(f"User {uid} pending target set to {target_id} ({target_data['nickname']})")
 
-                    reply_text = (await gstr("start_connection_established", message)).format(
-                        nickname=target_data['nickname']
+                    await message.reply(
+                        (await gstr("start_connection_established", message)).format(
+                            nickname=target_data['nickname']
+                        ),
+                        parse_mode=ParseMode.HTML
                     )
-
-                    if old_connection and old_connection['target_id'] != str(target_id):
-                        old_user = store.get_user(int(old_connection['target_id']))
-                        if old_user:
-                            reply_text += "\n" + (await gstr("start_connection_switched", message)).format(
-                                old_nickname=old_user['nickname']
-                            )
-
-                    await message.reply(reply_text, parse_mode=ParseMode.HTML)
 
                 except (UserIsBlocked, InputUserDeactivated) as e:
                     logger.warning(f"Connection failed {uid} -> {target_id}: {type(e).__name__}")
