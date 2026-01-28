@@ -402,22 +402,37 @@ def register_messaging_handlers(app: Client) -> None:
             old_user = store.get_user(int(old_connection['target_id']))
             old_nickname = old_user['nickname'] if old_user else None
 
-        # Handle reply to message
+        # Handle reply to message or external reply (quote)
+        reply_text = None
         if message.reply_to_message:
-            lines = message.reply_to_message.caption or message.reply_to_message.text or ""
-            sender_nickname = extract_nickname_from_message(lines)
+            reply_text = message.reply_to_message.caption or message.reply_to_message.text or ""
+        elif message.external_reply:
+            # External reply (Telegram quote feature)
+            if hasattr(message.external_reply, 'quote') and message.external_reply.quote:
+                reply_text = message.external_reply.quote.text or ""
+            elif hasattr(message.external_reply, 'text'):
+                reply_text = message.external_reply.text or ""
+
+        if reply_text:
+            sender_nickname = extract_nickname_from_message(reply_text)
             logger.debug(f"Extracted sender_nickname: {sender_nickname!r}")
 
             if sender_nickname:
                 target_id = store.find_user_by_nickname(sender_nickname)
 
+            # If can't extract target from reply, fall back to current connection
             if not target_id or target_id == uid:
-                logger.warning(f"Reply target not found for nickname: {sender_nickname!r}")
-                await message.reply(
-                    await gstr("anonymous_reply_not_found", message),
-                    parse_mode=ParseMode.HTML
-                )
-                return
+                conn = store.get_connection(uid)
+                if conn:
+                    target_id = int(conn['target_id'])
+                    logger.info(f"Reply target not found, using current connection: {target_id}")
+                else:
+                    logger.warning(f"Reply target not found for nickname: {sender_nickname!r}")
+                    await message.reply(
+                        await gstr("anonymous_reply_not_found", message),
+                        parse_mode=ParseMode.HTML
+                    )
+                    return
 
             try:
                 can_connect_result, reason = await can_connect(client, uid, target_id)
@@ -490,8 +505,8 @@ def register_messaging_handlers(app: Client) -> None:
                 )
                 return
 
-        else:
-            # No reply - use existing connection
+        if not target_id:
+            # No reply or couldn't extract target - use existing connection
             conn = store.get_connection(uid)
             if not conn:
                 logger.warning(f"User {uid} sent message without connection")

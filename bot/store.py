@@ -36,7 +36,7 @@ class JSONStore:
         "contact", "venue", "successful_payment"
     ]
     # Default allowed types for new users
-    DEFAULT_ALLOWED = ["text", "photo", "video", "voice", "document"]
+    DEFAULT_ALLOWED = ["text", "photo", "video", "voice", "document", "emoji"]
 
     def __init__(self, path: str):
         self.path = path
