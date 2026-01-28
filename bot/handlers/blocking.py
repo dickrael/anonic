@@ -66,15 +66,13 @@ def register_blocking_handlers(app: Client) -> None:
             return
 
         recipient = str(uid)
-
-        # End active connection
-        if store.get_connection(uid):
-            await store.end_connection(uid)
-
         args = message.text.split()
+        target_id = None
+        target_data = None
+        sender_nickname = None
 
-        # Block by token
-        if len(args) == 2 and not message.reply_to_message:
+        # Priority 1: Block by token argument
+        if len(args) >= 2 and not message.reply_to_message:
             token = args[1]
             target_id, target_data = store.get_by_token(token)
 
@@ -86,92 +84,67 @@ def register_blocking_handlers(app: Client) -> None:
                 )
                 return
 
-            if target_id == uid:
-                logger.warning(f"User {uid} tried to block own token")
-                await message.reply(await gstr("block_self", message), parse_mode=ParseMode.HTML)
-                return
+            sender_nickname = target_data['nickname']
 
-            try:
-                await client.get_chat(target_id)
-                if store.is_blocked(recipient, target_data['nickname']):
-                    logger.info(f"User {uid} tried to block already blocked: {target_data['nickname']}")
-                    await message.reply(
-                        (await gstr("block_already_blocked", message)).format(
-                            nickname=target_data['nickname']
-                        ),
-                        parse_mode=ParseMode.HTML
-                    )
-                    return
+        # Priority 2: Block by reply to message
+        elif message.reply_to_message:
+            lines = message.reply_to_message.caption or message.reply_to_message.text or ""
+            sender_nickname = extract_nickname_from_message(lines)
 
-                await store.block(recipient, target_data['nickname'], token)
-                logger.info(f"User {uid} blocked {target_data['nickname']} (token: {token})")
-                await message.reply(
-                    (await gstr("block_success", message)).format(nickname=target_data['nickname']),
-                    parse_mode=ParseMode.HTML
-                )
-            except InputUserDeactivated:
-                logger.warning(f"User {uid} tried to block deactivated user: {target_id}")
-                await message.reply(
-                    (await gstr("block_deactivated", message)).format(
-                        nickname=target_data['nickname']
-                    ),
-                    parse_mode=ParseMode.HTML
-                )
-            return
+            if sender_nickname:
+                target_id = store.find_user_by_nickname(sender_nickname)
+                if target_id:
+                    target_data = store.get_user(target_id)
 
-        # Block by reply
-        if not message.reply_to_message:
-            logger.warning(f"User {uid} tried /block without reply or token")
+        # Priority 3: Block current connection partner
+        if not target_id:
+            conn = store.get_connection(uid)
+            if conn:
+                target_id = int(conn['target_id'])
+                target_data = store.get_user(target_id)
+                if target_data:
+                    sender_nickname = target_data['nickname']
+
+        # No target found
+        if not target_id or not target_data:
+            logger.warning(f"User {uid} tried /block but no target found")
             await message.reply(await gstr("block_no_args", message), parse_mode=ParseMode.HTML)
             return
 
-        lines = message.reply_to_message.caption or message.reply_to_message.text or ""
-        sender_nickname = extract_nickname_from_message(lines)
-
-        if not sender_nickname:
-            logger.warning(f"User {uid} tried to block but couldn't extract nickname")
-            await message.reply(await gstr("block_no_nickname", message), parse_mode=ParseMode.HTML)
+        # Can't block yourself
+        if target_id == uid:
+            logger.warning(f"User {uid} tried to block themselves")
+            await message.reply(await gstr("block_self", message), parse_mode=ParseMode.HTML)
             return
 
-        target_id = store.find_user_by_nickname(sender_nickname)
-        if not target_id:
-            logger.warning(f"Nickname {sender_nickname} not found for block by {uid}")
+        # End active connection
+        if store.get_connection(uid):
+            await store.end_connection(uid)
+
+        # Check if already blocked
+        if store.is_blocked(recipient, sender_nickname):
+            logger.info(f"User {uid} tried to block already blocked: {sender_nickname}")
             await message.reply(
-                await gstr("block_nickname_not_found", message),
+                (await gstr("block_already_blocked", message)).format(nickname=sender_nickname),
                 parse_mode=ParseMode.HTML
             )
             return
 
-        target_data = store.get_user(target_id)
-        blocked_token = target_data['token'] if target_data else None
-
-        if not blocked_token:
-            await message.reply(
-                await gstr("block_nickname_not_found", message),
-                parse_mode=ParseMode.HTML
-            )
-            return
-
+        # Block the user
         try:
             await client.get_chat(target_id)
-            if store.is_blocked(recipient, sender_nickname):
-                logger.info(f"User {uid} tried to block already blocked: {sender_nickname}")
-                await message.reply(
-                    (await gstr("block_already_blocked", message)).format(nickname=sender_nickname),
-                    parse_mode=ParseMode.HTML
-                )
-                return
-
-            await store.block(recipient, sender_nickname, blocked_token)
-            logger.info(f"User {uid} blocked {sender_nickname} (token: {blocked_token})")
+            await store.block(recipient, sender_nickname, target_data['token'])
+            logger.info(f"User {uid} blocked {sender_nickname} (token: {target_data['token']})")
             await message.reply(
                 (await gstr("block_success", message)).format(nickname=sender_nickname),
                 parse_mode=ParseMode.HTML
             )
         except InputUserDeactivated:
-            logger.warning(f"User {uid} tried to block deactivated user: {target_id}")
+            # Still block them even if deactivated
+            await store.block(recipient, sender_nickname, target_data['token'])
+            logger.info(f"User {uid} blocked deactivated user {sender_nickname}")
             await message.reply(
-                (await gstr("block_deactivated", message)).format(nickname=sender_nickname),
+                (await gstr("block_success", message)).format(nickname=sender_nickname),
                 parse_mode=ParseMode.HTML
             )
 

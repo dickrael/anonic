@@ -9,6 +9,7 @@ This module handles the core anonymous messaging functionality, including:
 
 import asyncio
 import logging
+import re
 from datetime import timedelta
 
 from pyrogram import Client, filters
@@ -30,52 +31,178 @@ EXCLUDED_COMMANDS = [
     "blocked", "block", "unblock", "report", "ban", "unban", "lang"
 ]
 
+# Zalgo detection pattern (combining characters)
+ZALGO_PATTERN = re.compile(r'[\u0300-\u036f\u0489]{3,}')
+# Cyrillic pattern
+CYRILLIC_PATTERN = re.compile(r'[\u0400-\u04FF]')
+# Cashtag pattern ($WORD)
+CASHTAG_PATTERN = re.compile(r'\$[A-Z]{2,}')
+# Emoji pattern
+EMOJI_PATTERN = re.compile(
+    r'[\U0001F600-\U0001F64F'  # emoticons
+    r'\U0001F300-\U0001F5FF'  # symbols & pictographs
+    r'\U0001F680-\U0001F6FF'  # transport & map
+    r'\U0001F1E0-\U0001F1FF'  # flags
+    r'\U00002702-\U000027B0'  # dingbats
+    r'\U0001F900-\U0001F9FF'  # supplemental symbols
+    r'\U0001FA00-\U0001FA6F'  # chess symbols
+    r'\U0001FA70-\U0001FAFF'  # symbols extended
+    r'\U00002600-\U000026FF'  # misc symbols
+    r']'
+)
 
-def get_message_type(message: Message) -> str:
-    """Determine the type of message.
+
+def get_message_types(message: Message) -> list:
+    """Determine all applicable types for a message.
 
     Args:
         message: Pyrogram Message object
 
     Returns:
-        String representing message type
+        List of message type strings
     """
-    # Check for text with links first
-    if message.text or message.caption:
-        entities = message.entities or message.caption_entities or []
-        if any(e.type in [MessageEntityType.URL, MessageEntityType.TEXT_LINK] for e in entities):
-            return "link"
-        if message.text:
-            return "text"
+    types = []
+    text = message.text or message.caption or ""
+    entities = message.entities or message.caption_entities or []
 
-    # Check media types
+    # --- Forward types ---
+    if message.forward_origin:
+        types.append("forward")
+        # Check forward source type
+        origin = message.forward_origin
+        origin_type = str(type(origin).__name__).lower()
+        if "user" in origin_type:
+            types.append("forwarduser")
+        elif "channel" in origin_type:
+            types.append("forwardchannel")
+        elif "chat" in origin_type:
+            if hasattr(origin, 'sender_chat') and origin.sender_chat:
+                if origin.sender_chat.type == "bot":
+                    types.append("forwardbot")
+                else:
+                    types.append("forwardchannel")
+
+    # --- Sticker types ---
+    if message.sticker:
+        types.append("sticker")
+        if message.sticker.is_animated:
+            types.append("stickeranimated")
+        if message.sticker.is_video:
+            types.append("stickeranimated")  # video stickers are also "animated"
+        if hasattr(message.sticker, 'premium_animation') and message.sticker.premium_animation:
+            types.append("stickerpremium")
+
+    # --- Media types ---
+    if message.photo:
+        types.append("photo")
+    if message.video:
+        types.append("video")
+    if message.animation:
+        types.append("gif")
+    if message.voice:
+        types.append("voice")
+    if message.video_note:
+        types.append("videonote")
     if message.audio:
-        return "audio"
+        types.append("audio")
+    if message.document and not message.animation:
+        types.append("document")
+    if message.location:
+        types.append("location")
+    if message.poll:
+        types.append("poll")
+
+    # --- Interactive types ---
+    if message.game:
+        types.append("game")
+    if message.dice:
+        types.append("emojigame")
+    if message.reply_markup:
+        if hasattr(message.reply_markup, 'inline_keyboard'):
+            types.append("inline")
+            types.append("button")
+
+    # --- External reply ---
+    if message.external_reply:
+        types.append("externalreply")
+
+    # --- Text content analysis ---
+    if text:
+        # Base text type
+        if not types or types == ["forward"] or "forwarduser" in types:
+            types.append("text")
+
+        # Entity-based types
+        for entity in entities:
+            if entity.type == MessageEntityType.URL:
+                types.append("url")
+            elif entity.type == MessageEntityType.TEXT_LINK:
+                types.append("url")
+            elif entity.type == MessageEntityType.EMAIL:
+                types.append("email")
+            elif entity.type == MessageEntityType.PHONE_NUMBER:
+                types.append("phone")
+            elif entity.type == MessageEntityType.SPOILER:
+                types.append("spoiler")
+            elif entity.type == MessageEntityType.CUSTOM_EMOJI:
+                types.append("emojicustom")
+            elif entity.type == MessageEntityType.CASHTAG:
+                types.append("cashtag")
+
+        # Pattern-based detection
+        if CASHTAG_PATTERN.search(text) and "cashtag" not in types:
+            types.append("cashtag")
+
+        if CYRILLIC_PATTERN.search(text):
+            types.append("cyrillic")
+
+        if ZALGO_PATTERN.search(text):
+            types.append("zalgo")
+
+        # Emoji detection
+        emojis = EMOJI_PATTERN.findall(text)
+        if emojis:
+            types.append("emoji")
+            # Check if message is ONLY emojis
+            text_without_emoji = EMOJI_PATTERN.sub('', text).strip()
+            if not text_without_emoji:
+                types.append("emojionly")
+
+    # Default to text if nothing else
+    if not types:
+        types.append("text")
+
+    return list(set(types))  # Remove duplicates
+
+
+def get_primary_type(message: Message) -> str:
+    """Get the primary/main type of a message for display purposes."""
+    if message.sticker:
+        return "sticker"
     if message.photo:
         return "photo"
-    if message.document:
-        return "document"
-    if message.forward_origin:
-        return "forward"
+    if message.video:
+        return "video"
     if message.animation:
         return "gif"
+    if message.voice:
+        return "voice"
+    if message.video_note:
+        return "videonote"
+    if message.audio:
+        return "audio"
+    if message.document:
+        return "document"
     if message.location:
         return "location"
     if message.poll:
         return "poll"
-    if message.video:
-        return "video"
-    if message.video_note:
-        return "videonote"
-    if message.voice:
-        return "voice"
-    if message.media_group_id:
-        return "album"
-
-    # Default to text if has caption
-    if message.caption:
-        return "text"
-
+    if message.game:
+        return "game"
+    if message.dice:
+        return "emojigame"
+    if message.forward_origin:
+        return "forward"
     return "text"
 
 
@@ -173,10 +300,21 @@ async def send_message_to_target(
             parse_mode=ParseMode.HTML
         )
 
-    elif msg_type == "album":
-        # FIX: Proper album handling - albums are handled individually by Pyrogram
-        # Each message in album triggers handler separately
-        # Just send as individual media with caption
+    elif msg_type == "sticker":
+        await client.send_sticker(target_id, message.sticker.file_id)
+        await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+
+    elif msg_type == "emojigame":
+        # Dice, bowling, darts, etc.
+        await client.send_dice(target_id, emoji=message.dice.emoji)
+        await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+
+    elif msg_type == "game":
+        # Games can't be forwarded easily, just notify
+        await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+
+    else:
+        # Fallback for any other type - try to forward or send as text
         if message.photo:
             await client.send_photo(
                 target_id,
@@ -198,6 +336,8 @@ async def send_message_to_target(
                 caption=caption,
                 parse_mode=ParseMode.HTML
             )
+        else:
+            await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
 
 
 def register_messaging_handlers(app: Client) -> None:
@@ -219,6 +359,9 @@ def register_messaging_handlers(app: Client) -> None:
             | filters.video_note
             | filters.voice
             | filters.media_group
+            | filters.sticker
+            | filters.dice
+            | filters.game
         )
     )
     async def anonymous_handler(client: Client, message: Message):
@@ -237,18 +380,20 @@ def register_messaging_handlers(app: Client) -> None:
 
         await store.update_last_activity(uid)
 
-        # Determine message type
-        msg_type = get_message_type(message)
-        logger.info(f"Processing message type '{msg_type}' from user {uid}")
+        # Determine all message types
+        msg_types = get_message_types(message)
+        primary_type = get_primary_type(message)
+        logger.info(f"Processing message types {msg_types} (primary: {primary_type}) from user {uid}")
 
-        # Safety check
-        if msg_type not in store.VALID_TYPES:
-            logger.warning(f"Unexpected message type '{msg_type}' from user {uid}")
-            await message.reply(
-                await gstr("anonymous_unsupported_type", message),
-                parse_mode=ParseMode.HTML
-            )
-            return
+        # Check for blocked types (types that are never allowed)
+        for t in msg_types:
+            if t in store.BLOCKED_TYPES:
+                logger.warning(f"Blocked type '{t}' from user {uid}")
+                await message.reply(
+                    await gstr("anonymous_unsupported_type", message),
+                    parse_mode=ParseMode.HTML
+                )
+                return
 
         target_id = None
         old_connection = store.get_connection(uid)
@@ -419,11 +564,14 @@ def register_messaging_handlers(app: Client) -> None:
             )
             return
 
-        # Check message type allowed
-        if msg_type not in store.get_allowed_types(str(target_id)):
-            logger.info(f"Message type {msg_type} not allowed for {target_id}")
+        # Check message types allowed
+        allowed_types = store.get_allowed_types(str(target_id))
+        blocked_types = [t for t in msg_types if t not in allowed_types and t != "text"]
+        if blocked_types:
+            blocked_type = blocked_types[0]  # Report first blocked type
+            logger.info(f"Message type {blocked_type} not allowed for {target_id}")
             await message.reply(
-                (await gstr("anonymous_type_blocked", message)).format(type=msg_type),
+                (await gstr("anonymous_type_blocked", message)).format(type=blocked_type),
                 parse_mode=ParseMode.HTML
             )
             return
@@ -478,10 +626,10 @@ def register_messaging_handlers(app: Client) -> None:
                     nickname=target['nickname']
                 )
 
-            await send_message_to_target(client, target_id, message, msg_type, caption)
+            await send_message_to_target(client, target_id, message, primary_type, caption)
 
             await store.increment_message_count(uid)
-            logger.info(f"Message '{msg_type}' sent from {user['nickname']} ({uid}) to {target_id}")
+            logger.info(f"Message '{primary_type}' sent from {user['nickname']} ({uid}) to {target_id}")
 
             reply_text = (await gstr("anonymous_sent", message)).format(nickname=target['nickname'])
             if (message.reply_to_message and old_connection and
@@ -540,10 +688,7 @@ def register_messaging_handlers(app: Client) -> None:
         filters.private
         & ~filters.command(EXCLUDED_COMMANDS)
         & (
-            filters.sticker
-            | filters.contact
-            | filters.dice
-            | filters.game
+            filters.contact
             | filters.venue
             | filters.successful_payment
         )

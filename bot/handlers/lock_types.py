@@ -34,30 +34,33 @@ def register_lock_handlers(app: Client) -> None:
             return
 
         user_allowed_types = store.get_allowed_types(str(uid))
-        valid_types = [t for t in store.VALID_TYPES if t != "text"]
 
-        types_display = []
-        for msg_type in valid_types:
-            status = "✅" if msg_type in user_allowed_types else "🚫"
-            types_display.append(f"- {msg_type} {status}")
+        # Categorized types for better display
+        categories = {
+            "📝 Content": ["text", "url", "email", "phone", "cashtag", "spoiler"],
+            "🔤 Text Filters": ["emoji", "emojionly", "emojicustom", "cyrillic", "zalgo"],
+            "📷 Media": ["photo", "video", "gif", "voice", "videonote", "audio", "document"],
+            "🎭 Stickers": ["sticker", "stickeranimated", "stickerpremium"],
+            "🎮 Interactive": ["location", "poll", "inline", "button", "game", "emojigame"],
+            "↩️ Forwards": ["forward", "forwardbot", "forwardchannel", "forwardstory", "forwarduser"],
+            "📎 Other": ["externalreply"],
+        }
 
-        blocked_types = [t for t in valid_types if t != "all" and t not in user_allowed_types]
-        unblocked_types = [t for t in valid_types if t != "all" and t in user_allowed_types]
+        lines = ["📋 <b>Message Type Settings</b>\n"]
+        for category, types in categories.items():
+            category_types = []
+            for t in types:
+                if t in store.VALID_TYPES:
+                    status = "✅" if t in user_allowed_types else "🚫"
+                    category_types.append(f"{t} {status}")
+            if category_types:
+                lines.append(f"\n{category}")
+                lines.append(", ".join(category_types))
 
-        blocked_str = ""
-        if blocked_types:
-            blocked_str = f"\n\n🚫 {(await gstr('locktypes_blocked', message)).format(types=', '.join(blocked_types))}"
+        lines.append("\n\n<i>Use /lock -type or /unlock -type to change</i>")
+        lines.append("<i>Use /lock -all or /unlock -all for all types</i>")
 
-        unblocked_str = ""
-        if unblocked_types:
-            unblocked_str = f"\n\n✅ {(await gstr('locktypes_unblocked', message)).format(types=', '.join(unblocked_types))}"
-
-        response = (await gstr("locktypes_response", message)).format(
-            types_list="\n".join(types_display),
-            blocked_types=blocked_str,
-            unblocked_types=unblocked_str
-        )
-        await message.reply(response, parse_mode=ParseMode.HTML)
+        await message.reply("\n".join(lines), parse_mode=ParseMode.HTML)
         logger.info(f"User {uid} requested lock types")
 
     @app.on_message(filters.command("lock") & filters.private)

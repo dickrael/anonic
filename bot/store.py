@@ -13,13 +13,30 @@ logger = logging.getLogger(__name__)
 class JSONStore:
     """Thread-safe JSON-based data store for user data, blocks, and connections."""
 
+    # Message content types that can be locked/unlocked
     VALID_TYPES = [
-        "all", "audio", "album", "document", "forward", "gif", "location",
-        "photo", "poll", "video", "videonote", "voice", "text", "link"
+        "all",
+        # Text content
+        "text", "url", "email", "phone", "cashtag", "spoiler",
+        # Text filters
+        "emoji", "emojionly", "emojicustom", "cyrillic", "zalgo",
+        # Media
+        "photo", "video", "gif", "voice", "videonote", "audio", "document",
+        # Stickers
+        "sticker", "stickeranimated", "stickerpremium",
+        # Interactive
+        "location", "poll", "inline", "button", "game", "emojigame",
+        # Forwards
+        "forward", "forwardbot", "forwardchannel", "forwardstory", "forwarduser",
+        # Other
+        "externalreply",
     ]
-    UNSUPPORTED_TYPES = [
-        "sticker", "contact", "dice", "game", "venue", "successful_payment"
+    # Types that are always blocked (no user option)
+    BLOCKED_TYPES = [
+        "contact", "venue", "successful_payment"
     ]
+    # Default allowed types for new users
+    DEFAULT_ALLOWED = ["text", "photo", "video", "voice", "document"]
 
     def __init__(self, path: str):
         self.path = path
@@ -55,7 +72,7 @@ class JSONStore:
                 "token": token,
                 "nickname": nickname,
                 "registered_at": datetime.now(timezone.utc).isoformat(),
-                "allowed_types": ["text"],
+                "allowed_types": self.DEFAULT_ALLOWED.copy(),
                 "last_activity": datetime.now(timezone.utc).isoformat(),
                 "lang": "en",
                 "banned": False,
