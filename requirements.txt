@@ -2,3 +2,4 @@ kurigram
 python-dotenv
 apscheduler
 pyyaml
+tgcrypto
