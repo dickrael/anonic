@@ -34,8 +34,8 @@ logger = logging.getLogger(__name__)
 
 # Commands to exclude from message handling
 EXCLUDED_COMMANDS = [
-    "start", "disconnect", "locktypes", "lock", "unlock",
-    "blocked", "block", "unblock", "report", "ban", "unban", "lang"
+    "start", "disconnect", "locktypes", "blocked", "block",
+    "unblock", "report", "ban", "unban", "lang"
 ]
 
 # Zalgo detection pattern (combining characters)
@@ -553,10 +553,10 @@ def register_messaging_handlers(app: Client) -> None:
                 pass
             elif target_pending:
                 # Target is connected to someone else - warn about disconnection
-                caption += "\n\n" + (await gstr("anonymous_reply_warning", message))
+                caption += "\n" + (await gstr("anonymous_reply_warning", message))
             else:
                 # Target has no session - show reply instruction
-                caption += "\n\n" + (await gstr("anonymous_reply_instruction", message))
+                caption += "\n" + (await gstr("anonymous_reply_instruction", message))
 
             # Send message to target
             sent_msg = await send_message_to_target(client, target_id, message, primary_type, caption)
