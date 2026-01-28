@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 # Commands to exclude from message handling
 EXCLUDED_COMMANDS = [
     "start", "disconnect", "locktypes", "blocked", "block",
-    "unblock", "report", "ban", "unban", "lang"
+    "unblock", "report", "ban", "unban", "lang", "revoke"
 ]
 
 # Zalgo detection pattern (combining characters)

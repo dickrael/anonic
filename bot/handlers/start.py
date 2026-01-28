@@ -1,9 +1,10 @@
-"""Start command handler."""
+"""Start and revoke command handlers."""
 
+import asyncio
 import logging
 
 from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ParseMode
 from pyrogram.errors import UserIsBlocked, InputUserDeactivated
 
@@ -15,8 +16,17 @@ from .common import can_connect
 logger = logging.getLogger(__name__)
 
 
+async def auto_delete_message(message: Message, delay: int = 60):
+    """Delete message after delay."""
+    await asyncio.sleep(delay)
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+
 def register_start_handlers(app: Client) -> None:
-    """Register start command handler."""
+    """Register start and revoke command handlers."""
 
     @app.on_message(filters.command("start") & filters.private)
     async def start_cmd(client: Client, message: Message):
@@ -34,7 +44,15 @@ def register_start_handlers(app: Client) -> None:
         if not user_data:
             token = generate_token()
             nickname = generate_nickname()
-            await store.add_user(uid, token, nickname)
+            await store.add_user(
+                telegram_id=uid,
+                token=token,
+                nickname=nickname,
+                language_code=user.language_code,
+                username=user.username,
+                first_name=user.first_name,
+                last_name=user.last_name
+            )
             logger.info(f"New user registered - ID: {uid}, Nickname: {nickname}")
             user_data = store.get_user(uid)
 
@@ -57,7 +75,6 @@ def register_start_handlers(app: Client) -> None:
                     return
 
                 try:
-                    # Validate target is reachable
                     can_connect_result, reason = await can_connect(client, uid, target_id)
                     if not can_connect_result:
                         logger.warning(f"Connection blocked: {uid} -> {target_id}, reason: {reason}")
@@ -89,7 +106,6 @@ def register_start_handlers(app: Client) -> None:
                             )
                         return
 
-                    # Set one-time pending target (cleared after first message)
                     await store.set_pending_target(uid, target_id)
                     logger.info(f"User {uid} pending target set to {target_id} ({target_data['nickname']})")
 
@@ -124,3 +140,92 @@ def register_start_handlers(app: Client) -> None:
             ),
             parse_mode=ParseMode.HTML
         )
+
+    @app.on_message(filters.command("revoke") & filters.private)
+    async def revoke_cmd(client: Client, message: Message):
+        store = get_store()
+        uid = message.from_user.id
+
+        if store.is_banned(uid):
+            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
+            return
+
+        user_data = store.get_user(uid)
+        if not user_data:
+            await message.reply(await gstr("revoke_no_user", message), parse_mode=ParseMode.HTML)
+            return
+
+        # Check weekly limit before showing confirmation
+        last_revoke = user_data.get('last_revoke')
+        if last_revoke:
+            try:
+                from datetime import datetime, timezone
+                last_revoke_dt = datetime.fromisoformat(last_revoke)
+                days_since = (datetime.now(timezone.utc) - last_revoke_dt).days
+                if days_since < 7:
+                    days_left = 7 - days_since
+                    await message.reply(
+                        (await gstr("revoke_wait", message)).format(days=days_left),
+                        parse_mode=ParseMode.HTML
+                    )
+                    return
+            except ValueError:
+                pass
+
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("✅ Yes, revoke", callback_data="revoke:confirm"),
+                InlineKeyboardButton("❌ Cancel", callback_data="revoke:cancel"),
+            ]
+        ])
+
+        sent_msg = await message.reply(
+            await gstr("revoke_confirm", message),
+            reply_markup=keyboard,
+            parse_mode=ParseMode.HTML
+        )
+
+        asyncio.create_task(auto_delete_message(sent_msg, 60))
+        logger.info(f"User {uid} requested revoke confirmation")
+
+    @app.on_callback_query(filters.regex(r"^revoke:"))
+    async def revoke_callback(client: Client, callback: CallbackQuery):
+        store = get_store()
+        uid = callback.from_user.id
+        action = callback.data.split(":")[1]
+
+        if action == "cancel":
+            await callback.message.delete()
+            await callback.answer("Cancelled")
+            return
+
+        if action == "confirm":
+            user_data = store.get_user(uid)
+            if not user_data:
+                await callback.answer("User not found", show_alert=True)
+                await callback.message.delete()
+                return
+
+            new_token = generate_token()
+            new_nickname = generate_nickname()
+
+            success, error = await store.revoke_user(uid, new_token, new_nickname)
+
+            if success:
+                await callback.message.edit_text(
+                    (await gstr("revoke_success", callback)).format(
+                        bot_username=client.me.username,
+                        token=new_token,
+                        nickname=new_nickname
+                    ),
+                    parse_mode=ParseMode.HTML
+                )
+                await callback.answer("Revoked successfully!")
+                logger.info(f"User {uid} revoked: new nickname {new_nickname}")
+            else:
+                if error.startswith("wait_"):
+                    days = error.split("_")[1]
+                    await callback.answer(f"Wait {days} more days", show_alert=True)
+                else:
+                    await callback.answer("Failed to revoke", show_alert=True)
+                await callback.message.delete()

@@ -22,6 +22,7 @@ BOT_COMMANDS = [
     BotCommand("block", "Block a user"),
     BotCommand("unblock", "Unblock a user"),
     BotCommand("blocked", "List blocked users"),
+    BotCommand("revoke", "Get new identity"),
     BotCommand("locktypes", "Message type settings"),
     BotCommand("report", "Report a message"),
     BotCommand("lang", "Change language"),

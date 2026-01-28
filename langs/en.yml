@@ -115,3 +115,14 @@ spam_report: |
 spam_banned: "🚫 You have been banned for {duration} for spamming."
 anonymous_reply_instruction: "💬 <i>Reply to answer</i>"
 anonymous_reply_warning: "⚠️ <i>Reply to answer (you'll be disconnected from current chat)</i>"
+block_no_reply: "❌ Reply to a message to block the sender."
+revoke_no_user: "❌ Register first using /start."
+revoke_wait: "⏳ You can revoke again in <b>{days}</b> days."
+revoke_confirm: "⚠️ <b>Are you sure you want to revoke your identity?</b>\n\nThis will generate a new link and nickname. Your old link will stop working."
+revoke_success: |
+  ✅ <b>Identity revoked!</b>
+
+  🔗 Your new link:
+  <code>https://t.me/{bot_username}?start={token}</code>
+
+  👤 New nickname: <b>{nickname}</b>

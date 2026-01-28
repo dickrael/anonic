@@ -80,7 +80,16 @@ class JSONStore:
 
     # ----- User Management -----
 
-    async def add_user(self, telegram_id: int, token: str, nickname: str) -> None:
+    async def add_user(
+        self,
+        telegram_id: int,
+        token: str,
+        nickname: str,
+        language_code: str = "en",
+        username: str = None,
+        first_name: str = None,
+        last_name: str = None
+    ) -> None:
         """Add a new user to the store."""
         async with self._lock:
             self._data['users'][str(telegram_id)] = {
@@ -89,12 +98,61 @@ class JSONStore:
                 "registered_at": datetime.now(timezone.utc).isoformat(),
                 "allowed_types": self.DEFAULT_ALLOWED.copy(),
                 "last_activity": datetime.now(timezone.utc).isoformat(),
-                "lang": "en",
+                "lang": language_code or "en",
+                "language_code": language_code or "en",
+                "username": username,
+                "first_name": first_name,
+                "last_name": last_name,
                 "banned": False,
                 "ban_expires_at": None,
-                "message_timestamps": {}
+                "message_timestamps": {},
+                "last_revoke": None
             }
             await self._save()
+
+    async def revoke_user(self, telegram_id: int, new_token: str, new_nickname: str) -> Tuple[bool, str]:
+        """Revoke user data and generate new token/nickname. Returns (success, error_reason).
+
+        Keeps history of old tokens/nicknames and counts total revokes.
+        User data is never deleted.
+        """
+        async with self._lock:
+            user = self._data['users'].get(str(telegram_id))
+            if not user:
+                return False, "not_found"
+
+            # Check weekly limit
+            last_revoke = user.get('last_revoke')
+            if last_revoke:
+                try:
+                    last_revoke_dt = datetime.fromisoformat(last_revoke)
+                    days_since = (datetime.now(timezone.utc) - last_revoke_dt).days
+                    if days_since < 7:
+                        return False, f"wait_{7 - days_since}"
+                except ValueError:
+                    pass
+
+            # Initialize history if not exists
+            if 'revoke_history' not in user:
+                user['revoke_history'] = []
+            if 'revoke_count' not in user:
+                user['revoke_count'] = 0
+
+            # Store old data in history
+            user['revoke_history'].append({
+                'old_token': user['token'],
+                'old_nickname': user['nickname'],
+                'revoked_at': datetime.now(timezone.utc).isoformat()
+            })
+
+            # Update user data with new token/nickname
+            user['token'] = new_token
+            user['nickname'] = new_nickname
+            user['last_revoke'] = datetime.now(timezone.utc).isoformat()
+            user['revoke_count'] = user['revoke_count'] + 1
+
+            await self._save()
+            return True, ""
 
     def get_user(self, telegram_id: int) -> Optional[Dict[str, Any]]:
         """Get user data by telegram ID (read-only, no lock needed)."""

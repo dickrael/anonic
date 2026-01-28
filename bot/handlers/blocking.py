@@ -60,59 +60,38 @@ def register_blocking_handlers(app: Client) -> None:
             await message.reply(await gstr("block_no_user", message), parse_mode=ParseMode.HTML)
             return
 
+        # Must reply to a message to block
+        if not message.reply_to_message:
+            await message.reply(await gstr("block_no_reply", message), parse_mode=ParseMode.HTML)
+            return
+
         recipient = str(uid)
-        args = message.text.split()
         target_id = None
         target_data = None
         sender_nickname = None
 
-        # Priority 1: Block by token argument
-        if len(args) >= 2 and not message.reply_to_message:
-            token = args[1]
-            target_id, target_data = store.get_by_token(token)
+        # Get sender from message tracking
+        reply_msg_id = message.reply_to_message.id
+        original_sender_id = store.get_message_sender(reply_msg_id)
 
-            if not target_data:
-                logger.warning(f"User {uid} tried to block invalid token: {token}")
-                await message.reply(
-                    (await gstr("block_invalid_token", message)).format(token=token),
-                    parse_mode=ParseMode.HTML
-                )
-                return
-
-            sender_nickname = target_data['nickname']
-
-        # Priority 2: Block by reply to message (using message tracking)
-        elif message.reply_to_message:
-            reply_msg_id = message.reply_to_message.id
-            original_sender_id = store.get_message_sender(reply_msg_id)
-
-            if original_sender_id:
-                target_id = original_sender_id
-                target_data = store.get_user(target_id)
-                if target_data:
-                    sender_nickname = target_data['nickname']
-            else:
-                # Fallback: try to extract from message text
-                lines = message.reply_to_message.caption or message.reply_to_message.text or ""
-                sender_nickname = extract_nickname_from_message(lines)
-                if sender_nickname:
-                    target_id = store.find_user_by_nickname(sender_nickname)
-                    if target_id:
-                        target_data = store.get_user(target_id)
-
-        # Priority 3: Block pending target (from deep link)
-        if not target_id:
-            pending_target_id = store.get_pending_target(uid)
-            if pending_target_id:
-                target_id = pending_target_id
-                target_data = store.get_user(target_id)
-                if target_data:
-                    sender_nickname = target_data['nickname']
+        if original_sender_id:
+            target_id = original_sender_id
+            target_data = store.get_user(target_id)
+            if target_data:
+                sender_nickname = target_data['nickname']
+        else:
+            # Fallback: try to extract from message text
+            lines = message.reply_to_message.caption or message.reply_to_message.text or ""
+            sender_nickname = extract_nickname_from_message(lines)
+            if sender_nickname:
+                target_id = store.find_user_by_nickname(sender_nickname)
+                if target_id:
+                    target_data = store.get_user(target_id)
 
         # No target found
         if not target_id or not target_data:
             logger.warning(f"User {uid} tried /block but no target found")
-            await message.reply(await gstr("block_no_args", message), parse_mode=ParseMode.HTML)
+            await message.reply(await gstr("block_no_reply", message), parse_mode=ParseMode.HTML)
             return
 
         # Can't block yourself
