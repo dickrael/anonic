@@ -52,8 +52,9 @@ anonymous_error: "❌ Error sending message."
 anonymous_sent: "✅ Message sent to <b>{nickname}</b>"
 anonymous_switched: "Your connection switched from <b>{old_nickname}</b> to <b>{new_nickname}</b>."
 anonymous_caption: |
-  {original}
-  –– <b>{nickname}</b>
+  <blockquote>{original}</blockquote>
+  ———
+  ✨ from <b>{nickname}</b>
 anonymous_no_connection_info: "ℹ️ User <b>{nickname}</b> is currently not in chat. Replying to this message will establish a connection with them."
 anonymous_switch_info: "ℹ️ To reply to <b>{sender_nickname}</b>, please reply to their message. You will be switched to a chat with <b>{sender_nickname}</b> and disconnected from <b>{current_nickname}</b>."
 block_no_user: "❌ Register first using /start."
@@ -117,5 +118,5 @@ start_busy: "⏳ <b>{nickname}</b> is currently in another conversation. Try aga
 start_frozen: "❄️ Connection failed with <b>{nickname}</b>: account is frozen."
 anonymous_busy: "⏳ <b>{nickname}</b> is currently in another conversation."
 anonymous_frozen: "❄️ Connection terminated: user account is frozen."
-anonymous_reply_instruction: "—— <i>Reply to this message in order to answer</i>"
-anonymous_reply_warning: "—— <i>Reply to this message in order to answer. You will be disconnected from your current conversation.</i>"
+anonymous_reply_instruction: "💬 <i>Reply to answer</i>"
+anonymous_reply_warning: "⚠️ <i>Reply to answer (you'll be disconnected from current chat)</i>"

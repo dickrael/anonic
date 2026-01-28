@@ -535,10 +535,16 @@ def register_messaging_handlers(app: Client) -> None:
         # ===== SEND MESSAGE =====
         try:
             original_caption = message.caption or message.text or ""
-            caption = (await gstr("anonymous_caption", message)).format(
-                original=original_caption,
-                nickname=user['nickname']
-            )
+
+            # Build caption based on whether there's text content
+            if original_caption.strip():
+                caption = (await gstr("anonymous_caption", message)).format(
+                    original=original_caption,
+                    nickname=user['nickname']
+                )
+            else:
+                # No text content (sticker, voice, etc.) - just show sender info
+                caption = f"———\n✨ from <b>{user['nickname']}</b>"
 
             # Add reply instruction ONLY if target has no active session with sender
             target_pending = store.get_pending_target(target_id)
