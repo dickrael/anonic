@@ -1,0 +1,573 @@
+"""Anonymous message handling.
+
+This module handles the core anonymous messaging functionality, including:
+- Message type detection
+- Message forwarding between users
+- Connection management during messaging
+- Rate limiting and spam protection
+"""
+
+import asyncio
+import logging
+from datetime import timedelta
+
+from pyrogram import Client, filters
+from pyrogram.types import Message
+from pyrogram.enums import ParseMode, MessageEntityType
+from pyrogram.errors import UserIsBlocked, FloodWait, PeerIdInvalid, InputUserDeactivated
+
+from ..store import get_store
+from ..strings import gstr
+from ..config import config
+from ..utils import extract_nickname_from_message
+from .common import can_connect
+
+logger = logging.getLogger(__name__)
+
+# Commands to exclude from message handling
+EXCLUDED_COMMANDS = [
+    "start", "disconnect", "locktypes", "lock", "unlock",
+    "blocked", "block", "unblock", "report", "ban", "unban", "lang"
+]
+
+
+def get_message_type(message: Message) -> str:
+    """Determine the type of message.
+
+    Args:
+        message: Pyrogram Message object
+
+    Returns:
+        String representing message type
+    """
+    # Check for text with links first
+    if message.text or message.caption:
+        entities = message.entities or message.caption_entities or []
+        if any(e.type in [MessageEntityType.URL, MessageEntityType.TEXT_LINK] for e in entities):
+            return "link"
+        if message.text:
+            return "text"
+
+    # Check media types
+    if message.audio:
+        return "audio"
+    if message.photo:
+        return "photo"
+    if message.document:
+        return "document"
+    if message.forward_origin:
+        return "forward"
+    if message.animation:
+        return "gif"
+    if message.location:
+        return "location"
+    if message.poll:
+        return "poll"
+    if message.video:
+        return "video"
+    if message.video_note:
+        return "videonote"
+    if message.voice:
+        return "voice"
+    if message.media_group_id:
+        return "album"
+
+    # Default to text if has caption
+    if message.caption:
+        return "text"
+
+    return "text"
+
+
+async def send_message_to_target(
+    client: Client,
+    target_id: int,
+    message: Message,
+    msg_type: str,
+    caption: str
+) -> None:
+    """Send message to target user based on type.
+
+    Args:
+        client: Pyrogram client
+        target_id: Target user ID
+        message: Original message
+        msg_type: Detected message type
+        caption: Formatted caption to include
+    """
+    if msg_type in ("text", "link"):
+        await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+
+    elif msg_type == "audio":
+        await client.send_audio(
+            target_id,
+            message.audio.file_id,
+            caption=caption,
+            parse_mode=ParseMode.HTML
+        )
+
+    elif msg_type == "photo":
+        # FIX: Use message.photo[-1].file_id for largest photo size
+        await client.send_photo(
+            target_id,
+            message.photo[-1].file_id,
+            caption=caption,
+            parse_mode=ParseMode.HTML
+        )
+
+    elif msg_type == "document":
+        await client.send_document(
+            target_id,
+            message.document.file_id,
+            caption=caption,
+            parse_mode=ParseMode.HTML
+        )
+
+    elif msg_type == "forward":
+        await message.forward(target_id)
+        await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+
+    elif msg_type == "gif":
+        await client.send_animation(
+            target_id,
+            message.animation.file_id,
+            caption=caption,
+            parse_mode=ParseMode.HTML
+        )
+
+    elif msg_type == "location":
+        # FIX: send_location doesn't support caption, send separately
+        await client.send_location(
+            target_id,
+            message.location.latitude,
+            message.location.longitude
+        )
+        await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+
+    elif msg_type == "poll":
+        # FIX: send_poll doesn't support caption, send separately
+        await client.send_poll(
+            target_id,
+            message.poll.question,
+            [option.text for option in message.poll.options]
+        )
+        await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+
+    elif msg_type == "video":
+        await client.send_video(
+            target_id,
+            message.video.file_id,
+            caption=caption,
+            parse_mode=ParseMode.HTML
+        )
+
+    elif msg_type == "videonote":
+        await client.send_video_note(target_id, message.video_note.file_id)
+        await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+
+    elif msg_type == "voice":
+        await client.send_voice(
+            target_id,
+            message.voice.file_id,
+            caption=caption,
+            parse_mode=ParseMode.HTML
+        )
+
+    elif msg_type == "album":
+        # FIX: Proper album handling - albums are handled individually by Pyrogram
+        # Each message in album triggers handler separately
+        # Just send as individual media with caption
+        if message.photo:
+            await client.send_photo(
+                target_id,
+                message.photo[-1].file_id,
+                caption=caption,
+                parse_mode=ParseMode.HTML
+            )
+        elif message.video:
+            await client.send_video(
+                target_id,
+                message.video.file_id,
+                caption=caption,
+                parse_mode=ParseMode.HTML
+            )
+        elif message.document:
+            await client.send_document(
+                target_id,
+                message.document.file_id,
+                caption=caption,
+                parse_mode=ParseMode.HTML
+            )
+
+
+def register_messaging_handlers(app: Client) -> None:
+    """Register anonymous message handlers."""
+
+    @app.on_message(
+        filters.private
+        & ~filters.command(EXCLUDED_COMMANDS)
+        & (
+            filters.text
+            | filters.audio
+            | filters.photo
+            | filters.document
+            | filters.forwarded
+            | filters.animation
+            | filters.location
+            | filters.poll
+            | filters.video
+            | filters.video_note
+            | filters.voice
+            | filters.media_group
+        )
+    )
+    async def anonymous_handler(client: Client, message: Message):
+        store = get_store()
+        uid = message.from_user.id
+        user = store.get_user(uid)
+
+        if not user:
+            logger.warning(f"Unregistered user {uid} tried to send message")
+            await message.reply(await gstr("anonymous_no_user", message), parse_mode=ParseMode.HTML)
+            return
+
+        if store.is_banned(uid):
+            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
+            return
+
+        await store.update_last_activity(uid)
+
+        # Determine message type
+        msg_type = get_message_type(message)
+        logger.info(f"Processing message type '{msg_type}' from user {uid}")
+
+        # Safety check
+        if msg_type not in store.VALID_TYPES:
+            logger.warning(f"Unexpected message type '{msg_type}' from user {uid}")
+            await message.reply(
+                await gstr("anonymous_unsupported_type", message),
+                parse_mode=ParseMode.HTML
+            )
+            return
+
+        target_id = None
+        old_connection = store.get_connection(uid)
+        old_nickname = None
+        if old_connection:
+            old_user = store.get_user(int(old_connection['target_id']))
+            old_nickname = old_user['nickname'] if old_user else None
+
+        # Handle reply to message
+        if message.reply_to_message:
+            lines = message.reply_to_message.caption or message.reply_to_message.text or ""
+            sender_nickname = extract_nickname_from_message(lines)
+            logger.debug(f"Extracted sender_nickname: {sender_nickname!r}")
+
+            if sender_nickname:
+                target_id = store.find_user_by_nickname(sender_nickname)
+
+            if not target_id or target_id == uid:
+                logger.warning(f"Reply target not found for nickname: {sender_nickname!r}")
+                await message.reply(
+                    await gstr("anonymous_reply_not_found", message),
+                    parse_mode=ParseMode.HTML
+                )
+                return
+
+            try:
+                can_connect_result, reason = await can_connect(client, uid, target_id)
+                if not can_connect_result:
+                    logger.warning(f"Connection blocked: {uid} -> {target_id}, reason: {reason}")
+                    target_data = store.get_user(target_id)
+                    if reason == "banned":
+                        await message.reply(
+                            (await gstr("start_connection_failed_frozen", message)).format(
+                                nickname=target_data['nickname'] if target_data else "User"
+                            ),
+                            parse_mode=ParseMode.HTML
+                        )
+                    elif reason == "self_blocked":
+                        await message.reply(
+                            (await gstr("start_self_blocked", message)).format(
+                                nickname=target_data['nickname'] if target_data else "User"
+                            ),
+                            parse_mode=ParseMode.HTML
+                        )
+                    elif reason == "deactivated":
+                        await message.reply(
+                            (await gstr("start_deactivated", message)).format(
+                                nickname=target_data['nickname'] if target_data else "User"
+                            ),
+                            parse_mode=ParseMode.HTML
+                        )
+                    else:
+                        await message.reply(
+                            await gstr("anonymous_blocked", message),
+                            parse_mode=ParseMode.HTML
+                        )
+                    return
+
+                # Switch connection if replying to different user
+                if old_connection and old_connection['target_id'] != str(target_id):
+                    old_target_id = int(old_connection['target_id'])
+                    old_target = store.get_user(old_target_id)
+                    if old_target and store.get_message_count(uid) > 0:
+                        try:
+                            await client.get_chat(old_target_id)
+                            target_msg = await gstr("disconnect_by_partner", user_id=old_target_id)
+                            target_msg = target_msg.format(nickname=user['nickname'])
+                            await client.send_message(
+                                old_target_id,
+                                target_msg,
+                                parse_mode=ParseMode.HTML
+                            )
+                            logger.info(f"Notified {old_target_id} of connection switch by {uid}")
+                        # FIX: Added 'as e' to capture exception
+                        except (UserIsBlocked, InputUserDeactivated) as e:
+                            logger.info(f"Could not notify {old_target_id}: {type(e).__name__}")
+                        except Exception as e:
+                            logger.error(f"Failed to notify {old_target_id}: {type(e).__name__}: {e}")
+
+                    await store.start_connection(uid, target_id)
+                    logger.info(f"User {uid} switched connection to {target_id}")
+                elif not old_connection:
+                    await store.start_connection(uid, target_id)
+                    logger.info(f"User {uid} established connection with {target_id}")
+
+            except (UserIsBlocked, InputUserDeactivated) as e:
+                logger.warning(f"Connection failed {uid} -> {target_id}: {type(e).__name__}")
+                await message.reply(
+                    (await gstr(
+                        "start_deactivated" if isinstance(e, InputUserDeactivated) else "start_blocked",
+                        message
+                    )).format(nickname=sender_nickname),
+                    parse_mode=ParseMode.HTML
+                )
+                return
+
+        else:
+            # No reply - use existing connection
+            conn = store.get_connection(uid)
+            if not conn:
+                logger.warning(f"User {uid} sent message without connection")
+                await message.reply(
+                    await gstr("anonymous_no_connection", message),
+                    parse_mode=ParseMode.HTML
+                )
+                return
+
+            target_id = int(conn['target_id'])
+            try:
+                can_connect_result, reason = await can_connect(client, uid, target_id)
+                if not can_connect_result:
+                    logger.warning(f"Connection invalid: {uid} -> {target_id}, reason: {reason}")
+                    target_data = store.get_user(target_id)
+                    await store.end_connection(uid)
+                    await store.update_last_activity(uid)
+
+                    if reason == "banned":
+                        await message.reply(
+                            (await gstr("start_connection_failed_frozen", message)).format(
+                                nickname=target_data['nickname'] if target_data else "User"
+                            ),
+                            parse_mode=ParseMode.HTML
+                        )
+                    elif reason == "self_blocked":
+                        await message.reply(
+                            (await gstr("start_self_blocked", message)).format(
+                                nickname=target_data['nickname'] if target_data else "User"
+                            ),
+                            parse_mode=ParseMode.HTML
+                        )
+                    elif reason == "deactivated":
+                        await message.reply(
+                            (await gstr("start_deactivated", message)).format(
+                                nickname=target_data['nickname'] if target_data else "User"
+                            ),
+                            parse_mode=ParseMode.HTML
+                        )
+                    else:
+                        await message.reply(
+                            await gstr("anonymous_blocked", message),
+                            parse_mode=ParseMode.HTML
+                        )
+                    return
+
+            except (UserIsBlocked, InputUserDeactivated) as e:
+                logger.warning(f"Connection failed {uid} -> {target_id}: {type(e).__name__}")
+                target_data = store.get_user(target_id)
+                await store.end_connection(uid)
+                await store.update_last_activity(uid)
+                await message.reply(
+                    (await gstr(
+                        "start_deactivated" if isinstance(e, InputUserDeactivated) else "anonymous_blocked",
+                        message
+                    )).format(nickname=target_data['nickname'] if target_data else "User"),
+                    parse_mode=ParseMode.HTML
+                )
+                return
+
+        # Validate target
+        target = store.get_user(target_id)
+        if not target:
+            logger.warning(f"Invalid target {target_id}")
+            await store.end_connection(uid)
+            await store.update_last_activity(uid)
+            await message.reply(
+                await gstr("anonymous_target_not_found", message),
+                parse_mode=ParseMode.HTML
+            )
+            return
+
+        # Check message type allowed
+        if msg_type not in store.get_allowed_types(str(target_id)):
+            logger.info(f"Message type {msg_type} not allowed for {target_id}")
+            await message.reply(
+                (await gstr("anonymous_type_blocked", message)).format(type=msg_type),
+                parse_mode=ParseMode.HTML
+            )
+            return
+
+        # Anti-spam check: 60 messages per minute
+        await store.add_message_timestamp(uid, target_id)
+        message_count = store.get_message_count_in_window(uid, target_id)
+        if message_count > 60:
+            ban_duration = timedelta(days=1)
+            await store.ban_user(uid, ban_duration)
+            logger.warning(f"User {uid} banned for spam: {message_count} msgs/min to {target_id}")
+            try:
+                report_text = (await gstr("spam_report", message)).format(
+                    user_id=uid,
+                    nickname=user['nickname'],
+                    target_id=target_id,
+                    target_nickname=target['nickname'],
+                    message_count=message_count
+                )
+                await client.send_message(
+                    config.moderation_chat_id,
+                    report_text,
+                    parse_mode=ParseMode.HTML
+                )
+            except Exception as e:
+                logger.error(f"Failed to send spam report: {type(e).__name__}: {e}")
+            await message.reply(
+                (await gstr("spam_banned", message)).format(duration="1 day"),
+                parse_mode=ParseMode.HTML
+            )
+            return
+
+        # Send message
+        try:
+            original_caption = message.caption or message.text or ""
+            caption = (await gstr("anonymous_caption", message)).format(
+                original=original_caption,
+                nickname=user['nickname']
+            )
+
+            # Add context info
+            target_conn = store.get_connection(target_id)
+            if target_conn and int(target_conn['target_id']) != uid:
+                target_user = store.get_user(int(target_conn['target_id']))
+                target_nickname = target_user['nickname'] if target_user else "Unknown"
+                caption += "\n\n" + (await gstr("anonymous_switch_info", message)).format(
+                    sender_nickname=user['nickname'],
+                    current_nickname=target_nickname
+                )
+            elif not target_conn:
+                caption += "\n\n" + (await gstr("anonymous_no_connection_info", message)).format(
+                    nickname=target['nickname']
+                )
+
+            await send_message_to_target(client, target_id, message, msg_type, caption)
+
+            await store.increment_message_count(uid)
+            logger.info(f"Message '{msg_type}' sent from {user['nickname']} ({uid}) to {target_id}")
+
+            reply_text = (await gstr("anonymous_sent", message)).format(nickname=target['nickname'])
+            if (message.reply_to_message and old_connection and
+                old_connection['target_id'] != str(target_id) and old_nickname):
+                reply_text += "\n" + (await gstr("anonymous_switched", message)).format(
+                    old_nickname=old_nickname,
+                    new_nickname=target['nickname']
+                )
+            await message.reply(reply_text, parse_mode=ParseMode.HTML)
+
+        except UserIsBlocked:
+            logger.warning(f"Message failed: {target_id} blocked bot")
+            await store.end_connection(uid)
+            await store.update_last_activity(uid)
+            await message.reply(
+                await gstr("anonymous_target_blocked_bot", message),
+                parse_mode=ParseMode.HTML
+            )
+
+        except InputUserDeactivated:
+            logger.warning(f"Message failed: {target_id} deactivated")
+            await store.end_connection(uid)
+            await store.update_last_activity(uid)
+            await message.reply(
+                (await gstr("start_deactivated", message)).format(
+                    nickname=target['nickname'] if target else "User"
+                ),
+                parse_mode=ParseMode.HTML
+            )
+
+        except FloodWait as e:
+            logger.warning(f"FloodWait: {e.value} seconds")
+            await asyncio.sleep(e.value)
+            await message.reply(
+                await gstr("anonymous_flood_wait", message),
+                parse_mode=ParseMode.HTML
+            )
+
+        except PeerIdInvalid:
+            logger.error(f"Invalid peer ID: {target_id}")
+            await store.end_connection(uid)
+            await store.update_last_activity(uid)
+            await message.reply(
+                await gstr("anonymous_invalid_peer", message),
+                parse_mode=ParseMode.HTML
+            )
+
+        except Exception as e:
+            logger.error(f"Message failed: {type(e).__name__}: {e}")
+            await message.reply(
+                await gstr("anonymous_error", message),
+                parse_mode=ParseMode.HTML
+            )
+
+    @app.on_message(
+        filters.private
+        & ~filters.command(EXCLUDED_COMMANDS)
+        & (
+            filters.sticker
+            | filters.contact
+            | filters.dice
+            | filters.game
+            | filters.venue
+            | filters.successful_payment
+        )
+    )
+    async def unsupported_handler(client: Client, message: Message):
+        store = get_store()
+        uid = message.from_user.id
+        user = store.get_user(uid)
+
+        if not user:
+            logger.warning(f"Unregistered user {uid} sent unsupported message")
+            await message.reply(
+                await gstr("anonymous_no_user", message),
+                parse_mode=ParseMode.HTML
+            )
+            return
+
+        if store.is_banned(uid):
+            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
+            return
+
+        await store.update_last_activity(uid)
+        logger.info(f"Unsupported message type from user {uid}")
+        await message.reply(
+            await gstr("anonymous_unsupported_type", message),
+            parse_mode=ParseMode.HTML
+        )

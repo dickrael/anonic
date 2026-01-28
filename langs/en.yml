@@ -95,3 +95,20 @@ lang_invalid: "❌ Invalid language code. Available languages: {languages}"
 lang_success: "✅ Language changed to {language}."
 anonymous_unsupported_type: "❌ This media type is not supported by the bot."
 disconnect_by_partner: "ℹ️ <b>{nickname}</b> has disconnected from you."
+start_deactivated: "❌ Connection failed with <b>{nickname}</b>: account deactivated."
+locktypes_no_user: "❌ Register first using /start."
+locktypes_blocked: "Blocked: {types}"
+locktypes_unblocked: "Allowed: {types}"
+lock_no_user: "❌ Register first using /start."
+unlock_no_user: "❌ Register first using /start."
+blocked_no_user: "❌ Register first using /start."
+block_deactivated: "⚠️ User <b>{nickname}</b> account is deactivated."
+report_deactivated: "❌ Failed to send report: moderation chat unavailable."
+spam_report: |
+  🚨 <b>Spam Detected</b>
+  User ID: <code>{user_id}</code>
+  Nickname: {nickname}
+  Target ID: <code>{target_id}</code>
+  Target: {target_nickname}
+  Messages in 1 minute: {message_count}
+spam_banned: "🚫 You have been banned for {duration} for spamming."
