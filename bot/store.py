@@ -283,11 +283,11 @@ class JSONStore:
         return any(block["nickname"] == nickname for block in self._data['blocks'][recipient_id])
 
     def get_blocked_users(self, recipient_id: str) -> List[str]:
-        """Get list of blocked users for display."""
+        """Get list of blocked users for display (nickname only, no user_id)."""
         if recipient_id not in self._data['blocks']:
             return []
         return [
-            f"<code>{block['nickname']}</code> ({block.get('user_id', 'N/A')})"
+            f"<code>{block['nickname']}</code>"
             for block in self._data['blocks'][recipient_id]
         ]
 
