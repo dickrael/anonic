@@ -472,7 +472,7 @@ def register_messaging_handlers(app: Client) -> None:
                     )
                 elif reason == "frozen":
                     await message.reply(
-                        (await gstr("start_frozen", message)).format(nickname=nickname),
+                        (await gstr("start_connection_failed_frozen", message)).format(nickname=nickname),
                         parse_mode=ParseMode.HTML
                     )
                 else:
