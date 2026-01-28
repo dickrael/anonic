@@ -36,6 +36,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Suppress APScheduler INFO logs
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
+
 
 async def init_bot() -> None:
     """Initialize and start the bot."""
