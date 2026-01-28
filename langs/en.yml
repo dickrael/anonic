@@ -1,0 +1,97 @@
+start_no_token: |
+  🔗 Share this link to start receiving anonymous messages👇:
+  
+  <code>https://t.me/{bot_username}?start={token}</code>
+  
+  👤 Your nickname: <b>{nickname}</b>
+start_self_connect: |
+  ⚠️ <b>You cannot connect with yourself!</b>
+  🔗 Share this link to start receiving anonymous messages👇:
+  
+  <code>https://t.me/{bot_username}?start={token}</code>
+  
+  👤 Your nickname: <b>{nickname}</b>
+start_blocked: "❌ Unable to establish connection: you are either blocked by the user or the user has blocked the bot."
+start_invalid_token: "❌ Invalid or expired link."
+start_connection_established: "✅ Connection established with <b>{nickname}</b>.
+ℹ️ If you want to end this connection, use the <code>/disconnect</code> command."
+start_connection_switched: "ℹ️ Your previous connection with <b>{old_nickname}</b> has been terminated."
+disconnect_no_user: "❌ Register first using /start."
+disconnect_no_connection: "❌ You have no active connection."
+disconnect_success: "✅ Connection with <b>{nickname}</b> terminated."
+locktypes_active_connection: "⚠️ The /locktypes command cannot be used during an active connection."
+locktypes_response: |
+  📋 Available message types for blocking/unblocking:
+  {types_list}
+  {blocked_types}
+  {unblocked_types}
+lock_active_connection: "⚠️ The <code>/lock</code> command cannot be used during an active connection.<br>
+Please end the current session using the <code>/disconnect</code> command first, then try again."
+lock_no_args: "❌ Specify message types to block (e.g., /lock -all -gif -poll)."
+lock_success: "🔒 Blocked types: <b>{types}</b>"
+lock_invalid_types: "⚠️ Ignored invalid/text types: <b>{types}</b>"
+unlock_active_connection: "⚠️ You can't use <code>/unlock</code> while connected.<br>
+Use <code>/disconnect</code> first, then try again."
+unlock_no_args: "❌ Specify message types to unblock (e.g., /unlock -all -gif -poll)."
+unlock_success: "🔓 Unblocked types: <b>{types}</b>"
+unlock_invalid_types: "⚠️ Ignored invalid/text types: <b>{types}</b>"
+blocked_active_connection: "⚠️ The /blocked command cannot be used during an active connection. Connection terminated."
+start_self_blocked: "🔒 You have blocked <code>{nickname}</code>. Unblock them to connect."
+blocked_none: "✅ You have no blocked users."
+blocked_list: "🚫 Blocked users:\n<b>{users}</b>"
+anonymous_no_user: "❌ Register first using /start."
+anonymous_no_connection: "❌ Use your deep link to start or reply to a message."
+anonymous_reply_not_found: "❌ Error: sender not found."
+anonymous_blocked: "❌ Unable to send message: you are either blocked by the user or the user has blocked the bot."
+anonymous_target_not_found: "❌ Error: recipient not found."
+anonymous_type_blocked: "🚫 This user doesn't want to receive <b>{type}</b> messages."
+anonymous_flood_wait: "⏳ Message delayed due to Telegram restrictions."
+anonymous_target_blocked_bot: "❌ Connection terminated: recipient blocked the bot."
+anonymous_invalid_peer: "❌ Connection terminated: invalid recipient ID."
+anonymous_error: "❌ Error sending message."
+anonymous_sent: "✅ Message sent to <b>{nickname}</b>"
+anonymous_switched: "Your connection switched from <b>{old_nickname}</b> to <b>{new_nickname}</b>."
+anonymous_caption: |
+  {original}
+  –– <b>{nickname}</b>
+anonymous_no_connection_info: "ℹ️ User <b>{nickname}</b> is currently not in chat. Replying to this message will establish a connection with them."
+anonymous_switch_info: "ℹ️ To reply to <b>{sender_nickname}</b>, please reply to their message. You will be switched to a chat with <b>{sender_nickname}</b> and disconnected from <b>{current_nickname}</b>."
+block_no_user: "❌ Register first using /start."
+block_active_connection: "⚠️ The /block command cannot be used during an active connection. Connection terminated."
+block_no_args: "❌ Specify a token (e.g., /block Xx7Ly5bke) or reply to a message to block."
+block_invalid_token: "❌ Token <code>{token}</code> not found."
+block_self: "⚠️ You cannot block yourself."
+block_already_blocked: "⚠️ User <code>{nickname}</code> is already blocked."
+block_success: "🔒 User <code>{nickname}</code> blocked. Connection terminated."
+block_no_nickname: "❌ Unable to identify nickname for blocking."
+block_nickname_not_found: "❌ User with this nickname not found."
+unblock_no_user: "❌ Register first using /start."
+unblock_active_connection: "⚠️ The /unblock command cannot be used during an active connection."
+unblock_no_args: "❌ Specify a nickname or token to unblock (e.g., /unblock AnonymousUser or /unblock Xx7Ly5bke). Use /blocked to see the list."
+unblock_not_blocked: "❌ User <code>{identifier}</code> is not blocked."
+unblock_success: "✅ User <code>{identifier}</code> unblocked."
+report_no_user: "❌ Register first using /start."
+report_no_nickname: "❌ Unable to identify sender's nickname for reporting."
+report_success: "✅ Your report has been sent to moderation."
+report_message: "⚠️ Report on message\nFrom: {user_id}\nTo: {reported_id}\nAnonymous: {nickname}\nMessage type: {type}\nMessage ID: {message_id}"
+inactivity_disconnect: "❌ Connection with <b>{nickname}</b> terminated due to inactivity (5 minutes without messages)."
+ban_no_user: "❌ Register first using /start."
+ban_not_owner: "❌ This command is only available to the bot owner."
+ban_no_args: "❌ Specify a user ID to ban (e.g., /ban 123456789)."
+ban_invalid_user: "❌ User with ID <code>{user_id}</code> not found."
+ban_already_banned: "⚠️ User with ID <code>{user_id}</code> is already banned."
+ban_success: "🚫 User with ID <code>{user_id}</code> banned."
+unban_no_user: "❌ Register first using /start."
+unban_not_owner: "❌ This command is only available to the bot owner."
+unban_no_args: "❌ Specify a user ID to unban (e.g., /unban 123456789)."
+unban_not_banned: "❌ User with ID <code>{user_id}</code> is not banned."
+unban_success: "✅ User with ID <code>{user_id}</code> unbanned."
+banned: "❄️ Your account is frozen due to violating the bot's Terms of Service."
+start_frozen: "❄️ This user's account is frozen due to violating the bot's Terms of Service."
+start_connection_failed_frozen: "Connection failed with user <b>{nickname}</b>\nReason: The user is frozen due to violating the bot's Terms of Service."
+lang_no_user: "❌ Register first using /start."
+lang_no_args: "❌ Specify a language code (e.g., /lang ru or /lang en)."
+lang_invalid: "❌ Invalid language code. Available languages: {languages}"
+lang_success: "✅ Language changed to {language}."
+anonymous_unsupported_type: "❌ This media type is not supported by the bot."
+disconnect_by_partner: "ℹ️ <b>{nickname}</b> has disconnected from you."
