@@ -39,10 +39,12 @@ async def can_connect(client: Client, user_id: int, target_id: int, check_busy: 
     if store.is_banned(target_id):
         return False, "banned"
 
-    if store.is_blocked(str(target_id), user['nickname']):
+    # Check if target blocked sender (by user_id to prevent revoke bypass)
+    if store.is_blocked_by_user_id(str(target_id), user_id):
         return False, "blocked"
 
-    if store.is_blocked(str(user_id), target['nickname']):
+    # Check if sender blocked target (self_blocked means "you blocked them")
+    if store.is_blocked_by_user_id(str(user_id), target_id):
         return False, "self_blocked"
 
     try:

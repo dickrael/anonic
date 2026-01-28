@@ -12,7 +12,7 @@ class Config:
     api_id: int
     api_hash: str
     bot_token: str
-    moderation_chat_id: str
+    moderation_chat_id: int
     owner_id: int
     data_file: str
 
@@ -47,15 +47,16 @@ def load_config() -> Config:
     try:
         api_id = int(api_id_str)
         owner_id = int(owner_id_str)
+        moderation_chat_id_int = int(moderation_chat_id)
     except ValueError:
-        sys.stderr.write("API_ID and OWNER_ID must be integers.\n")
+        sys.stderr.write("API_ID, OWNER_ID and MODERATION_CHAT_ID must be integers.\n")
         sys.exit(1)
 
     return Config(
         api_id=api_id,
         api_hash=api_hash,
         bot_token=bot_token,
-        moderation_chat_id=moderation_chat_id,
+        moderation_chat_id=moderation_chat_id_int,
         owner_id=owner_id,
         data_file=data_file,
     )

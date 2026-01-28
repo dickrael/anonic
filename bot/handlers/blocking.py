@@ -100,9 +100,9 @@ def register_blocking_handlers(app: Client) -> None:
             await message.reply(await gstr("block_self", message), parse_mode=ParseMode.HTML)
             return
 
-        # Check if already blocked
-        if store.is_blocked(recipient, sender_nickname):
-            logger.info(f"User {uid} tried to block already blocked: {sender_nickname}")
+        # Check if already blocked by user_id
+        if store.is_blocked_by_user_id(recipient, target_id):
+            logger.info(f"User {uid} tried to block already blocked user: {target_id}")
             await message.reply(
                 (await gstr("block_already_blocked", message)).format(nickname=sender_nickname),
                 parse_mode=ParseMode.HTML
@@ -114,19 +114,19 @@ def register_blocking_handlers(app: Client) -> None:
         if pending_target_id and pending_target_id == target_id:
             await store.clear_pending_target(uid)
 
-        # Block the user
+        # Block the user by user_id
         try:
             await client.get_chat(target_id)
-            await store.block(recipient, sender_nickname, target_data['token'])
-            logger.info(f"User {uid} blocked {sender_nickname} (token: {target_data['token']})")
+            await store.block(recipient, target_id, sender_nickname)
+            logger.info(f"User {uid} blocked {sender_nickname} (user_id: {target_id})")
             await message.reply(
                 (await gstr("block_success", message)).format(nickname=sender_nickname),
                 parse_mode=ParseMode.HTML
             )
         except InputUserDeactivated:
             # Still block them even if deactivated
-            await store.block(recipient, sender_nickname, target_data['token'])
-            logger.info(f"User {uid} blocked deactivated user {sender_nickname}")
+            await store.block(recipient, target_id, sender_nickname)
+            logger.info(f"User {uid} blocked deactivated user {sender_nickname} (user_id: {target_id})")
             await message.reply(
                 (await gstr("block_success", message)).format(nickname=sender_nickname),
                 parse_mode=ParseMode.HTML

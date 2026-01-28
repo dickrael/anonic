@@ -245,28 +245,39 @@ class JSONStore:
 
     # ----- Block Management -----
 
-    async def block(self, recipient_id: str, nickname: str, token: str) -> None:
-        """Block a user by nickname."""
+    async def block(self, recipient_id: str, blocked_user_id: int, nickname: str) -> None:
+        """Block a user by user_id. Nickname stored for display only."""
         async with self._lock:
             blocks = self._data['blocks'].setdefault(recipient_id, [])
-            if not any(block["nickname"] == nickname for block in blocks):
-                blocks.append({"nickname": nickname, "token": token})
+            # Check if already blocked by user_id
+            if not any(block.get("user_id") == str(blocked_user_id) for block in blocks):
+                blocks.append({
+                    "user_id": str(blocked_user_id),
+                    "nickname": nickname  # For display, may change after revoke
+                })
                 await self._save()
 
     async def unblock(self, recipient_id: str, identifier: str) -> bool:
-        """Unblock a user by token or nickname."""
+        """Unblock a user by user_id or nickname."""
         async with self._lock:
             if recipient_id not in self._data['blocks']:
                 return False
             for block in self._data['blocks'][recipient_id][:]:
-                if block["token"] == identifier or identifier.lower() in block["nickname"].lower():
+                # Match by user_id or nickname (case insensitive)
+                if block.get("user_id") == identifier or identifier.lower() in block["nickname"].lower():
                     self._data['blocks'][recipient_id].remove(block)
                     await self._save()
                     return True
             return False
 
+    def is_blocked_by_user_id(self, recipient_id: str, blocked_user_id: int) -> bool:
+        """Check if a user_id is blocked by recipient."""
+        if recipient_id not in self._data['blocks']:
+            return False
+        return any(block.get("user_id") == str(blocked_user_id) for block in self._data['blocks'][recipient_id])
+
     def is_blocked(self, recipient_id: str, nickname: str) -> bool:
-        """Check if a nickname is blocked by recipient."""
+        """Check if a nickname is blocked by recipient (legacy, for display)."""
         if recipient_id not in self._data['blocks']:
             return False
         return any(block["nickname"] == nickname for block in self._data['blocks'][recipient_id])
@@ -276,16 +287,16 @@ class JSONStore:
         if recipient_id not in self._data['blocks']:
             return []
         return [
-            f"<code>{block['nickname']}</code> - <code>{block['token']}</code>"
+            f"<code>{block['nickname']}</code> ({block.get('user_id', 'N/A')})"
             for block in self._data['blocks'][recipient_id]
         ]
 
     def is_user_blocked(self, recipient_id: str, identifier: str) -> bool:
-        """Check if identifier (token or nickname) is blocked."""
+        """Check if identifier (user_id or nickname) is blocked."""
         if recipient_id not in self._data['blocks']:
             return False
         return any(
-            block["token"] == identifier or identifier.lower() in block["nickname"].lower()
+            block.get("user_id") == identifier or identifier.lower() in block["nickname"].lower()
             for block in self._data['blocks'][recipient_id]
         )
 
