@@ -382,25 +382,43 @@ def register_messaging_handlers(app: Client) -> None:
 
         # ===== ROUTING LOGIC =====
         #
-        # 1. Reply to message → lookup original sender from message tracking
-        # 2. Pending target (from deep link) → use once, then clear
-        # 3. No route → reject
-        #
-        # EVERYONE must reply after the first message!
+        # Sender (has pending target via deep link): Can send freely
+        # Receiver (no pending target): MUST reply to answer
         #
 
         target_id = None
         target = None
-        used_pending_target = False
+        is_reply_routing = False
 
-        # Priority 1: Reply to a tracked message
-        if message.reply_to_message:
+        # Priority 1: User has pending target (sender - connected via deep link)
+        pending_target_id = store.get_pending_target(uid)
+        if pending_target_id:
+            target_id = pending_target_id
+            target = store.get_user(target_id)
+            logger.info(f"Session routing: {uid} -> {target_id}")
+
+        # Priority 2: Reply to a tracked message (receiver must reply)
+        elif message.reply_to_message:
             reply_msg_id = message.reply_to_message.id
             original_sender_id = store.get_message_sender(reply_msg_id)
 
             if original_sender_id:
                 target_id = original_sender_id
                 target = store.get_user(target_id)
+                is_reply_routing = True
+
+                # If user had a pending target (was connected to someone), switch to new target
+                old_pending = store.get_pending_target(uid)
+                if old_pending and old_pending != target_id:
+                    old_target = store.get_user(old_pending)
+                    old_nickname = old_target['nickname'] if old_target else "user"
+                    await store.set_pending_target(uid, target_id)
+                    logger.info(f"User {uid} switched from {old_pending} to {target_id} via reply")
+                elif not old_pending:
+                    # Set new pending target for the replying user
+                    await store.set_pending_target(uid, target_id)
+                    logger.info(f"User {uid} now connected to {target_id} via reply")
+
                 logger.info(f"Reply routing: {uid} -> {target_id} (via message {reply_msg_id})")
             else:
                 # Reply to unknown/expired message - reject
@@ -411,22 +429,14 @@ def register_messaging_handlers(app: Client) -> None:
                 )
                 return
 
-        # Priority 2: Pending target from deep link (one-time use)
+        # Priority 3: No route - receiver must reply
         else:
-            pending_target_id = store.get_pending_target(uid)
-            if pending_target_id:
-                target_id = pending_target_id
-                target = store.get_user(target_id)
-                used_pending_target = True
-                logger.info(f"Pending target routing: {uid} -> {target_id} (first message)")
-            else:
-                # No pending target, no reply - cannot route
-                logger.warning(f"User {uid} sent message without reply or pending target")
-                await message.reply(
-                    await gstr("anonymous_no_connection", message),
-                    parse_mode=ParseMode.HTML
-                )
-                return
+            logger.warning(f"User {uid} sent message without session or reply")
+            await message.reply(
+                await gstr("anonymous_no_connection", message),
+                parse_mode=ParseMode.HTML
+            )
+            return
 
         # Validate target exists
         if not target_id or not target:
@@ -530,6 +540,16 @@ def register_messaging_handlers(app: Client) -> None:
                 nickname=user['nickname']
             )
 
+            # Add reply instruction for receiver
+            # Check if target has a pending target (connected to someone)
+            target_pending = store.get_pending_target(target_id)
+            if target_pending and target_pending != uid:
+                # Target is connected to someone else - warn about disconnection
+                caption += "\n\n" + (await gstr("anonymous_reply_warning", message))
+            else:
+                # Normal reply instruction
+                caption += "\n\n" + (await gstr("anonymous_reply_instruction", message))
+
             # Send message to target
             sent_msg = await send_message_to_target(client, target_id, message, primary_type, caption)
 
@@ -537,11 +557,6 @@ def register_messaging_handlers(app: Client) -> None:
             if sent_msg:
                 await store.store_message(sent_msg.id, uid, target_id)
                 logger.debug(f"Stored message {sent_msg.id} for reply routing: {uid} -> {target_id}")
-
-            # Clear pending target after first message (one-time use)
-            if used_pending_target:
-                await store.clear_pending_target(uid)
-                logger.info(f"Cleared pending target for {uid} after first message")
 
             logger.info(f"Message '{primary_type}' sent from {user['nickname']} ({uid}) to {target_id}")
 

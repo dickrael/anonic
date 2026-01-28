@@ -116,3 +116,5 @@ start_busy: "⏳ <b>{nickname}</b> is currently in another conversation. Try aga
 start_frozen: "❄️ Connection failed with <b>{nickname}</b>: account is frozen."
 anonymous_busy: "⏳ <b>{nickname}</b> is currently in another conversation."
 anonymous_frozen: "❄️ Connection terminated: user account is frozen."
+anonymous_reply_instruction: "—— <i>Reply to this message in order to answer</i>"
+anonymous_reply_warning: "—— <i>Reply to this message in order to answer. You will be disconnected from your current conversation.</i>"
