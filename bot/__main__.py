@@ -4,6 +4,7 @@ import asyncio
 import logging
 
 from pyrogram import idle
+from pyrogram.types import BotCommand
 
 from .config import config
 from .client import create_client, get_client
@@ -12,6 +13,21 @@ from .strings import strings
 from .utils import load_nicknames
 from .scheduler import start_scheduler, stop_scheduler
 from .handlers import register_all_handlers
+
+
+# Bot commands for the Telegram menu
+BOT_COMMANDS = [
+    BotCommand("start", "Get your anonymous link"),
+    BotCommand("disconnect", "End current conversation"),
+    BotCommand("block", "Block a user"),
+    BotCommand("unblock", "Unblock a user"),
+    BotCommand("blocked", "List blocked users"),
+    BotCommand("lock", "Block message types"),
+    BotCommand("unlock", "Unblock message types"),
+    BotCommand("locktypes", "Show message type settings"),
+    BotCommand("report", "Report a message"),
+    BotCommand("lang", "Change language"),
+]
 
 # Configure logging
 logging.basicConfig(
@@ -47,6 +63,10 @@ async def init_bot() -> None:
                 f"Bot '{bot_info.first_name}' (ID: {bot_info.id}) started"
                 + (f" after {attempt} attempts" if attempt > 1 else "")
             )
+
+            # Set bot commands menu
+            await app.set_bot_commands(BOT_COMMANDS)
+            logger.info("Bot commands menu set")
 
             # Start scheduler
             start_scheduler(app, store, strings.strings)

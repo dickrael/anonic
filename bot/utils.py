@@ -46,26 +46,36 @@ def generate_nickname() -> str:
 def extract_nickname_from_message(text: str) -> Optional[str]:
     """Extract sender nickname from message text.
 
-    Handles two formats:
-    1. '✅ ... <b>Nickname</b>' - confirmation format
-    2. '... –– <b>Nickname</b>' - message caption format
+    Handles formats:
+    1. '✅ Message sent to <b>Nickname</b>' - sent confirmation
+    2. '✅ Connection established with <b>Nickname</b>' - connection confirmation
+    3. '... –– <b>Nickname</b>' - message caption format
     """
     if not text:
         return None
 
-    sender_nickname = None
+    # Clean HTML tags for easier parsing
+    clean_text = text.replace('<b>', '').replace('</b>', '').replace('<code>', '').replace('</code>', '')
 
-    if text.startswith("✅"):
-        lines_parts = text.split('\n')
-        for line in lines_parts:
-            if line.startswith("✅"):
-                parts = line.split(" ")
-                if len(parts) >= 4:
-                    sender_nickname = " ".join(parts[3:]).replace('<b>', '').replace('</b>', '')
-                    break
-    elif '–– ' in text:
-        sender_nickname_block = text.split('–– ')[-1]
-        sender_nickname_line = sender_nickname_block.split('\n')[0].strip()
-        sender_nickname = sender_nickname_line.replace('<b>', '').replace('</b>', '')
+    # Format: "✅ Message sent to Nickname"
+    if 'sent to ' in clean_text:
+        after_sent = clean_text.split('sent to ')[-1]
+        nickname = after_sent.split('\n')[0].strip()
+        if nickname:
+            return nickname
 
-    return sender_nickname.strip() if sender_nickname else None
+    # Format: "✅ Connection established with Nickname"
+    if 'established with ' in clean_text:
+        after_with = clean_text.split('established with ')[-1]
+        nickname = after_with.split('.')[0].split('\n')[0].strip()
+        if nickname:
+            return nickname
+
+    # Format: "text\n–– Nickname"
+    if '–– ' in clean_text:
+        after_dash = clean_text.split('–– ')[-1]
+        nickname = after_dash.split('\n')[0].strip()
+        if nickname:
+            return nickname
+
+    return None
