@@ -142,6 +142,7 @@ class JSONStore:
             user['revoke_history'].append({
                 'old_token': user['token'],
                 'old_nickname': user['nickname'],
+                'registered_at': user.get('registered_at'),
                 'revoked_at': datetime.now(timezone.utc).isoformat()
             })
 
