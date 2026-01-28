@@ -116,7 +116,7 @@ def register_moderation_handlers(app: Client) -> None:
             parse_mode=ParseMode.HTML
         )
 
-    @app.on_message(filters.command("report") & filters.reply & filters.private)
+    @app.on_message(filters.command("report") & filters.private)
     async def report_cmd(client: Client, message: Message):
         store = get_store()
         uid = message.from_user.id
@@ -131,16 +131,32 @@ def register_moderation_handlers(app: Client) -> None:
             await message.reply(await gstr("report_no_user", message), parse_mode=ParseMode.HTML)
             return
 
-        replied_message = message.reply_to_message
-        lines = replied_message.caption or replied_message.text or ""
-
-        sender_nickname = extract_nickname_from_message(lines)
-        if not sender_nickname:
-            logger.warning(f"User {uid} tried to report but couldn't extract nickname")
-            await message.reply(await gstr("report_no_nickname", message), parse_mode=ParseMode.HTML)
+        # Must reply to a message to report
+        if not message.reply_to_message:
+            await message.reply(await gstr("report_no_reply", message), parse_mode=ParseMode.HTML)
             return
 
-        reported_id = store.find_user_by_nickname(sender_nickname)
+        replied_message = message.reply_to_message
+        reply_msg_id = replied_message.id
+
+        # Try to get sender from message tracking first
+        reported_id = store.get_message_sender(reply_msg_id)
+        sender_nickname = None
+
+        if reported_id:
+            reported_user = store.get_user(reported_id)
+            sender_nickname = reported_user['nickname'] if reported_user else None
+        else:
+            # Fallback to nickname extraction
+            lines = replied_message.caption or replied_message.text or ""
+            sender_nickname = extract_nickname_from_message(lines)
+            if sender_nickname:
+                reported_id = store.find_user_by_nickname(sender_nickname)
+
+        if not sender_nickname:
+            logger.warning(f"User {uid} tried to report but couldn't identify sender")
+            await message.reply(await gstr("report_no_nickname", message), parse_mode=ParseMode.HTML)
+            return
 
         try:
             forwarded_message = await replied_message.forward(config.moderation_chat_id)

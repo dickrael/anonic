@@ -540,14 +540,16 @@ def register_messaging_handlers(app: Client) -> None:
                 nickname=user['nickname']
             )
 
-            # Add reply instruction for receiver
-            # Check if target has a pending target (connected to someone)
+            # Add reply instruction ONLY if target has no active session with sender
             target_pending = store.get_pending_target(target_id)
-            if target_pending and target_pending != uid:
+            if target_pending == uid:
+                # Target is already connected to sender - no instruction needed
+                pass
+            elif target_pending:
                 # Target is connected to someone else - warn about disconnection
                 caption += "\n\n" + (await gstr("anonymous_reply_warning", message))
             else:
-                # Normal reply instruction
+                # Target has no session - show reply instruction
                 caption += "\n\n" + (await gstr("anonymous_reply_instruction", message))
 
             # Send message to target
