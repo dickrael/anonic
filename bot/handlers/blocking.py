@@ -237,7 +237,6 @@ def register_blocking_handlers(app: Client) -> None:
 
             await callback.message.delete()
             await callback.answer(
-                (await gstr("unblockall_success", callback)).format(count=count),
-                show_alert=True
+                (await gstr("unblockall_success", callback)).format(count=count)
             )
             logger.info(f"User {uid} unblocked all: {count} users")

@@ -12,12 +12,17 @@ logger = logging.getLogger(__name__)
 
 
 def generate_special_code(user_id: int) -> str:
-    """Generate a short special code tied to user_id. Format: 7 chars alphanumeric."""
+    """Generate a UID special code tied to user_id. Format: 8 chars alphanumeric."""
+    import string
     # Create deterministic hash from user_id
-    hash_input = f"anonic_{user_id}_special"
-    hash_bytes = hashlib.sha256(hash_input.encode()).hexdigest()
-    # Take first 7 characters, mix of letters and numbers
-    return hash_bytes[:7]
+    hash_input = f"anonic_{user_id}_uid"
+    hash_bytes = hashlib.sha256(hash_input.encode()).digest()
+    # Convert to alphanumeric (letters + numbers)
+    chars = string.ascii_lowercase + string.digits
+    result = ""
+    for i in range(8):
+        result += chars[hash_bytes[i] % len(chars)]
+    return result
 
 
 class JSONStore:
@@ -46,7 +51,7 @@ class JSONStore:
         "contact", "venue", "successful_payment"
     ]
     # Default allowed types for new users
-    DEFAULT_ALLOWED = ["text", "photo", "video", "voice", "document", "emoji"]
+    DEFAULT_ALLOWED = ["text", "emoji", "emojionly", "emojicustom", "voice", "audio", "cyrillic"]
 
     def __init__(self, path: str):
         self.path = path

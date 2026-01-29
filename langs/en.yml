@@ -70,7 +70,7 @@ block_no_nickname: "❌ Unable to identify user."
 block_nickname_not_found: "❌ User not found."
 unblock_no_user: "❌ Register first using /start."
 unblock_active_connection: "⚠️ Cannot use /unblock during active connection."
-unblock_no_args: "❌ Specify nickname or code to unblock. Use /blocked to see the list."
+unblock_no_args: "❌ Specify nickname or code to unblock.\nUse /blocked to see the list or /unblockall to unblock everyone."
 unblock_not_blocked: "❌ <code>{identifier}</code> is not blocked."
 unblock_success: "✅ <code>{identifier}</code> unblocked."
 unblockall_confirm: "⚠️ <b>Unblock all {count} users?</b>"
@@ -136,3 +136,26 @@ revoke_success: |
   <code>https://t.me/{bot_username}?start={token}</code>
 
   👤 New nickname: <b>{nickname}</b>
+help_message: |
+  👋 <b>Anonymous Messaging Bot</b>
+
+  Share your link to receive anonymous messages. Reply to answer.
+
+  <b>Commands:</b>
+  /start - Get your anonymous link
+  /help - Show this help
+  /disconnect - End current chat
+  /block - Block sender (reply to message)
+  /unblock - Unblock user by code
+  /unblockall - Unblock all users
+  /blocked - View blocked users
+  /locktypes - Message type settings
+  /revoke - Get new identity (weekly)
+  /report - Report message (reply)
+  /lang - Change language
+
+  <b>How it works:</b>
+  1. Share your link with someone
+  2. They send you a message
+  3. Reply to their message to respond
+  4. Use /disconnect to end the chat

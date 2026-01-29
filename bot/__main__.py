@@ -18,13 +18,15 @@ from .handlers import register_all_handlers
 # Bot commands for the Telegram menu
 BOT_COMMANDS = [
     BotCommand("start", "Get your anonymous link"),
-    BotCommand("disconnect", "End current conversation"),
-    BotCommand("block", "Block a user"),
-    BotCommand("unblock", "Unblock a user"),
-    BotCommand("blocked", "List blocked users"),
+    BotCommand("help", "How to use the bot"),
+    BotCommand("disconnect", "End current chat"),
+    BotCommand("block", "Block sender (reply)"),
+    BotCommand("unblock", "Unblock by code"),
+    BotCommand("unblockall", "Unblock all users"),
+    BotCommand("blocked", "View blocked users"),
     BotCommand("revoke", "Get new identity"),
     BotCommand("locktypes", "Message type settings"),
-    BotCommand("report", "Report a message"),
+    BotCommand("report", "Report message (reply)"),
     BotCommand("lang", "Change language"),
 ]
 

@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 # Commands to exclude from message handling
 EXCLUDED_COMMANDS = [
-    "start", "disconnect", "locktypes", "blocked", "block",
+    "start", "help", "disconnect", "locktypes", "blocked", "block",
     "unblock", "unblockall", "report", "ban", "unban", "lang", "revoke"
 ]
 

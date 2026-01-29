@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 # Items per page for pagination
 ITEMS_PER_PAGE = 8
 
+# Track auto-delete tasks by message_id to allow resetting on interaction
+_auto_delete_tasks: Dict[int, asyncio.Task] = {}
+
 # Type descriptions for info buttons
 TYPE_INFO: Dict[str, str] = {
     "all": "Toggle all message types at once",
@@ -141,13 +144,34 @@ def build_locktypes_keyboard(user_id: int, page: int = 0) -> InlineKeyboardMarku
     return InlineKeyboardMarkup(buttons)
 
 
-async def auto_delete_message(message: Message, delay: int = 60):
+async def auto_delete_after(message: Message, delay: int = 60):
     """Delete message after delay."""
     await asyncio.sleep(delay)
     try:
         await message.delete()
+        # Clean up task reference
+        if message.id in _auto_delete_tasks:
+            del _auto_delete_tasks[message.id]
     except Exception:
-        pass  # Message might already be deleted
+        pass
+
+
+def schedule_auto_delete(message: Message, delay: int = 60):
+    """Schedule auto-delete, cancelling any existing task for this message."""
+    msg_id = message.id
+
+    # Cancel existing task if any
+    if msg_id in _auto_delete_tasks:
+        _auto_delete_tasks[msg_id].cancel()
+
+    # Create new task
+    task = asyncio.create_task(auto_delete_after(message, delay))
+    _auto_delete_tasks[msg_id] = task
+
+
+def reset_auto_delete(message: Message, delay: int = 60):
+    """Reset auto-delete timer on user interaction."""
+    schedule_auto_delete(message, delay)
 
 
 def register_lock_handlers(app: Client) -> None:
@@ -174,14 +198,13 @@ def register_lock_handlers(app: Client) -> None:
         keyboard = build_locktypes_keyboard(uid, 0)
         sent_msg = await message.reply(
             "📋 <b>Message Type Settings</b>\n\n"
-            "Click type name for info, toggle button to enable/disable.\n"
-            "<i>Auto-closes in 60 seconds</i>",
+            "Click type name for info, toggle button to enable/disable.",
             reply_markup=keyboard,
             parse_mode=ParseMode.HTML
         )
 
-        # Schedule auto-delete
-        asyncio.create_task(auto_delete_message(sent_msg, 60))
+        # Schedule auto-delete (resets on each interaction)
+        schedule_auto_delete(sent_msg, 60)
         logger.info(f"User {uid} opened locktypes menu")
 
     @app.on_callback_query(filters.regex(r"^lt:"))
@@ -197,6 +220,10 @@ def register_lock_handlers(app: Client) -> None:
 
         parts = data.split(":")
         action = parts[1]
+
+        # Reset auto-delete timer on any interaction (except close)
+        if action != "c" and callback.message:
+            reset_auto_delete(callback.message, 60)
 
         # Toggle type
         if action == "t" and len(parts) > 2:
@@ -215,11 +242,7 @@ def register_lock_handlers(app: Client) -> None:
             if callback.message.reply_markup:
                 for row in callback.message.reply_markup.inline_keyboard:
                     for btn in row:
-                        if btn.callback_data and btn.callback_data.startswith("lt:p:"):
-                            # This is a nav button, extract nearby page info
-                            pass
                         if btn.callback_data == "lt:noop":
-                            # Page indicator like "2/5"
                             try:
                                 current_page = int(btn.text.split("/")[0]) - 1
                             except:
@@ -247,7 +270,6 @@ def register_lock_handlers(app: Client) -> None:
         elif action == "ua":
             await store.unlock_type(str(uid), "all")
             await callback.answer("✅ All types unlocked")
-            # Stay on current page
             current_page = 0
             if callback.message.reply_markup:
                 for row in callback.message.reply_markup.inline_keyboard:
@@ -278,8 +300,12 @@ def register_lock_handlers(app: Client) -> None:
 
         # Close
         elif action == "c":
+            # Cancel auto-delete task
+            if callback.message.id in _auto_delete_tasks:
+                _auto_delete_tasks[callback.message.id].cancel()
+                del _auto_delete_tasks[callback.message.id]
             await callback.message.delete()
-            await callback.answer("Closed")
+            await callback.answer()
 
         # No-op (page indicator)
         elif action == "noop":

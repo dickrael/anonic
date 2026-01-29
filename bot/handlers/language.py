@@ -129,8 +129,7 @@ def register_language_handlers(app: Client) -> None:
             logger.info(f"User {uid} changed language to {lang}")
             await callback.message.delete()
             await callback.answer(
-                (await gstr("lang_changed", callback)).format(language=LANG_NAMES.get(lang, lang)),
-                show_alert=True
+                (await gstr("lang_changed", callback)).format(language=LANG_NAMES.get(lang, lang))
             )
         else:
             await callback.answer("Failed to change language", show_alert=True)
