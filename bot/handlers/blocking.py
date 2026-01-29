@@ -1,9 +1,10 @@
 """Block/unblock user handlers."""
 
+import asyncio
 import logging
 
 from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ParseMode
 from pyrogram.errors import InputUserDeactivated
 
@@ -12,6 +13,15 @@ from ..strings import gstr
 from ..utils import extract_nickname_from_message
 
 logger = logging.getLogger(__name__)
+
+
+async def auto_delete_message(message: Message, delay: int = 60):
+    """Delete message after delay."""
+    await asyncio.sleep(delay)
+    try:
+        await message.delete()
+    except Exception:
+        pass
 
 
 def register_blocking_handlers(app: Client) -> None:
@@ -40,7 +50,7 @@ def register_blocking_handlers(app: Client) -> None:
             await message.reply(await gstr("blocked_none", message), parse_mode=ParseMode.HTML)
         else:
             await message.reply(
-                (await gstr("blocked_list", message)).format(users=', '.join(blocked_users)),
+                (await gstr("blocked_list", message)).format(users='\n'.join(blocked_users)),
                 parse_mode=ParseMode.HTML
             )
         logger.info(f"User {uid} requested blocked list: {len(blocked_users)} users")
@@ -155,6 +165,7 @@ def register_blocking_handlers(app: Client) -> None:
         identifier = args[0]
         recipient = str(uid)
 
+        # Check if user is blocked before trying to unblock
         if not store.is_user_blocked(recipient, identifier):
             logger.warning(f"Identifier {identifier} not blocked by {uid}")
             await message.reply(
@@ -169,3 +180,64 @@ def register_blocking_handlers(app: Client) -> None:
             (await gstr("unblock_success", message)).format(identifier=identifier),
             parse_mode=ParseMode.HTML
         )
+
+    @app.on_message(filters.command("unblockall") & filters.private)
+    async def unblockall_cmd(client: Client, message: Message):
+        store = get_store()
+        uid = message.from_user.id
+
+        if store.is_banned(uid):
+            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
+            return
+
+        user = store.get_user(uid)
+        if not user:
+            logger.warning(f"Unregistered user {uid} tried /unblockall")
+            await message.reply(await gstr("unblock_no_user", message), parse_mode=ParseMode.HTML)
+            return
+
+        # Check if there are any blocked users
+        blocked_count = store.get_blocked_count(str(uid))
+        if blocked_count == 0:
+            await message.reply(await gstr("blocked_none", message), parse_mode=ParseMode.HTML)
+            return
+
+        # Show confirmation with count
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton("✅", callback_data="unblockall:confirm"),
+                InlineKeyboardButton("❌", callback_data="unblockall:cancel"),
+            ]
+        ])
+
+        sent_msg = await message.reply(
+            (await gstr("unblockall_confirm", message)).format(count=blocked_count),
+            reply_markup=keyboard,
+            parse_mode=ParseMode.HTML
+        )
+
+        # Auto-delete after 60 seconds
+        asyncio.create_task(auto_delete_message(sent_msg, 60))
+        logger.info(f"User {uid} requested unblockall confirmation ({blocked_count} users)")
+
+    @app.on_callback_query(filters.regex(r"^unblockall:"))
+    async def unblockall_callback(client: Client, callback: CallbackQuery):
+        store = get_store()
+        uid = callback.from_user.id
+        action = callback.data.split(":")[1]
+
+        if action == "cancel":
+            await callback.message.delete()
+            await callback.answer()
+            return
+
+        if action == "confirm":
+            recipient = str(uid)
+            count = await store.unblock_all(recipient)
+
+            await callback.message.delete()
+            await callback.answer(
+                (await gstr("unblockall_success", callback)).format(count=count),
+                show_alert=True
+            )
+            logger.info(f"User {uid} unblocked all: {count} users")

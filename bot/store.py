@@ -1,6 +1,7 @@
 """Thread-safe JSON data store with asyncio locking."""
 
 import asyncio
+import hashlib
 import json
 import logging
 import os
@@ -8,6 +9,15 @@ from datetime import datetime, timezone, timedelta
 from typing import Dict, Any, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
+
+
+def generate_special_code(user_id: int) -> str:
+    """Generate a short special code tied to user_id. Format: 7 chars alphanumeric."""
+    # Create deterministic hash from user_id
+    hash_input = f"anonic_{user_id}_special"
+    hash_bytes = hashlib.sha256(hash_input.encode()).hexdigest()
+    # Take first 7 characters, mix of letters and numbers
+    return hash_bytes[:7]
 
 
 class JSONStore:
@@ -92,9 +102,11 @@ class JSONStore:
     ) -> None:
         """Add a new user to the store."""
         async with self._lock:
+            special_code = generate_special_code(telegram_id)
             self._data['users'][str(telegram_id)] = {
                 "token": token,
                 "nickname": nickname,
+                "special_code": special_code,
                 "registered_at": datetime.now(timezone.utc).isoformat(),
                 "allowed_types": self.DEFAULT_ALLOWED.copy(),
                 "last_activity": datetime.now(timezone.utc).isoformat(),
@@ -196,6 +208,24 @@ class JSONStore:
                 return int(user_id)
         return None
 
+    def find_user_by_special_code(self, special_code: str) -> Optional[int]:
+        """Find user ID by special code."""
+        for user_id, u in self._data['users'].items():
+            if u.get('special_code') == special_code:
+                return int(user_id)
+        return None
+
+    def get_user_special_code(self, telegram_id: int) -> str:
+        """Get or generate special code for user. Auto-generates if missing."""
+        user = self._data['users'].get(str(telegram_id))
+        if not user:
+            return ""
+        if 'special_code' not in user or not user['special_code']:
+            # Generate and store for existing users without special_code
+            user['special_code'] = generate_special_code(telegram_id)
+            self._save_sync()  # Sync save for read operation
+        return user['special_code']
+
     # ----- Ban Management -----
 
     async def ban_user(self, telegram_id: int, duration: Optional[timedelta] = None) -> bool:
@@ -246,29 +276,42 @@ class JSONStore:
     # ----- Block Management -----
 
     async def block(self, recipient_id: str, blocked_user_id: int, nickname: str) -> None:
-        """Block a user by user_id. Nickname stored for display only."""
+        """Block a user by user_id. Nickname and special_code stored for display."""
         async with self._lock:
             blocks = self._data['blocks'].setdefault(recipient_id, [])
             # Check if already blocked by user_id
             if not any(block.get("user_id") == str(blocked_user_id) for block in blocks):
+                special_code = self.get_user_special_code(blocked_user_id)
                 blocks.append({
                     "user_id": str(blocked_user_id),
-                    "nickname": nickname  # For display, may change after revoke
+                    "nickname": nickname,
+                    "special_code": special_code
                 })
                 await self._save()
 
     async def unblock(self, recipient_id: str, identifier: str) -> bool:
-        """Unblock a user by user_id or nickname."""
+        """Unblock a user by special_code or nickname."""
         async with self._lock:
             if recipient_id not in self._data['blocks']:
                 return False
             for block in self._data['blocks'][recipient_id][:]:
-                # Match by user_id or nickname (case insensitive)
-                if block.get("user_id") == identifier or identifier.lower() in block["nickname"].lower():
+                # Match by special_code (exact) or nickname (case insensitive)
+                if (block.get("special_code") == identifier or
+                    identifier.lower() in block["nickname"].lower()):
                     self._data['blocks'][recipient_id].remove(block)
                     await self._save()
                     return True
             return False
+
+    async def unblock_all(self, recipient_id: str) -> int:
+        """Unblock all users. Returns count of unblocked users."""
+        async with self._lock:
+            if recipient_id not in self._data['blocks']:
+                return 0
+            count = len(self._data['blocks'][recipient_id])
+            self._data['blocks'][recipient_id] = []
+            await self._save()
+            return count
 
     def is_blocked_by_user_id(self, recipient_id: str, blocked_user_id: int) -> bool:
         """Check if a user_id is blocked by recipient."""
@@ -283,20 +326,26 @@ class JSONStore:
         return any(block["nickname"] == nickname for block in self._data['blocks'][recipient_id])
 
     def get_blocked_users(self, recipient_id: str) -> List[str]:
-        """Get list of blocked users for display (nickname only, no user_id)."""
+        """Get list of blocked users for display: {nickname} {special_code}."""
         if recipient_id not in self._data['blocks']:
             return []
         return [
-            f"<code>{block['nickname']}</code>"
+            f"<b>{block['nickname']}</b> <code>{block.get('special_code', 'N/A')}</code>"
             for block in self._data['blocks'][recipient_id]
         ]
 
+    def get_blocked_count(self, recipient_id: str) -> int:
+        """Get count of blocked users."""
+        if recipient_id not in self._data['blocks']:
+            return 0
+        return len(self._data['blocks'][recipient_id])
+
     def is_user_blocked(self, recipient_id: str, identifier: str) -> bool:
-        """Check if identifier (user_id or nickname) is blocked."""
+        """Check if identifier (special_code or nickname) is blocked."""
         if recipient_id not in self._data['blocks']:
             return False
         return any(
-            block.get("user_id") == identifier or identifier.lower() in block["nickname"].lower()
+            block.get("special_code") == identifier or identifier.lower() in block["nickname"].lower()
             for block in self._data['blocks'][recipient_id]
         )
 

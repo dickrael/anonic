@@ -1,128 +1,138 @@
 start_no_token: |
-  🔗 Share this link to start receiving anonymous messages👇:
-  
+  🔗 Share this link to receive anonymous messages:
+
   <code>https://t.me/{bot_username}?start={token}</code>
-  
+
   👤 Your nickname: <b>{nickname}</b>
 start_self_connect: |
   ⚠️ <b>You cannot connect with yourself!</b>
-  🔗 Share this link to start receiving anonymous messages👇:
-  
+  🔗 Share this link to receive anonymous messages:
+
   <code>https://t.me/{bot_username}?start={token}</code>
-  
+
   👤 Your nickname: <b>{nickname}</b>
-start_blocked: "❌ Unable to establish connection: you are either blocked by the user or the user has blocked the bot."
+start_blocked: "❌ Unable to establish connection: you are blocked by this user."
 start_invalid_token: "❌ Invalid or expired link."
-start_connection_established: "✅ Connection established with <b>{nickname}</b>.
-ℹ️ If you want to end this connection, use the <code>/disconnect</code> command."
+start_connection_established: |
+  ✅ Connection established with <b>{nickname}</b>.
+  ℹ️ Use /disconnect to end this connection.
 start_connection_switched: "ℹ️ Your previous connection with <b>{old_nickname}</b> has been terminated."
 disconnect_no_user: "❌ Register first using /start."
 disconnect_no_connection: "❌ You have no active connection."
 disconnect_success: "✅ Connection with <b>{nickname}</b> terminated."
-locktypes_active_connection: "⚠️ The /locktypes command cannot be used during an active connection."
+locktypes_active_connection: "⚠️ Cannot use /locktypes during active connection."
 locktypes_response: |
-  📋 Available message types for blocking/unblocking:
+  📋 Message types:
   {types_list}
   {blocked_types}
   {unblocked_types}
-lock_active_connection: "⚠️ The <code>/lock</code> command cannot be used during an active connection.<br>
-Please end the current session using the <code>/disconnect</code> command first, then try again."
-lock_no_args: "❌ Specify message types to block (e.g., /lock -all -gif -poll)."
-lock_success: "🔒 Blocked types: <b>{types}</b>"
-lock_invalid_types: "⚠️ Ignored invalid/text types: <b>{types}</b>"
-unlock_active_connection: "⚠️ You can't use <code>/unlock</code> while connected.<br>
-Use <code>/disconnect</code> first, then try again."
-unlock_no_args: "❌ Specify message types to unblock (e.g., /unlock -all -gif -poll)."
-unlock_success: "🔓 Unblocked types: <b>{types}</b>"
-unlock_invalid_types: "⚠️ Ignored invalid/text types: <b>{types}</b>"
-blocked_active_connection: "⚠️ The /blocked command cannot be used during an active connection. Connection terminated."
-start_self_blocked: "🔒 You have blocked <code>{nickname}</code>. Unblock them to connect."
-blocked_none: "✅ You have no blocked users."
-blocked_list: "🚫 Blocked users:\n<b>{users}</b>"
+lock_active_connection: "⚠️ Cannot use /lock during active connection."
+lock_no_args: "❌ Specify types to block (e.g., /lock -all -gif -poll)."
+lock_success: "🔒 Blocked: <b>{types}</b>"
+lock_invalid_types: "⚠️ Ignored invalid types: <b>{types}</b>"
+unlock_active_connection: "⚠️ Cannot use /unlock during active connection."
+unlock_no_args: "❌ Specify types to unblock (e.g., /unlock -all -gif -poll)."
+unlock_success: "🔓 Unblocked: <b>{types}</b>"
+unlock_invalid_types: "⚠️ Ignored invalid types: <b>{types}</b>"
+blocked_active_connection: "⚠️ Cannot use /blocked during active connection."
+start_self_blocked: "🔒 You have blocked <b>{nickname}</b>. Unblock them to connect."
+blocked_none: "✅ No blocked users."
+blocked_list: |
+  🚫 <b>Blocked users:</b>
+  {users}
+
+  ℹ️ Use /unblock <code>code</code> to unblock
 anonymous_no_user: "❌ Register first using /start."
-anonymous_no_connection: "❌ Use your deep link to start or reply to a message."
-anonymous_reply_not_found: "❌ Error: sender not found."
-anonymous_blocked: "❌ Unable to send message: you are either blocked by the user or the user has blocked the bot."
-anonymous_target_not_found: "❌ Error: recipient not found."
-anonymous_type_blocked: "🚫 This user doesn't want to receive <b>{type}</b> messages."
-anonymous_flood_wait: "⏳ Message delayed due to Telegram restrictions."
-anonymous_target_blocked_bot: "❌ Connection terminated: recipient blocked the bot."
-anonymous_invalid_peer: "❌ Connection terminated: invalid recipient ID."
+anonymous_no_connection: "❌ Use your link to connect or reply to a message."
+anonymous_reply_not_found: "❌ Sender not found."
+anonymous_blocked: "❌ You are blocked by this user."
+anonymous_target_not_found: "❌ Recipient not found."
+anonymous_type_blocked: "🚫 This user doesn't accept <b>{type}</b> messages."
+anonymous_flood_wait: "⏳ Please wait, message delayed."
+anonymous_target_blocked_bot: "❌ Recipient blocked the bot."
+anonymous_invalid_peer: "❌ Invalid recipient."
 anonymous_error: "❌ Error sending message."
-anonymous_sent: "✅ Message sent to <b>{nickname}</b>"
-anonymous_switched: "Your connection switched from <b>{old_nickname}</b> to <b>{new_nickname}</b>."
+anonymous_sent: "✅ Sent to <b>{nickname}</b>"
+anonymous_switched: "Switched from <b>{old_nickname}</b> to <b>{new_nickname}</b>."
 anonymous_caption: |
   <blockquote>{original}</blockquote>
   ———
   ✨ from <b>{nickname}</b>
-anonymous_no_connection_info: "ℹ️ User <b>{nickname}</b> is currently not in chat. Replying to this message will establish a connection with them."
-anonymous_switch_info: "ℹ️ To reply to <b>{sender_nickname}</b>, please reply to their message. You will be switched to a chat with <b>{sender_nickname}</b> and disconnected from <b>{current_nickname}</b>."
+anonymous_no_connection_info: "ℹ️ <b>{nickname}</b> is not in chat. Reply to connect."
+anonymous_switch_info: "ℹ️ Reply to switch to <b>{sender_nickname}</b> (disconnects from <b>{current_nickname}</b>)."
 block_no_user: "❌ Register first using /start."
-block_active_connection: "⚠️ The /block command cannot be used during an active connection. Connection terminated."
-block_no_args: "❌ Specify a token (e.g., /block Xx7Ly5bke) or reply to a message to block."
-block_invalid_token: "❌ Token <code>{token}</code> not found."
+block_active_connection: "⚠️ Cannot use /block during active connection."
+block_no_reply: "❌ Reply to a message to block the sender."
 block_self: "⚠️ You cannot block yourself."
-block_already_blocked: "⚠️ User <code>{nickname}</code> is already blocked."
-block_success: "🔒 User <code>{nickname}</code> blocked. Connection terminated."
-block_no_nickname: "❌ Unable to identify nickname for blocking."
-block_nickname_not_found: "❌ User with this nickname not found."
+block_already_blocked: "⚠️ <b>{nickname}</b> is already blocked."
+block_success: "🔒 <b>{nickname}</b> blocked."
+block_no_nickname: "❌ Unable to identify user."
+block_nickname_not_found: "❌ User not found."
 unblock_no_user: "❌ Register first using /start."
-unblock_active_connection: "⚠️ The /unblock command cannot be used during an active connection."
-unblock_no_args: "❌ Specify a nickname or token to unblock (e.g., /unblock AnonymousUser or /unblock Xx7Ly5bke). Use /blocked to see the list."
-unblock_not_blocked: "❌ User <code>{identifier}</code> is not blocked."
-unblock_success: "✅ User <code>{identifier}</code> unblocked."
+unblock_active_connection: "⚠️ Cannot use /unblock during active connection."
+unblock_no_args: "❌ Specify nickname or code to unblock. Use /blocked to see the list."
+unblock_not_blocked: "❌ <code>{identifier}</code> is not blocked."
+unblock_success: "✅ <code>{identifier}</code> unblocked."
+unblockall_confirm: "⚠️ <b>Unblock all {count} users?</b>"
+unblockall_success: "✅ Unblocked {count} users."
 report_no_user: "❌ Register first using /start."
 report_no_reply: "❌ Reply to a message to report it."
-report_no_nickname: "❌ Unable to identify sender for reporting."
-report_success: "✅ Your report has been sent to moderation."
-report_message: "⚠️ Report on message\nFrom: {user_id}\nTo: {reported_id}\nAnonymous: {nickname}\nMessage type: {type}\nMessage ID: {message_id}"
-inactivity_disconnect: "❌ Connection with <b>{nickname}</b> terminated due to inactivity (5 minutes without messages)."
+report_no_nickname: "❌ Unable to identify sender."
+report_success: "✅ Report sent to moderation."
+report_message: |
+  🚨 <b>Report</b>
+
+  <b>From:</b> {reporter_nickname} <code>{reporter_code}</code>
+  <b>About:</b> {reported_nickname} <code>{reported_code}</code>
+  <b>Type:</b> {type}
+  <b>Msg ID:</b> <code>{message_id}</code>
+inactivity_disconnect: "❌ Disconnected from <b>{nickname}</b> (5 min inactive)."
 ban_no_user: "❌ Register first using /start."
-ban_not_owner: "❌ This command is only available to the bot owner."
-ban_no_args: "❌ Specify a user ID to ban (e.g., /ban 123456789)."
-ban_invalid_user: "❌ User with ID <code>{user_id}</code> not found."
-ban_already_banned: "⚠️ User with ID <code>{user_id}</code> is already banned."
-ban_success: "🚫 User with ID <code>{user_id}</code> banned."
+ban_not_owner: "❌ Owner only."
+ban_no_args: "❌ Specify user ID (e.g., /ban 123456789)."
+ban_invalid_user: "❌ User <code>{user_id}</code> not found."
+ban_already_banned: "⚠️ User <code>{user_id}</code> already banned."
+ban_success: "🚫 User <code>{user_id}</code> banned."
 unban_no_user: "❌ Register first using /start."
-unban_not_owner: "❌ This command is only available to the bot owner."
-unban_no_args: "❌ Specify a user ID to unban (e.g., /unban 123456789)."
-unban_not_banned: "❌ User with ID <code>{user_id}</code> is not banned."
-unban_success: "✅ User with ID <code>{user_id}</code> unbanned."
-banned: "❄️ Your account is frozen due to violating the bot's Terms of Service."
-start_connection_failed_frozen: "❄️ Connection failed with <b>{nickname}</b>: account is frozen."
+unban_not_owner: "❌ Owner only."
+unban_no_args: "❌ Specify user ID (e.g., /unban 123456789)."
+unban_not_banned: "❌ User <code>{user_id}</code> is not banned."
+unban_success: "✅ User <code>{user_id}</code> unbanned."
+banned: "❄️ Your account is frozen."
+start_connection_failed_frozen: "❄️ <b>{nickname}</b> is frozen."
 lang_no_user: "❌ Register first using /start."
-lang_no_args: "❌ Specify a language code (e.g., /lang ru or /lang en)."
-lang_invalid: "❌ Invalid language code. Available languages: {languages}"
-lang_success: "✅ Language changed to {language}."
-anonymous_unsupported_type: "❌ This media type is not supported by the bot."
-disconnect_by_partner: "ℹ️ <b>{nickname}</b> has disconnected from you."
-start_deactivated: "❌ Connection failed with <b>{nickname}</b>: account deactivated."
+lang_select: "🌐 <b>Select language:</b>"
+lang_already: "ℹ️ Already using {language}."
+lang_changed: "✅ Language changed to {language}."
+lang_invalid: "❌ Invalid language. Available: {languages}"
+lang_success: "✅ Language: {language}"
+anonymous_unsupported_type: "❌ Unsupported media type."
+disconnect_by_partner: "ℹ️ <b>{nickname}</b> disconnected."
+start_deactivated: "❌ <b>{nickname}</b> account deactivated."
 locktypes_no_user: "❌ Register first using /start."
-locktypes_blocked: "Blocked: {types}"
-locktypes_unblocked: "Allowed: {types}"
+locktypes_blocked: "🔒 {types}"
+locktypes_unblocked: "🔓 {types}"
 lock_no_user: "❌ Register first using /start."
 unlock_no_user: "❌ Register first using /start."
 blocked_no_user: "❌ Register first using /start."
-block_deactivated: "⚠️ User <b>{nickname}</b> account is deactivated."
-report_deactivated: "❌ Failed to send report: moderation chat unavailable."
+block_deactivated: "⚠️ <b>{nickname}</b> account deactivated."
+report_deactivated: "❌ Moderation unavailable."
 spam_report: |
   🚨 <b>Spam Detected</b>
-  User ID: <code>{user_id}</code>
-  Nickname: {nickname}
-  Target ID: <code>{target_id}</code>
-  Target: {target_nickname}
-  Messages in 1 minute: {message_count}
-spam_banned: "🚫 You have been banned for {duration} for spamming."
+
+  <b>Spammer:</b> {nickname}
+  <b>Target:</b> {target_nickname}
+  <b>Messages/min:</b> {message_count}
+spam_banned: "🚫 Banned for {duration} (spam)."
 anonymous_reply_instruction: "💬 <i>Reply to answer</i>"
-anonymous_reply_warning: "⚠️ <i>Reply to answer (you'll be disconnected from current chat)</i>"
-block_no_reply: "❌ Reply to a message to block the sender."
+anonymous_reply_warning: "⚠️ <i>Reply to answer (disconnects current chat)</i>"
 revoke_no_user: "❌ Register first using /start."
-revoke_wait: "⏳ You can revoke again in <b>{days}</b> days."
-revoke_confirm: "⚠️ <b>Are you sure you want to revoke your identity?</b>\n\nThis will generate a new link and nickname. Your old link will stop working."
+revoke_wait: "⏳ Wait <b>{days}</b> days to revoke again."
+revoke_confirm: "⚠️ <b>Revoke identity?</b>\n\nYou'll get a new link and nickname. Old link stops working."
 revoke_success: |
   ✅ <b>Identity revoked!</b>
 
-  🔗 Your new link:
+  🔗 New link:
   <code>https://t.me/{bot_username}?start={token}</code>
 
   👤 New nickname: <b>{nickname}</b>

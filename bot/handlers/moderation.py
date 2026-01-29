@@ -158,12 +158,22 @@ def register_moderation_handlers(app: Client) -> None:
             await message.reply(await gstr("report_no_nickname", message), parse_mode=ParseMode.HTML)
             return
 
+        # Get special_code for reported user
+        reported_special_code = ""
+        if reported_id:
+            reported_special_code = store.get_user_special_code(reported_id)
+
+        # Get reporter's info
+        reporter_nickname = user['nickname']
+        reporter_special_code = store.get_user_special_code(uid)
+
         try:
             forwarded_message = await replied_message.forward(config.moderation_chat_id)
             report_text = (await gstr("report_message", message)).format(
-                user_id=uid,
-                nickname=sender_nickname,
-                reported_id=reported_id if reported_id is not None else "Unknown",
+                reporter_nickname=reporter_nickname,
+                reporter_code=reporter_special_code,
+                reported_nickname=sender_nickname,
+                reported_code=reported_special_code or "N/A",
                 type=replied_message.media or 'text',
                 message_id=forwarded_message.id
             )
@@ -173,8 +183,8 @@ def register_moderation_handlers(app: Client) -> None:
                 parse_mode=ParseMode.HTML
             )
             logger.info(
-                f"Report from {uid} about {sender_nickname} (ID: {reported_id}), "
-                f"message ID: {forwarded_message.id}"
+                f"Report from {reporter_nickname} ({reporter_special_code}) about "
+                f"{sender_nickname} ({reported_special_code}), message ID: {forwarded_message.id}"
             )
             await message.reply(await gstr("report_success", message), parse_mode=ParseMode.HTML)
         except InputUserDeactivated:

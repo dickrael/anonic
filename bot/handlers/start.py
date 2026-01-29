@@ -9,7 +9,7 @@ from pyrogram.enums import ParseMode
 from pyrogram.errors import UserIsBlocked, InputUserDeactivated
 
 from ..store import get_store
-from ..strings import gstr
+from ..strings import gstr, strings
 from ..utils import generate_token, generate_nickname
 from .common import can_connect
 
@@ -44,16 +44,26 @@ def register_start_handlers(app: Client) -> None:
         if not user_data:
             token = generate_token()
             nickname = generate_nickname()
+
+            # Auto-detect language from user's Telegram settings
+            user_lang = user.language_code or "en"
+            available_langs = strings.get_available_languages()
+            # Check if user's language is available, otherwise default to "en"
+            if user_lang not in available_langs:
+                # Try base language (e.g., "ru" from "ru-RU")
+                base_lang = user_lang.split('-')[0] if '-' in user_lang else user_lang
+                user_lang = base_lang if base_lang in available_langs else "en"
+
             await store.add_user(
                 telegram_id=uid,
                 token=token,
                 nickname=nickname,
-                language_code=user.language_code,
+                language_code=user_lang,
                 username=user.username,
                 first_name=user.first_name,
                 last_name=user.last_name
             )
-            logger.info(f"New user registered - ID: {uid}, Nickname: {nickname}")
+            logger.info(f"New user registered - ID: {uid}, Nickname: {nickname}, Lang: {user_lang}")
             user_data = store.get_user(uid)
 
         args = message.text.split()
