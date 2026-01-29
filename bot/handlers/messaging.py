@@ -35,7 +35,8 @@ logger = logging.getLogger(__name__)
 # Commands to exclude from message handling
 EXCLUDED_COMMANDS = [
     "start", "help", "disconnect", "locktypes", "blocked", "block",
-    "unblock", "unblockall", "report", "ban", "unban", "lang", "revoke"
+    "unblock", "unblockall", "report", "ban", "unban", "lang", "revoke",
+    "security", "stats", "adminstats", "temp_link", "activelinks"
 ]
 
 # Zalgo detection pattern (combining characters)
@@ -202,20 +203,24 @@ async def send_message_to_target(
     target_id: int,
     message: Message,
     msg_type: str,
-    caption: str
+    caption: str,
+    protect_content: bool = False
 ) -> Message:
     """Send message to target user based on type. Returns the sent message."""
     sent_msg = None
 
     if msg_type in ("text", "link"):
-        sent_msg = await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+        sent_msg = await client.send_message(
+            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+        )
 
     elif msg_type == "audio":
         sent_msg = await client.send_audio(
             target_id,
             message.audio.file_id,
             caption=caption,
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.HTML,
+            protect_content=protect_content
         )
 
     elif msg_type == "photo":
@@ -223,7 +228,8 @@ async def send_message_to_target(
             target_id,
             message.photo[-1].file_id,
             caption=caption,
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.HTML,
+            protect_content=protect_content
         )
 
     elif msg_type == "document":
@@ -231,67 +237,89 @@ async def send_message_to_target(
             target_id,
             message.document.file_id,
             caption=caption,
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.HTML,
+            protect_content=protect_content
         )
 
     elif msg_type == "forward":
-        await message.forward(target_id)
-        sent_msg = await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+        await message.forward(target_id, protect_content=protect_content)
+        sent_msg = await client.send_message(
+            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+        )
 
     elif msg_type == "gif":
         sent_msg = await client.send_animation(
             target_id,
             message.animation.file_id,
             caption=caption,
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.HTML,
+            protect_content=protect_content
         )
 
     elif msg_type == "location":
         await client.send_location(
             target_id,
             message.location.latitude,
-            message.location.longitude
+            message.location.longitude,
+            protect_content=protect_content
         )
-        sent_msg = await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+        sent_msg = await client.send_message(
+            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+        )
 
     elif msg_type == "poll":
         await client.send_poll(
             target_id,
             message.poll.question,
-            [option.text for option in message.poll.options]
+            [option.text for option in message.poll.options],
+            protect_content=protect_content
         )
-        sent_msg = await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+        sent_msg = await client.send_message(
+            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+        )
 
     elif msg_type == "video":
         sent_msg = await client.send_video(
             target_id,
             message.video.file_id,
             caption=caption,
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.HTML,
+            protect_content=protect_content
         )
 
     elif msg_type == "videonote":
-        await client.send_video_note(target_id, message.video_note.file_id)
-        sent_msg = await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+        await client.send_video_note(
+            target_id, message.video_note.file_id, protect_content=protect_content
+        )
+        sent_msg = await client.send_message(
+            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+        )
 
     elif msg_type == "voice":
         sent_msg = await client.send_voice(
             target_id,
             message.voice.file_id,
             caption=caption,
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.HTML,
+            protect_content=protect_content
         )
 
     elif msg_type == "sticker":
-        await client.send_sticker(target_id, message.sticker.file_id)
-        sent_msg = await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+        await client.send_sticker(target_id, message.sticker.file_id, protect_content=protect_content)
+        sent_msg = await client.send_message(
+            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+        )
 
     elif msg_type == "emojigame":
-        await client.send_dice(target_id, emoji=message.dice.emoji)
-        sent_msg = await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+        await client.send_dice(target_id, emoji=message.dice.emoji, protect_content=protect_content)
+        sent_msg = await client.send_message(
+            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+        )
 
     elif msg_type == "game":
-        sent_msg = await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+        sent_msg = await client.send_message(
+            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+        )
 
     else:
         # Fallback
@@ -300,24 +328,29 @@ async def send_message_to_target(
                 target_id,
                 message.photo[-1].file_id,
                 caption=caption,
-                parse_mode=ParseMode.HTML
+                parse_mode=ParseMode.HTML,
+                protect_content=protect_content
             )
         elif message.video:
             sent_msg = await client.send_video(
                 target_id,
                 message.video.file_id,
                 caption=caption,
-                parse_mode=ParseMode.HTML
+                parse_mode=ParseMode.HTML,
+                protect_content=protect_content
             )
         elif message.document:
             sent_msg = await client.send_document(
                 target_id,
                 message.document.file_id,
                 caption=caption,
-                parse_mode=ParseMode.HTML
+                parse_mode=ParseMode.HTML,
+                protect_content=protect_content
             )
         else:
-            sent_msg = await client.send_message(target_id, caption, parse_mode=ParseMode.HTML)
+            sent_msg = await client.send_message(
+                target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+            )
 
     return sent_msg
 
@@ -558,13 +591,23 @@ def register_messaging_handlers(app: Client) -> None:
                 # Target has no session - show reply instruction
                 caption += "\n" + (await gstr("anonymous_reply_instruction", message))
 
+            # Get sender's protect_content setting
+            sender_protect_content = store.get_protect_content(uid)
+
             # Send message to target
-            sent_msg = await send_message_to_target(client, target_id, message, primary_type, caption)
+            sent_msg = await send_message_to_target(
+                client, target_id, message, primary_type, caption,
+                protect_content=sender_protect_content
+            )
 
             # Store message for reply routing (so target can reply back)
             if sent_msg:
                 await store.store_message(sent_msg.id, uid, target_id)
                 logger.debug(f"Stored message {sent_msg.id} for reply routing: {uid} -> {target_id}")
+
+            # Update message stats
+            await store.increment_messages_sent(uid)
+            await store.increment_messages_received(target_id)
 
             logger.info(f"Message '{primary_type}' sent from {user['nickname']} ({uid}) to {target_id}")
 

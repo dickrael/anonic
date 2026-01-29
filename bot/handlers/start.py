@@ -69,7 +69,17 @@ def register_start_handlers(app: Client) -> None:
         args = message.text.split()
         if len(args) == 2:
             token = args[1]
+
+            # First try regular token
             target_id, target_data = store.get_by_token(token)
+
+            # If not found, try temp link
+            if not target_data:
+                target_id, target_data = store.get_user_by_temp_link(token)
+                if target_data:
+                    # Increment temp link usage
+                    await store.use_temp_link(token)
+                    logger.info(f"User {uid} connected via temp link: {token[:8]}...")
 
             if target_data:
                 if uid == target_id:

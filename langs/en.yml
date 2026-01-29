@@ -144,14 +144,18 @@ help_message: |
   <b>Commands:</b>
   /start - Get your anonymous link
   /help - Show this help
+  /stats - Your statistics
   /disconnect - End current chat
-  /block - Block sender (reply to message)
-  /unblock - Unblock user by code
+  /block - Block sender (reply)
+  /unblock - Unblock by code
   /unblockall - Unblock all users
-  /blocked - View blocked users
+  /blocked - View blocked
+  /security - Message protection
+  /temp_link - Create temp link
+  /activelinks - Manage temp links
   /locktypes - Message type settings
-  /revoke - Get new identity (weekly)
-  /report - Report message (reply)
+  /revoke - New identity (weekly)
+  /report - Report (reply)
   /lang - Change language
 
   <b>How it works:</b>
@@ -159,3 +163,73 @@ help_message: |
   2. They send you a message
   3. Reply to their message to respond
   4. Use /disconnect to end the chat
+security_no_user: "❌ Register first using /start."
+security_info: |
+  🔒 <b>Message Protection</b>
+
+  Status: {status}
+
+  When enabled, your messages cannot be forwarded or saved by recipients.
+
+  <i>Protects text, photos, videos, and other media you send.</i>
+security_enabled: "✅ Protection enabled"
+security_disabled: "❌ Protection disabled"
+stats_no_user: "❌ Register first using /start."
+stats_message: |
+  📊 <b>Your Statistics</b>
+
+  📤 Sent: <b>{messages_sent}</b>
+  📥 Received: <b>{messages_received}</b>
+  💬 Total: <b>{total_messages}</b>
+
+  🚫 Blocked: <b>{blocked_count}</b>
+  🔄 Revokes: <b>{revoke_count}</b>
+  🔗 Temp links: <b>{temp_links_count}</b>
+
+  🔒 Protection: {protect_content}
+  📅 Registered: {registered_at}
+  ⏱️ Last active: {last_activity}
+admin_stats_message: |
+  👑 <b>Admin Statistics</b>
+
+  👥 Total users: <b>{total_users}</b>
+  🟢 Active (24h): <b>{active_24h}</b>
+  🔵 Active (7d): <b>{active_7d}</b>
+  💬 Total messages: <b>{total_messages}</b>
+  🚫 Banned: <b>{total_banned}</b>
+  🔗 Temp links: <b>{temp_links_count}</b>
+temp_link_no_user: "❌ Register first using /start."
+temp_link_menu: |
+  🔗 <b>Create Temporary Link</b>
+
+  Choose link settings:
+temp_link_expiry_menu: |
+  ⏱️ <b>Set Expiration</b>
+
+  Select when the link expires:
+temp_link_uses_menu: |
+  🔢 <b>Set Usage Limit</b>
+
+  Select max number of uses:
+temp_link_created: |
+  ✅ <b>Temporary link created!</b>
+
+  🔗 <code>{link}</code>
+
+  {info}
+
+  Use /activelinks to manage your links.
+temp_link_created_alert: "✅ Link created!"
+temp_link_deleted_alert: "🗑️ Link deleted"
+active_links_none: "ℹ️ No active temporary links. Use /temp_link to create one."
+active_links_list: |
+  🔗 <b>Active Links ({count})</b>
+
+  Click to view details, 🗑️ to delete:
+active_link_view: |
+  🔗 <b>Temporary Link</b>
+
+  <code>{link}</code>
+
+  📊 {info}
+  👁️ Used: <b>{uses}</b> times

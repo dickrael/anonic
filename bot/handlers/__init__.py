@@ -8,6 +8,9 @@ from .lock_types import register_lock_handlers
 from .moderation import register_moderation_handlers
 from .language import register_language_handlers
 from .help import register_help_handlers
+from .security import register_security_handlers
+from .stats import register_stats_handlers
+from .temp_links import register_temp_links_handlers
 
 
 def register_all_handlers(app) -> None:
@@ -15,6 +18,9 @@ def register_all_handlers(app) -> None:
     register_start_handlers(app)
     register_disconnect_handlers(app)
     register_help_handlers(app)
+    register_security_handlers(app)
+    register_stats_handlers(app)
+    register_temp_links_handlers(app)
     register_messaging_handlers(app)
     register_blocking_handlers(app)
     register_lock_handlers(app)

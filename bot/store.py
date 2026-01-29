@@ -76,6 +76,8 @@ class JSONStore:
                 self._data["pending_targets"] = {}
             if "messages" not in self._data:
                 self._data["messages"] = {}
+            if "temp_links" not in self._data:
+                self._data["temp_links"] = {}
             self._save_sync()
 
     def _load_sync(self) -> None:
@@ -123,7 +125,10 @@ class JSONStore:
                 "banned": False,
                 "ban_expires_at": None,
                 "message_timestamps": {},
-                "last_revoke": None
+                "last_revoke": None,
+                "protect_content": False,
+                "messages_sent": 0,
+                "messages_received": 0
             }
             await self._save()
 
@@ -230,6 +235,92 @@ class JSONStore:
             user['special_code'] = generate_special_code(telegram_id)
             self._save_sync()  # Sync save for read operation
         return user['special_code']
+
+    # ----- Security Settings -----
+
+    async def set_protect_content(self, telegram_id: int, enabled: bool) -> bool:
+        """Set protect_content setting for user."""
+        async with self._lock:
+            user = self._data['users'].get(str(telegram_id))
+            if user:
+                user['protect_content'] = enabled
+                await self._save()
+                return True
+            return False
+
+    def get_protect_content(self, telegram_id: int) -> bool:
+        """Get user's protect_content setting."""
+        user = self.get_user(telegram_id)
+        return user.get('protect_content', False) if user else False
+
+    # ----- Message Stats -----
+
+    async def increment_messages_sent(self, telegram_id: int) -> None:
+        """Increment messages sent counter."""
+        async with self._lock:
+            user = self._data['users'].get(str(telegram_id))
+            if user:
+                user['messages_sent'] = user.get('messages_sent', 0) + 1
+                user['last_activity'] = datetime.now(timezone.utc).isoformat()
+                await self._save()
+
+    async def increment_messages_received(self, telegram_id: int) -> None:
+        """Increment messages received counter."""
+        async with self._lock:
+            user = self._data['users'].get(str(telegram_id))
+            if user:
+                user['messages_received'] = user.get('messages_received', 0) + 1
+                user['last_activity'] = datetime.now(timezone.utc).isoformat()
+                await self._save()
+
+    def get_user_stats(self, telegram_id: int) -> Dict[str, Any]:
+        """Get user statistics."""
+        user = self.get_user(telegram_id)
+        if not user:
+            return {}
+        return {
+            'messages_sent': user.get('messages_sent', 0),
+            'messages_received': user.get('messages_received', 0),
+            'registered_at': user.get('registered_at'),
+            'last_activity': user.get('last_activity'),
+            'blocked_count': self.get_blocked_count(str(telegram_id)),
+            'revoke_count': user.get('revoke_count', 0),
+            'protect_content': user.get('protect_content', False)
+        }
+
+    # ----- Admin Stats -----
+
+    def get_admin_stats(self) -> Dict[str, Any]:
+        """Get admin statistics for all users."""
+        now = datetime.now(timezone.utc)
+        total_users = len(self._data['users'])
+        active_24h = 0
+        active_7d = 0
+        total_messages = 0
+        total_banned = 0
+
+        for user in self._data['users'].values():
+            total_messages += user.get('messages_sent', 0) + user.get('messages_received', 0)
+            if user.get('banned', False):
+                total_banned += 1
+            try:
+                last_activity = datetime.fromisoformat(user.get('last_activity', ''))
+                hours_since = (now - last_activity).total_seconds() / 3600
+                if hours_since <= 24:
+                    active_24h += 1
+                if hours_since <= 168:  # 7 days
+                    active_7d += 1
+            except (ValueError, TypeError):
+                pass
+
+        return {
+            'total_users': total_users,
+            'active_24h': active_24h,
+            'active_7d': active_7d,
+            'total_messages': total_messages,
+            'total_banned': total_banned,
+            'temp_links_count': len(self._data.get('temp_links', {}))
+        }
 
     # ----- Ban Management -----
 
@@ -557,6 +648,165 @@ class JSONStore:
             if expired:
                 await self._save()
         return len(expired)
+
+    # ----- Temporary Links -----
+
+    def _generate_temp_token(self) -> str:
+        """Generate unique temp link token."""
+        import secrets
+        return secrets.token_urlsafe(12)
+
+    async def create_temp_link(
+        self,
+        user_id: int,
+        expires_days: Optional[int] = None,
+        max_uses: Optional[int] = None
+    ) -> str:
+        """Create a temporary link with optional expiration and usage limit."""
+        async with self._lock:
+            if 'temp_links' not in self._data:
+                self._data['temp_links'] = {}
+
+            token = self._generate_temp_token()
+            now = datetime.now(timezone.utc)
+
+            self._data['temp_links'][token] = {
+                'user_id': str(user_id),
+                'created_at': now.isoformat(),
+                'expires_at': (now + timedelta(days=expires_days)).isoformat() if expires_days else None,
+                'max_uses': max_uses,
+                'current_uses': 0,
+                'active': True
+            }
+            await self._save()
+            return token
+
+    def get_temp_link(self, token: str) -> Optional[Dict[str, Any]]:
+        """Get temp link data by token."""
+        return self._data.get('temp_links', {}).get(token)
+
+    def get_user_by_temp_link(self, token: str) -> Tuple[Optional[int], Optional[Dict[str, Any]]]:
+        """Find user by temp link token. Returns (user_id, user_data) or (None, None)."""
+        link = self.get_temp_link(token)
+        if not link or not link.get('active', True):
+            return None, None
+
+        # Check expiration
+        if link.get('expires_at'):
+            try:
+                expires_at = datetime.fromisoformat(link['expires_at'])
+                if datetime.now(timezone.utc) > expires_at:
+                    return None, None
+            except ValueError:
+                pass
+
+        # Check usage limit
+        if link.get('max_uses') is not None:
+            if link.get('current_uses', 0) >= link['max_uses']:
+                return None, None
+
+        user_id = int(link['user_id'])
+        user = self.get_user(user_id)
+        return user_id, user
+
+    async def use_temp_link(self, token: str) -> bool:
+        """Increment usage counter for temp link."""
+        async with self._lock:
+            link = self._data.get('temp_links', {}).get(token)
+            if link and link.get('active', True):
+                link['current_uses'] = link.get('current_uses', 0) + 1
+                await self._save()
+                return True
+            return False
+
+    async def revoke_temp_link(self, token: str, user_id: int) -> bool:
+        """Revoke a temp link (must be owned by user)."""
+        async with self._lock:
+            link = self._data.get('temp_links', {}).get(token)
+            if link and link.get('user_id') == str(user_id):
+                link['active'] = False
+                await self._save()
+                return True
+            return False
+
+    async def delete_temp_link(self, token: str, user_id: int) -> bool:
+        """Delete a temp link completely (must be owned by user)."""
+        async with self._lock:
+            link = self._data.get('temp_links', {}).get(token)
+            if link and link.get('user_id') == str(user_id):
+                del self._data['temp_links'][token]
+                await self._save()
+                return True
+            return False
+
+    def get_user_temp_links(self, user_id: int) -> List[Dict[str, Any]]:
+        """Get all temp links for a user."""
+        links = []
+        for token, link in self._data.get('temp_links', {}).items():
+            if link.get('user_id') == str(user_id):
+                link_info = {
+                    'token': token,
+                    **link
+                }
+                links.append(link_info)
+        return links
+
+    def get_active_temp_links(self, user_id: int) -> List[Dict[str, Any]]:
+        """Get active (non-expired, not max used) temp links for a user."""
+        links = []
+        now = datetime.now(timezone.utc)
+
+        for token, link in self._data.get('temp_links', {}).items():
+            if link.get('user_id') != str(user_id):
+                continue
+            if not link.get('active', True):
+                continue
+
+            # Check expiration
+            if link.get('expires_at'):
+                try:
+                    expires_at = datetime.fromisoformat(link['expires_at'])
+                    if now > expires_at:
+                        continue
+                except ValueError:
+                    pass
+
+            # Check usage limit
+            if link.get('max_uses') is not None:
+                if link.get('current_uses', 0) >= link['max_uses']:
+                    continue
+
+            link_info = {'token': token, **link}
+            links.append(link_info)
+
+        return links
+
+    async def cleanup_expired_temp_links(self) -> int:
+        """Clean up expired temp links. Returns count deleted."""
+        async with self._lock:
+            now = datetime.now(timezone.utc)
+            to_delete = []
+
+            for token, link in self._data.get('temp_links', {}).items():
+                # Delete if inactive
+                if not link.get('active', True):
+                    to_delete.append(token)
+                    continue
+                # Delete if expired
+                if link.get('expires_at'):
+                    try:
+                        expires_at = datetime.fromisoformat(link['expires_at'])
+                        if now > expires_at:
+                            to_delete.append(token)
+                    except ValueError:
+                        to_delete.append(token)
+
+            for token in to_delete:
+                del self._data['temp_links'][token]
+
+            if to_delete:
+                await self._save()
+            return len(to_delete)
 
 
 # Global store instance - initialized in main
