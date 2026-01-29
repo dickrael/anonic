@@ -14,15 +14,21 @@ from .temp_links import register_temp_links_handlers
 
 
 def register_all_handlers(app) -> None:
-    """Register all handlers with the app."""
+    """Register all handlers with the app.
+
+    Order matters: command handlers MUST be registered before messaging_handlers
+    since messaging is the catch-all handler.
+    """
+    # Command handlers first
     register_start_handlers(app)
     register_disconnect_handlers(app)
     register_help_handlers(app)
     register_security_handlers(app)
     register_stats_handlers(app)
     register_temp_links_handlers(app)
-    register_messaging_handlers(app)
     register_blocking_handlers(app)
     register_lock_handlers(app)
     register_moderation_handlers(app)
     register_language_handlers(app)
+    # Messaging handler LAST (catch-all for anonymous messages)
+    register_messaging_handlers(app)
