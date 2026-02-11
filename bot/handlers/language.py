@@ -5,7 +5,7 @@ import logging
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.enums import ParseMode
+from pyrogram.enums import ParseMode, ButtonStyle
 
 from ..store import get_store
 from ..strings import gstr, strings
@@ -67,9 +67,13 @@ def register_language_handlers(app: Client) -> None:
         for lang_code in available_langs:
             display_name = LANG_NAMES.get(lang_code, lang_code.upper())
             # Mark current language
-            if lang_code == current_lang:
+            is_current = lang_code == current_lang
+            if is_current:
                 display_name = f"✓ {display_name}"
-            row.append(InlineKeyboardButton(display_name, callback_data=f"lang:{lang_code}"))
+            row.append(InlineKeyboardButton(
+                display_name, callback_data=f"lang:{lang_code}",
+                style=ButtonStyle.SUCCESS if is_current else ButtonStyle.PRIMARY,
+            ))
             if len(row) == 2:  # 2 buttons per row
                 buttons.append(row)
                 row = []
@@ -77,7 +81,7 @@ def register_language_handlers(app: Client) -> None:
             buttons.append(row)
 
         # Add cancel button
-        buttons.append([InlineKeyboardButton("❌", callback_data="lang:cancel")])
+        buttons.append([InlineKeyboardButton("❌", callback_data="lang:cancel", style=ButtonStyle.DANGER)])
 
         keyboard = InlineKeyboardMarkup(buttons)
 

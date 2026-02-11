@@ -5,7 +5,7 @@ import logging
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.enums import ParseMode
+from pyrogram.enums import ParseMode, ButtonStyle
 
 from ..store import get_store
 from ..strings import gstr
@@ -46,11 +46,12 @@ def register_security_handlers(app: Client) -> None:
             [
                 InlineKeyboardButton(
                     "🔓 Disable" if current_status else "🔒 Enable",
-                    callback_data=f"security:toggle"
+                    callback_data=f"security:toggle",
+                    style=ButtonStyle.DANGER if current_status else ButtonStyle.SUCCESS,
                 ),
             ],
             [
-                InlineKeyboardButton("❌", callback_data="security:close"),
+                InlineKeyboardButton("❌", callback_data="security:close", style=ButtonStyle.DANGER),
             ]
         ])
 
@@ -91,11 +92,12 @@ def register_security_handlers(app: Client) -> None:
                 [
                     InlineKeyboardButton(
                         "🔓 Disable" if new_status else "🔒 Enable",
-                        callback_data=f"security:toggle"
+                        callback_data=f"security:toggle",
+                        style=ButtonStyle.DANGER if new_status else ButtonStyle.SUCCESS,
                     ),
                 ],
                 [
-                    InlineKeyboardButton("❌", callback_data="security:close"),
+                    InlineKeyboardButton("❌", callback_data="security:close", style=ButtonStyle.DANGER),
                 ]
             ])
 

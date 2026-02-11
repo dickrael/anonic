@@ -5,7 +5,7 @@ import logging
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.enums import ParseMode
+from pyrogram.enums import ParseMode, ButtonStyle
 from pyrogram.errors import UserIsBlocked, InputUserDeactivated
 
 from ..store import get_store
@@ -194,7 +194,7 @@ def register_start_handlers(app: Client) -> None:
 
         keyboard = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("✅ Yes, revoke", callback_data="revoke:confirm"),
+                InlineKeyboardButton("✅ Yes, revoke", callback_data="revoke:confirm", style=ButtonStyle.DANGER),
                 InlineKeyboardButton("❌ Cancel", callback_data="revoke:cancel"),
             ]
         ])

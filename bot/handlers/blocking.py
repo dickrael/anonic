@@ -5,7 +5,7 @@ import logging
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.enums import ParseMode
+from pyrogram.enums import ParseMode, ButtonStyle
 from pyrogram.errors import InputUserDeactivated
 
 from ..store import get_store
@@ -205,8 +205,8 @@ def register_blocking_handlers(app: Client) -> None:
         # Show confirmation with count
         keyboard = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("✅", callback_data="unblockall:confirm"),
-                InlineKeyboardButton("❌", callback_data="unblockall:cancel"),
+                InlineKeyboardButton("✅", callback_data="unblockall:confirm", style=ButtonStyle.SUCCESS),
+                InlineKeyboardButton("❌", callback_data="unblockall:cancel", style=ButtonStyle.DANGER),
             ]
         ])
 
