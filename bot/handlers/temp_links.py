@@ -77,72 +77,55 @@ def format_expiry(link: Dict) -> str:
     return " • ".join(parts)
 
 
-def build_main_menu(expiry_days: int = 0) -> InlineKeyboardMarkup:
-    """Build main temp_link menu, preserving selected expiry."""
-    expiry_label = f"⏱️ Expiration: {expiry_days} days ✅" if expiry_days > 0 else "⏱️ Set Expiration"
-    rows = [
-        [InlineKeyboardButton(expiry_label, callback_data=f"tl:menu:expiry:{expiry_days}")],
-        [InlineKeyboardButton("🔢 Set Usage Limit", callback_data=f"tl:menu:uses:{expiry_days}")],
-    ]
-    if expiry_days > 0:
-        rows.append([InlineKeyboardButton(f"🔗 Create ({expiry_days}d, unlimited uses)", callback_data=f"tl:create:{expiry_days}:0")])
-    rows.append([InlineKeyboardButton("🔗 Create Without Limits", callback_data="tl:create:0:0")])
-    rows.append([InlineKeyboardButton("❌", callback_data="tl:close")])
-    return InlineKeyboardMarkup(rows)
+def build_main_menu(expiry_days: int = 0, max_uses: int = 0) -> InlineKeyboardMarkup:
+    """Build main temp_link menu showing current selections + Create button."""
+    expiry_label = f"⏱️ {expiry_days} days" if expiry_days > 0 else "⏱️ No expiration"
+    uses_label = f"🔢 {max_uses} uses" if max_uses > 0 else "🔢 Unlimited"
+    # Encode both settings: tl:menu:expiry:EXP:USES / tl:menu:uses:EXP:USES
+    s = f"{expiry_days}:{max_uses}"
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton(expiry_label, callback_data=f"tl:menu:expiry:{s}")],
+        [InlineKeyboardButton(uses_label, callback_data=f"tl:menu:uses:{s}")],
+        [InlineKeyboardButton("🔗 Create", callback_data=f"tl:create:{s}")],
+        [InlineKeyboardButton("❌", callback_data="tl:close")],
+    ])
 
 
-def build_expiry_menu(current_expiry: int = 0) -> InlineKeyboardMarkup:
+def build_expiry_menu(expiry_days: int = 0, max_uses: int = 0) -> InlineKeyboardMarkup:
     """Build expiration selection submenu."""
-    def label(days):
-        check = " ✅" if days == current_expiry else ""
-        return f"{days} day{'s' if days > 1 else ''}{check}"
+    s_uses = str(max_uses)
+
+    def btn(days):
+        check = " ✅" if days == expiry_days else ""
+        return InlineKeyboardButton(
+            f"{days} day{'s' if days > 1 else ''}{check}",
+            callback_data=f"tl:expiry:{days}:{s_uses}",
+        )
 
     return InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton(label(1), callback_data="tl:expiry:1"),
-            InlineKeyboardButton(label(3), callback_data="tl:expiry:3"),
-        ],
-        [
-            InlineKeyboardButton(label(7), callback_data="tl:expiry:7"),
-            InlineKeyboardButton(label(30), callback_data="tl:expiry:30"),
-        ],
-        [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:main:{current_expiry}")],
+        [btn(1), btn(3)],
+        [btn(7), btn(30)],
+        [InlineKeyboardButton("♾️ No expiration" + (" ✅" if expiry_days == 0 else ""),
+                              callback_data=f"tl:expiry:0:{s_uses}")],
+        [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:main:{expiry_days}:{s_uses}")],
     ])
 
 
-def build_uses_menu(expiry_days: int = 0) -> InlineKeyboardMarkup:
+def build_uses_menu(expiry_days: int = 0, max_uses: int = 0) -> InlineKeyboardMarkup:
     """Build usage limit selection submenu."""
-    prefix = f"tl:create:{expiry_days}"
-    return InlineKeyboardMarkup([
-        [
-            InlineKeyboardButton("1 use", callback_data=f"{prefix}:1"),
-            InlineKeyboardButton("5 uses", callback_data=f"{prefix}:5"),
-        ],
-        [
-            InlineKeyboardButton("10 uses", callback_data=f"{prefix}:10"),
-            InlineKeyboardButton("50 uses", callback_data=f"{prefix}:50"),
-        ],
-        [
-            InlineKeyboardButton("♾️ Unlimited", callback_data=f"{prefix}:0"),
-        ],
-        [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:main:{expiry_days}")],
-    ])
+    s_exp = str(expiry_days)
 
+    def btn(n):
+        check = " ✅" if n == max_uses else ""
+        label = f"{n} use{'s' if n > 1 else ''}{check}"
+        return InlineKeyboardButton(label, callback_data=f"tl:uses:{s_exp}:{n}")
 
-def build_expiry_then_uses_menu(expiry_days: int) -> InlineKeyboardMarkup:
-    """Build menu to set uses after selecting expiry."""
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton(f"✅ {expiry_days} days expiry selected", callback_data="tl:noop")],
-        [
-            InlineKeyboardButton("1 use", callback_data=f"tl:create:{expiry_days}:1"),
-            InlineKeyboardButton("5 uses", callback_data=f"tl:create:{expiry_days}:5"),
-        ],
-        [
-            InlineKeyboardButton("10 uses", callback_data=f"tl:create:{expiry_days}:10"),
-            InlineKeyboardButton("50 uses", callback_data=f"tl:create:{expiry_days}:50"),
-        ],
-        [InlineKeyboardButton("♾️ Unlimited uses", callback_data=f"tl:create:{expiry_days}:0")],
-        [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:expiry:{expiry_days}")],
+        [btn(1), btn(5)],
+        [btn(10), btn(50)],
+        [InlineKeyboardButton("♾️ Unlimited" + (" ✅" if max_uses == 0 else ""),
+                              callback_data=f"tl:uses:{s_exp}:0")],
+        [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:main:{s_exp}:{max_uses}")],
     ])
 
 
@@ -240,26 +223,29 @@ def register_temp_links_handlers(app: Client) -> None:
         if action not in ["close", "noop"] and callback.message:
             reset_auto_delete(callback.message, 60)
 
+        # Parse saved settings from callback data: tl:action:expiry:uses
+        saved_expiry = int(parts[3]) if len(parts) > 3 else 0
+        saved_uses = int(parts[4]) if len(parts) > 4 else 0
+
         # Main menu navigation
         if action == "menu":
             submenu = parts[2]
-            saved_expiry = int(parts[3]) if len(parts) > 3 else 0
             if submenu == "main":
-                keyboard = build_main_menu(saved_expiry)
+                keyboard = build_main_menu(saved_expiry, saved_uses)
                 await callback.message.edit_text(
                     await gstr("temp_link_menu", callback),
                     reply_markup=keyboard,
                     parse_mode=ParseMode.HTML
                 )
             elif submenu == "expiry":
-                keyboard = build_expiry_menu(saved_expiry)
+                keyboard = build_expiry_menu(saved_expiry, saved_uses)
                 await callback.message.edit_text(
                     await gstr("temp_link_expiry_menu", callback),
                     reply_markup=keyboard,
                     parse_mode=ParseMode.HTML
                 )
             elif submenu == "uses":
-                keyboard = build_uses_menu(saved_expiry)
+                keyboard = build_uses_menu(saved_expiry, saved_uses)
                 await callback.message.edit_text(
                     await gstr("temp_link_uses_menu", callback),
                     reply_markup=keyboard,
@@ -267,20 +253,33 @@ def register_temp_links_handlers(app: Client) -> None:
                 )
             await callback.answer()
 
-        # Select expiry days, then show uses menu or go back to main with selection saved
+        # Select expiry days → back to main with selection saved
         elif action == "expiry":
             expiry_days = int(parts[2])
-            keyboard = build_main_menu(expiry_days)
+            uses = int(parts[3]) if len(parts) > 3 else 0
+            keyboard = build_main_menu(expiry_days, uses)
             await callback.message.edit_text(
                 await gstr("temp_link_menu", callback),
                 reply_markup=keyboard,
                 parse_mode=ParseMode.HTML
             )
-            await callback.answer(f"✅ {expiry_days} day{'s' if expiry_days > 1 else ''} selected")
+            await callback.answer()
 
-        # Create link with settings
+        # Select usage limit → back to main with selection saved
+        elif action == "uses":
+            expiry = int(parts[2]) if len(parts) > 2 else 0
+            max_uses = int(parts[3]) if len(parts) > 3 else 0
+            keyboard = build_main_menu(expiry, max_uses)
+            await callback.message.edit_text(
+                await gstr("temp_link_menu", callback),
+                reply_markup=keyboard,
+                parse_mode=ParseMode.HTML
+            )
+            await callback.answer()
+
+        # Create link with current settings
         elif action == "create":
-            expiry_days = int(parts[2])
+            expiry_days = int(parts[2]) if len(parts) > 2 else 0
             max_uses = int(parts[3]) if len(parts) > 3 else 0
 
             token = await store.create_temp_link(
