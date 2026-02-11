@@ -197,6 +197,12 @@ def get_primary_type(message: Message) -> str:
     return "text"
 
 
+def _has_custom_emoji(message: Message) -> bool:
+    """Check if message contains custom emoji entities."""
+    entities = message.entities or message.caption_entities or []
+    return any(e.type == MessageEntityType.CUSTOM_EMOJI for e in entities)
+
+
 async def send_message_to_target(
     client: Client,
     target_id: int,
@@ -207,6 +213,15 @@ async def send_message_to_target(
 ) -> Message:
     """Send message to target user based on type. Returns the sent message."""
     sent_msg = None
+
+    # Messages with custom emojis: copy original to preserve entities,
+    # then send sender info as a separate message
+    if _has_custom_emoji(message):
+        await message.copy(target_id, protect_content=protect_content)
+        sent_msg = await client.send_message(
+            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+        )
+        return sent_msg
 
     if msg_type in ("text", "link"):
         sent_msg = await client.send_message(
@@ -575,7 +590,13 @@ def register_messaging_handlers(app: Client) -> None:
             original_caption = message.caption or message.text or ""
 
             # Build caption in the RECIPIENT's language
-            if original_caption.strip():
+            has_custom = _has_custom_emoji(message)
+            if has_custom:
+                # Custom emoji: original is sent via copy, so only show sender info
+                caption = (await gstr("anonymous_caption_media", user_id=target_id)).format(
+                    nickname=user['nickname']
+                )
+            elif original_caption.strip():
                 caption = (await gstr("anonymous_caption", user_id=target_id)).format(
                     original=original_caption,
                     nickname=user['nickname']
