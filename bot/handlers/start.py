@@ -193,7 +193,7 @@ def register_start_handlers(app: Client) -> None:
 
         keyboard = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("✅ Yes, revoke", callback_data="revoke:confirm", style=ButtonStyle.DANGER),
+                InlineKeyboardButton("Yes, revoke", callback_data="revoke:confirm", style=ButtonStyle.DANGER, icon_custom_emoji_id=5427009714745517609),
                 InlineKeyboardButton("Cancel", callback_data="revoke:cancel", icon_custom_emoji_id=5985346521103604145),
             ]
         ])

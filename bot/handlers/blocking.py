@@ -208,7 +208,7 @@ def register_blocking_handlers(app: Client) -> None:
         # Show confirmation with count
         keyboard = InlineKeyboardMarkup([
             [
-                InlineKeyboardButton("✅", callback_data="unblockall:confirm", style=ButtonStyle.SUCCESS),
+                InlineKeyboardButton("✅", callback_data="unblockall:confirm", style=ButtonStyle.SUCCESS, icon_custom_emoji_id=5427009714745517609),
                 InlineKeyboardButton("❌", callback_data="unblockall:cancel", style=ButtonStyle.DANGER, icon_custom_emoji_id=5985346521103604145),
             ]
         ])

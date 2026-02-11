@@ -22,12 +22,12 @@ def _ban_allow_buttons(user_id: int) -> InlineKeyboardMarkup:
     """Ban / Allow buttons for a report."""
     return InlineKeyboardMarkup([[
         InlineKeyboardButton(
-            "🚫 Ban", callback_data=f"mod:ban:{user_id}",
-            style=ButtonStyle.DANGER,
+            "Ban", callback_data=f"mod:ban:{user_id}",
+            style=ButtonStyle.DANGER, icon_custom_emoji_id=5240241223632954241,
         ),
         InlineKeyboardButton(
-            "✅ Allow", callback_data=f"mod:allow:{user_id}",
-            style=ButtonStyle.SUCCESS,
+            "Allow", callback_data=f"mod:allow:{user_id}",
+            style=ButtonStyle.SUCCESS, icon_custom_emoji_id=5427009714745517609,
         ),
     ]])
 
@@ -36,8 +36,8 @@ def _unban_button(user_id: int) -> InlineKeyboardMarkup:
     """Unban button shown after a ban action."""
     return InlineKeyboardMarkup([[
         InlineKeyboardButton(
-            "✅ Unban", callback_data=f"mod:unban:{user_id}",
-            style=ButtonStyle.SUCCESS,
+            "Unban", callback_data=f"mod:unban:{user_id}",
+            style=ButtonStyle.SUCCESS, icon_custom_emoji_id=5427009714745517609,
         ),
     ]])
 
@@ -46,12 +46,12 @@ def _unban_allow_buttons(user_id: int) -> InlineKeyboardMarkup:
     """Unban / Allow buttons for spam auto-ban reports."""
     return InlineKeyboardMarkup([[
         InlineKeyboardButton(
-            "✅ Unban", callback_data=f"mod:unban:{user_id}",
-            style=ButtonStyle.SUCCESS,
+            "Unban", callback_data=f"mod:unban:{user_id}",
+            style=ButtonStyle.SUCCESS, icon_custom_emoji_id=5427009714745517609,
         ),
         InlineKeyboardButton(
-            "✅ Allow", callback_data=f"mod:allow:{user_id}",
-            style=ButtonStyle.SUCCESS,
+            "Allow", callback_data=f"mod:allow:{user_id}",
+            style=ButtonStyle.SUCCESS, icon_custom_emoji_id=5427009714745517609,
         ),
     ]])
 

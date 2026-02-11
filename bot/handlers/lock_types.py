@@ -136,8 +136,13 @@ def build_locktypes_keyboard(user_id: int, page: int = 0) -> InlineKeyboardMarku
 
     for msg_type in page_types:
         is_allowed = msg_type in allowed_types
-        status = "✅" if is_allowed else "🚫"
-        toggle_style = ButtonStyle.SUCCESS if is_allowed else ButtonStyle.DANGER
+        is_allowed = msg_type in allowed_types
+        if is_allowed:
+            toggle_icon = 5427009714745517609
+            toggle_style = ButtonStyle.SUCCESS
+        else:
+            toggle_icon = 5240241223632954241
+            toggle_style = ButtonStyle.DANGER
 
         emoji_id = TYPE_EMOJI_ID.get(msg_type)
         name_btn_kwargs = {}
@@ -151,9 +156,10 @@ def build_locktypes_keyboard(user_id: int, page: int = 0) -> InlineKeyboardMarku
                 **name_btn_kwargs,
             ),
             InlineKeyboardButton(
-                status,
+                " ",
                 callback_data=f"lt:t:{msg_type}",
                 style=toggle_style,
+                icon_custom_emoji_id=toggle_icon,
             ),
         ])
 

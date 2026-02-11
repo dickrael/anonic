@@ -383,7 +383,7 @@ def register_temp_links_handlers(app: Client) -> None:
             # Show confirmation
             links = store.get_active_temp_links(uid)
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton(f"✅ Yes, delete all ({len(links)})", callback_data="al:delallok", style=ButtonStyle.DANGER)],
+                [InlineKeyboardButton(f"Yes, delete all ({len(links)})", callback_data="al:delallok", style=ButtonStyle.DANGER, icon_custom_emoji_id=5427009714745517609)],
                 [InlineKeyboardButton("◀️ Back", callback_data="al:back")],
             ])
             await callback.message.edit_text(
