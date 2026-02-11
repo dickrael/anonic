@@ -12,23 +12,13 @@ from ..strings import gstr, strings
 
 logger = logging.getLogger(__name__)
 
-# Language display names
-LANG_NAMES = {
-    "en": "English",
-    "ru": "Русский",
-    "uz": "O'zbekcha",
-    "uk": "Українська",
-    "de": "Deutsch",
-    "es": "Español",
-    "fr": "Français",
-    "it": "Italiano",
-    "pt": "Português",
-    "tr": "Türkçe",
-    "ar": "العربية",
-    "zh": "中文",
-    "ja": "日本語",
-    "ko": "한국어",
-}
+
+def _get_lang_display(lang_code: str) -> str:
+    """Get display name for a language from its lang_name key, fallback to code."""
+    name = strings.strings.get(lang_code, {}).get("lang_name")
+    if name:
+        return name
+    return lang_code.upper()
 
 
 async def auto_delete_message(message: Message, delay: int = 60):
@@ -64,14 +54,12 @@ def register_language_handlers(app: Client) -> None:
         buttons = []
         row = []
         for lang_code in available_langs:
-            display_name = LANG_NAMES.get(lang_code, lang_code.upper())
+            display_name = _get_lang_display(lang_code)
             # Mark current language
-            is_current = lang_code == current_lang
-            if is_current:
+            if lang_code == current_lang:
                 display_name = f"✓ {display_name}"
             row.append(InlineKeyboardButton(
                 display_name, callback_data=f"lang:{lang_code}",
-                style=ButtonStyle.SUCCESS if is_current else ButtonStyle.PRIMARY,
             ))
             if len(row) == 2:  # 2 buttons per row
                 buttons.append(row)
@@ -79,7 +67,7 @@ def register_language_handlers(app: Client) -> None:
         if row:
             buttons.append(row)
 
-        # Add cancel button
+        # Add cancel button (only colored button)
         buttons.append([InlineKeyboardButton("❌", callback_data="lang:cancel", style=ButtonStyle.DANGER)])
 
         keyboard = InlineKeyboardMarkup(buttons)
@@ -123,7 +111,7 @@ def register_language_handlers(app: Client) -> None:
         current_lang = user.get('lang', 'en')
         if lang == current_lang:
             await callback.answer(
-                (await gstr("lang_already", callback)).format(language=LANG_NAMES.get(lang, lang)),
+                (await gstr("lang_already", callback)).format(language=_get_lang_display(lang)),
                 show_alert=True
             )
             return
@@ -132,7 +120,7 @@ def register_language_handlers(app: Client) -> None:
             logger.info(f"User {uid} changed language to {lang}")
             await callback.message.delete()
             await callback.answer(
-                (await gstr("lang_changed", callback)).format(language=LANG_NAMES.get(lang, lang))
+                (await gstr("lang_changed", callback)).format(language=_get_lang_display(lang))
             )
         else:
             await callback.answer("Failed to change language", show_alert=True)

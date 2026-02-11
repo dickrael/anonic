@@ -124,13 +124,14 @@ def build_locktypes_keyboard(user_id: int, page: int = 0) -> InlineKeyboardMarku
             ),
         ])
 
-    # Pagination row
+    # Pagination row — clickable page numbers
     nav_buttons = []
-    if page > 0:
-        nav_buttons.append(InlineKeyboardButton("◀️", callback_data=f"lt:p:{page-1}"))
-    nav_buttons.append(InlineKeyboardButton(f"{page+1}/{total_pages}", callback_data="lt:noop"))
-    if page < total_pages - 1:
-        nav_buttons.append(InlineKeyboardButton("▶️", callback_data=f"lt:p:{page+1}"))
+    for p in range(total_pages):
+        label = f"• {p + 1} •" if p == page else str(p + 1)
+        nav_buttons.append(InlineKeyboardButton(
+            label,
+            callback_data=f"lt:p:{p}" if p != page else "lt:noop",
+        ))
     buttons.append(nav_buttons)
 
     # Action buttons
