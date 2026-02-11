@@ -15,7 +15,7 @@ start_self_connect: |
   <code>https://t.me/{bot_username}?start={token}</code>
 
   👤 You'll appear as: <b>{nickname}</b>
-start_blocked: "🚫 Can't connect — this person has blocked you."
+start_blocked: "🚫 Can't connect — this person has blocked you. Ouch."
 start_invalid_token: "🔗 This link is invalid or has expired. Ask for a new one!"
 start_connection_established: |
   ✅ You're now chatting with <b>{nickname}</b>!
@@ -24,7 +24,7 @@ start_connection_established: |
   Done chatting? Use /disconnect
 start_connection_switched: "🔄 Switched away from <b>{old_nickname}</b>."
 disconnect_no_user: "👋 You haven't started yet! Tap /start to get your link."
-disconnect_no_connection: "ℹ️ You're not chatting with anyone right now."
+disconnect_no_connection: "ℹ️ You're not chatting with anyone right now. Enjoy the silence!"
 disconnect_success: "👋 Chat with <b>{nickname}</b> ended."
 locktypes_active_connection: "⏳ Finish your current chat first, then use /locktypes."
 locktypes_response: |
@@ -53,7 +53,7 @@ start_self_blocked: |
   🔒 You've blocked <b>{nickname}</b>.
 
   Use /unblock to remove the block first, then try connecting again.
-blocked_none: "👍 You haven't blocked anyone."
+blocked_none: "👍 You haven't blocked anyone. Clean conscience!"
 blocked_list: |
   🚫 <b>Blocked users:</b>
   {users}
@@ -68,7 +68,7 @@ anonymous_reply_not_found: "🤷 Couldn't find who sent that. The message may be
 anonymous_blocked: "🚫 This person has blocked you."
 anonymous_target_not_found: "🤷 Recipient not found — they may have left the bot."
 anonymous_type_blocked: "🚫 <b>{type}</b> messages aren't accepted by this user."
-anonymous_flood_wait: "⏳ Slow down! Your message is queued."
+anonymous_flood_wait: "⏳ Whoa, slow down! Your message is queued."
 anonymous_target_blocked_bot: "😕 Can't deliver — this person has stopped the bot."
 anonymous_invalid_peer: "❌ Something went wrong with the recipient."
 anonymous_error: "❌ Couldn't send your message. Try again."
@@ -85,7 +85,7 @@ block_no_user: "👋 You haven't started yet! Tap /start first."
 block_active_connection: "⏳ Finish your current chat first, then use /block."
 block_no_reply: |
   🔒 To block someone, reply to one of their messages with /block.
-block_self: "😅 You can't block yourself!"
+block_self: "😅 You can't block yourself! That's not how therapy works."
 block_already_blocked: "ℹ️ <b>{nickname}</b> is already blocked."
 block_success: "🔒 <b>{nickname}</b> has been blocked. They can no longer message you."
 block_no_nickname: "🤷 Couldn't identify who sent that message."
@@ -101,7 +101,7 @@ unblock_no_args: |
 unblock_not_blocked: "ℹ️ <code>{identifier}</code> isn't on your block list."
 unblock_success: "✅ <b>{nickname}</b> <code>{code}</code> has been unblocked."
 unblockall_confirm: "⚠️ <b>Unblock all {count} users?</b>"
-unblockall_success: "✅ Done! Unblocked {count} users."
+unblockall_success: "✅ Done! Unblocked {count} users. Fresh start, no grudges."
 report_no_user: "👋 You haven't started yet! Tap /start first."
 report_no_reply: |
   🚨 To report a message, reply to it with /report.
@@ -114,7 +114,7 @@ report_message: |
   <b>About:</b> {reported_nickname} <code>{reported_code}</code>
   <b>Type:</b> {type}
   <b>Msg ID:</b> <code>{message_id}</code>
-inactivity_disconnect: "⏰ Chat with <b>{nickname}</b> ended — inactive for 5 minutes."
+inactivity_disconnect: "⏰ Chat with <b>{nickname}</b> ended — 5 minutes of silence. Guess the conversation died naturally."
 ban_no_user: "👋 Tap /start first."
 ban_not_owner: "🔒 This command is for the bot owner only."
 ban_no_args: |
@@ -136,12 +136,12 @@ banned: "❄️ Your account is frozen."
 start_connection_failed_frozen: "❄️ <b>{nickname}</b>'s account is frozen."
 lang_no_user: "👋 Tap /start first to get started."
 lang_select: "🌐 <b>Choose your language:</b>"
-lang_already: "ℹ️ You're already using {language}."
+lang_already: "ℹ️ You're already using {language}. Great choice, by the way."
 lang_changed: "✅ Language set to {language}."
 lang_invalid: "❌ Unknown language. Available: {languages}"
 lang_success: "✅ Language: {language}"
 anonymous_unsupported_type: "🚫 This media type isn't supported."
-disconnect_by_partner: "👋 <b>{nickname}</b> left the chat."
+disconnect_by_partner: "👋 <b>{nickname}</b> left the chat. Don't take it personally!"
 start_deactivated: "😕 <b>{nickname}</b>'s account has been deactivated."
 locktypes_no_user: "👋 Tap /start first to get started."
 locktypes_blocked: "🔒 {types}"
@@ -157,7 +157,7 @@ spam_report: |
   <b>Spammer:</b> {nickname}
   <b>Target:</b> {target_nickname}
   <b>Messages/min:</b> {message_count}
-spam_banned: "🚫 You've been temporarily banned for {duration} due to spam."
+spam_banned: "🚫 You've been temporarily banned for {duration} due to spam. Maybe take a breather?"
 ban_warning: |
   ⚠️ <b>Your account has been frozen.</b>
 
@@ -177,9 +177,9 @@ revoke_confirm: |
 
   This will give you a new link and nickname. Your old link will stop working and all temporary links will be deleted.
 
-  <i>This cannot be undone.</i>
+  <i>Think of it as starting a new life. No going back!</i>
 revoke_success: |
-  ✅ <b>Fresh start!</b>
+  ✅ <b>Fresh start!</b> Who even was that old you?
 
   🔗 Your new link:
   <code>https://t.me/{bot_username}?start={token}</code>
