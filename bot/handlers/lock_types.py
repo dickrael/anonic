@@ -49,7 +49,6 @@ TYPE_INFO: Dict[str, str] = {
     # Stickers
     "sticker": "Regular stickers",
     "stickeranimated": "Animated stickers",
-    "stickerpremium": "Premium stickers",
     # Interactive
     "location": "Location sharing",
     "poll": "Polls",
@@ -70,7 +69,7 @@ TYPE_CATEGORIES = [
     ("📝", ["url", "email", "phone", "cashtag", "spoiler"]),
     ("🔤", ["emoji", "emojionly", "emojicustom", "cyrillic", "zalgo"]),
     ("📷", ["photo", "video", "gif", "voice", "videonote", "audio", "document"]),
-    ("🎭", ["sticker", "stickeranimated", "stickerpremium"]),
+    ("🎭", ["sticker", "stickeranimated"]),
     ("🎮", ["location", "poll", "game", "emojigame"]),
     ("↩️", ["forward", "forwardbot", "forwardchannel", "forwardstory", "forwarduser"]),
     ("📎", ["externalreply"]),
