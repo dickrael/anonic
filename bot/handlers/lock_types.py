@@ -52,12 +52,16 @@ TYPE_INFO: Dict[str, str] = {
     # Interactive
     "location": "Location sharing",
     "poll": "Polls",
+    "game": "Games shared via inline bots",
     "emojigame": "Dice, bowling, darts mini-games",
     # Forwards
     "forward": "Any forwarded message",
     "forwardbot": "Messages forwarded from bots",
     "forwardchannel": "Messages forwarded from channels",
+    "forwardstory": "Forwarded stories",
     "forwarduser": "Messages forwarded from users",
+    # Other
+    "externalreply": "Quote-reply messages",
 }
 
 # Categorized types for organized display
@@ -66,8 +70,9 @@ TYPE_CATEGORIES = [
     ("🔤", ["emoji", "emojionly", "emojicustom", "cyrillic", "zalgo"]),
     ("📷", ["photo", "video", "gif", "voice", "videonote", "audio", "document"]),
     ("🎭", ["sticker", "stickeranimated", "stickerpremium"]),
-    ("🎮", ["location", "poll", "emojigame"]),
-    ("↩️", ["forward", "forwardbot", "forwardchannel", "forwarduser"]),
+    ("🎮", ["location", "poll", "game", "emojigame"]),
+    ("↩️", ["forward", "forwardbot", "forwardchannel", "forwardstory", "forwarduser"]),
+    ("📎", ["externalreply"]),
 ]
 
 

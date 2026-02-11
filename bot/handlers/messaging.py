@@ -113,8 +113,16 @@ def get_message_types(message: Message) -> list:
         types.append("poll")
 
     # --- Interactive types ---
+    if message.game:
+        types.append("game")
     if message.dice:
         types.append("emojigame")
+
+    # --- External reply / story ---
+    if message.external_reply:
+        types.append("externalreply")
+    if message.story:
+        types.append("forwardstory")
 
     # --- Text content analysis ---
     if text:
