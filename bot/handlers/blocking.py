@@ -209,7 +209,7 @@ def register_blocking_handlers(app: Client) -> None:
         keyboard = InlineKeyboardMarkup([
             [
                 InlineKeyboardButton("✅", callback_data="unblockall:confirm", style=ButtonStyle.SUCCESS),
-                InlineKeyboardButton("❌", callback_data="unblockall:cancel", style=ButtonStyle.DANGER),
+                InlineKeyboardButton("❌", callback_data="unblockall:cancel", style=ButtonStyle.DANGER, icon_custom_emoji_id=5985346521103604145),
             ]
         ])
 

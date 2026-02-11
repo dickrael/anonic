@@ -68,7 +68,7 @@ def register_language_handlers(app: Client) -> None:
             buttons.append(row)
 
         # Add cancel button (only colored button)
-        buttons.append([InlineKeyboardButton("❌", callback_data="lang:cancel", style=ButtonStyle.DANGER)])
+        buttons.append([InlineKeyboardButton("Close", callback_data="lang:cancel", style=ButtonStyle.DANGER, icon_custom_emoji_id=5985346521103604145)])
 
         keyboard = InlineKeyboardMarkup(buttons)
 

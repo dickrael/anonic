@@ -88,7 +88,7 @@ def build_main_menu(expiry_days: int = 0, max_uses: int = 0) -> InlineKeyboardMa
         [InlineKeyboardButton(expiry_label, callback_data=f"tl:menu:expiry:{s}", style=ButtonStyle.PRIMARY)],
         [InlineKeyboardButton(uses_label, callback_data=f"tl:menu:uses:{s}", style=ButtonStyle.PRIMARY)],
         [InlineKeyboardButton(create_label, callback_data=f"tl:create:{s}", style=ButtonStyle.SUCCESS)],
-        [InlineKeyboardButton("❌", callback_data="tl:close", style=ButtonStyle.DANGER)],
+        [InlineKeyboardButton("Close", callback_data="tl:close", style=ButtonStyle.DANGER, icon_custom_emoji_id=5985346521103604145)],
     ])
 
 
@@ -152,7 +152,7 @@ def build_active_links_buttons(links: list) -> list:
         ])
     if len(buttons) > 1:
         buttons.append([InlineKeyboardButton("🗑️ Delete All", callback_data="al:delall", style=ButtonStyle.DANGER)])
-    buttons.append([InlineKeyboardButton("❌", callback_data="al:close", style=ButtonStyle.DANGER)])
+    buttons.append([InlineKeyboardButton("Close", callback_data="al:close", style=ButtonStyle.DANGER, icon_custom_emoji_id=5985346521103604145)])
     return buttons
 
 

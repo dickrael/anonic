@@ -169,14 +169,14 @@ def build_locktypes_keyboard(user_id: int, page: int = 0) -> InlineKeyboardMarku
 
     # Action buttons
     buttons.append([
-        InlineKeyboardButton("🔓 Unlock All", callback_data="lt:ua", style=ButtonStyle.SUCCESS),
-        InlineKeyboardButton("🔒 Lock All", callback_data="lt:la", style=ButtonStyle.DANGER),
+        InlineKeyboardButton("Unlock All", callback_data="lt:ua", style=ButtonStyle.SUCCESS, icon_custom_emoji_id=6034962180875490251),
+        InlineKeyboardButton("Lock All", callback_data="lt:la", style=ButtonStyle.DANGER, icon_custom_emoji_id=5879895758202735862),
     ])
     buttons.append([
-        InlineKeyboardButton("🔄 Default", callback_data="lt:df", style=ButtonStyle.PRIMARY),
+        InlineKeyboardButton("Default", callback_data="lt:df", style=ButtonStyle.PRIMARY, icon_custom_emoji_id=5933905551770522490),
     ])
     buttons.append([
-        InlineKeyboardButton("❌ Close", callback_data="lt:c", style=ButtonStyle.DANGER),
+        InlineKeyboardButton("Close", callback_data="lt:c", style=ButtonStyle.DANGER, icon_custom_emoji_id=5985346521103604145),
     ])
 
     return InlineKeyboardMarkup(buttons)
