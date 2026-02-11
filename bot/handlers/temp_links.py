@@ -7,7 +7,7 @@ from typing import Dict
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.enums import ParseMode
+from pyrogram.enums import ParseMode, ButtonStyle
 
 from ..store import get_store
 from ..strings import gstr
@@ -85,10 +85,10 @@ def build_main_menu(expiry_days: int = 0, max_uses: int = 0) -> InlineKeyboardMa
     create_label = "🔗 Create" if has_limits else "🔗 Create without limits"
     s = f"{expiry_days}:{max_uses}"
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton(expiry_label, callback_data=f"tl:menu:expiry:{s}")],
-        [InlineKeyboardButton(uses_label, callback_data=f"tl:menu:uses:{s}")],
-        [InlineKeyboardButton(create_label, callback_data=f"tl:create:{s}")],
-        [InlineKeyboardButton("❌", callback_data="tl:close")],
+        [InlineKeyboardButton(expiry_label, callback_data=f"tl:menu:expiry:{s}", style=ButtonStyle.PRIMARY)],
+        [InlineKeyboardButton(uses_label, callback_data=f"tl:menu:uses:{s}", style=ButtonStyle.PRIMARY)],
+        [InlineKeyboardButton(create_label, callback_data=f"tl:create:{s}", style=ButtonStyle.SUCCESS)],
+        [InlineKeyboardButton("❌", callback_data="tl:close", style=ButtonStyle.DANGER)],
     ])
 
 
@@ -97,17 +97,21 @@ def build_expiry_menu(expiry_days: int = 0, max_uses: int = 0) -> InlineKeyboard
     s_uses = str(max_uses)
 
     def btn(days):
-        check = " ✅" if days == expiry_days else ""
+        selected = days == expiry_days
+        check = " ✅" if selected else ""
         return InlineKeyboardButton(
             f"{days} day{'s' if days > 1 else ''}{check}",
             callback_data=f"tl:expiry:{days}:{s_uses}",
+            style=ButtonStyle.SUCCESS if selected else ButtonStyle.DEFAULT,
         )
 
+    no_exp_selected = expiry_days == 0
     return InlineKeyboardMarkup([
         [btn(1), btn(3)],
         [btn(7), btn(30)],
-        [InlineKeyboardButton("♾️ No expiration" + (" ✅" if expiry_days == 0 else ""),
-                              callback_data=f"tl:expiry:0:{s_uses}")],
+        [InlineKeyboardButton("♾️ No expiration" + (" ✅" if no_exp_selected else ""),
+                              callback_data=f"tl:expiry:0:{s_uses}",
+                              style=ButtonStyle.SUCCESS if no_exp_selected else ButtonStyle.DEFAULT)],
         [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:main:{expiry_days}:{s_uses}")],
     ])
 
@@ -117,15 +121,21 @@ def build_uses_menu(expiry_days: int = 0, max_uses: int = 0) -> InlineKeyboardMa
     s_exp = str(expiry_days)
 
     def btn(n):
-        check = " ✅" if n == max_uses else ""
+        selected = n == max_uses
+        check = " ✅" if selected else ""
         label = f"{n} use{'s' if n > 1 else ''}{check}"
-        return InlineKeyboardButton(label, callback_data=f"tl:uses:{s_exp}:{n}")
+        return InlineKeyboardButton(
+            label, callback_data=f"tl:uses:{s_exp}:{n}",
+            style=ButtonStyle.SUCCESS if selected else ButtonStyle.DEFAULT,
+        )
 
+    unlim_selected = max_uses == 0
     return InlineKeyboardMarkup([
         [btn(1), btn(5)],
         [btn(10), btn(50)],
-        [InlineKeyboardButton("♾️ Unlimited" + (" ✅" if max_uses == 0 else ""),
-                              callback_data=f"tl:uses:{s_exp}:0")],
+        [InlineKeyboardButton("♾️ Unlimited" + (" ✅" if unlim_selected else ""),
+                              callback_data=f"tl:uses:{s_exp}:0",
+                              style=ButtonStyle.SUCCESS if unlim_selected else ButtonStyle.DEFAULT)],
         [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:main:{s_exp}:{max_uses}")],
     ])
 
@@ -137,10 +147,10 @@ def build_active_links_buttons(links: list) -> list:
         token = link['token']
         info = format_expiry(link)
         buttons.append([
-            InlineKeyboardButton(f"🔗 Link {i} ({info})", callback_data=f"al:view:{token[:16]}"),
-            InlineKeyboardButton("🗑️", callback_data=f"al:del:{token[:16]}"),
+            InlineKeyboardButton(f"🔗 Link {i} ({info})", callback_data=f"al:view:{token[:16]}", style=ButtonStyle.PRIMARY),
+            InlineKeyboardButton("🗑️", callback_data=f"al:del:{token[:16]}", style=ButtonStyle.DANGER),
         ])
-    buttons.append([InlineKeyboardButton("❌", callback_data="al:close")])
+    buttons.append([InlineKeyboardButton("❌", callback_data="al:close", style=ButtonStyle.DANGER)])
     return buttons
 
 
@@ -395,7 +405,7 @@ def register_temp_links_handlers(app: Client) -> None:
             info = format_expiry(link_data)
 
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🗑️ Delete", callback_data=f"al:del:{token_prefix}")],
+                [InlineKeyboardButton("🗑️ Delete", callback_data=f"al:del:{token_prefix}", style=ButtonStyle.DANGER)],
                 [InlineKeyboardButton("◀️ Back", callback_data="al:back")],
             ])
 

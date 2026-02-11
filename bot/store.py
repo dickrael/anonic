@@ -496,6 +496,16 @@ class JSONStore:
                     return True
             return False
 
+    async def reset_allowed_types(self, user_id: str) -> bool:
+        """Reset allowed types to defaults."""
+        async with self._lock:
+            user = self._data['users'].get(user_id)
+            if not user:
+                return False
+            user['allowed_types'] = self.DEFAULT_ALLOWED.copy()
+            await self._save()
+            return True
+
     def get_allowed_types(self, user_id: str) -> List[str]:
         """Get allowed message types for user."""
         user = self._data['users'].get(user_id)

@@ -8,7 +8,7 @@ from pyrogram import Client, filters
 from pyrogram.types import (
     Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 )
-from pyrogram.enums import ParseMode
+from pyrogram.enums import ParseMode, ButtonStyle
 
 from ..store import get_store
 from ..strings import gstr
@@ -102,6 +102,7 @@ def build_locktypes_keyboard(user_id: int, page: int = 0) -> InlineKeyboardMarku
     for msg_type in page_types:
         is_allowed = msg_type in allowed_types
         status = "✅" if is_allowed else "🚫"
+        toggle_style = ButtonStyle.SUCCESS if is_allowed else ButtonStyle.DANGER
 
         # Find category emoji for this type
         cat_emoji = "📎"
@@ -113,11 +114,12 @@ def build_locktypes_keyboard(user_id: int, page: int = 0) -> InlineKeyboardMarku
         buttons.append([
             InlineKeyboardButton(
                 f"{cat_emoji} {msg_type}",
-                callback_data=f"lt:i:{msg_type}"
+                callback_data=f"lt:i:{msg_type}",
             ),
             InlineKeyboardButton(
                 status,
-                callback_data=f"lt:t:{msg_type}"
+                callback_data=f"lt:t:{msg_type}",
+                style=toggle_style,
             ),
         ])
 
@@ -130,13 +132,16 @@ def build_locktypes_keyboard(user_id: int, page: int = 0) -> InlineKeyboardMarku
         nav_buttons.append(InlineKeyboardButton("▶️", callback_data=f"lt:p:{page+1}"))
     buttons.append(nav_buttons)
 
-    # Toggle all and close buttons
+    # Action buttons
     buttons.append([
-        InlineKeyboardButton("🔓 Unlock All", callback_data="lt:ua"),
-        InlineKeyboardButton("🔒 Lock All", callback_data="lt:la"),
+        InlineKeyboardButton("🔓 Unlock All", callback_data="lt:ua", style=ButtonStyle.SUCCESS),
+        InlineKeyboardButton("🔒 Lock All", callback_data="lt:la", style=ButtonStyle.DANGER),
     ])
     buttons.append([
-        InlineKeyboardButton("❌ Close", callback_data="lt:c"),
+        InlineKeyboardButton("🔄 Default", callback_data="lt:df", style=ButtonStyle.PRIMARY),
+    ])
+    buttons.append([
+        InlineKeyboardButton("❌ Close", callback_data="lt:c", style=ButtonStyle.DANGER),
     ])
 
     return InlineKeyboardMarkup(buttons)
@@ -268,6 +273,22 @@ def register_lock_handlers(app: Client) -> None:
         elif action == "ua":
             await store.unlock_type(str(uid), "all")
             await callback.answer("✅ All types unlocked")
+            current_page = 0
+            if callback.message.reply_markup:
+                for row in callback.message.reply_markup.inline_keyboard:
+                    for btn in row:
+                        if btn.callback_data == "lt:noop":
+                            try:
+                                current_page = int(btn.text.split("/")[0]) - 1
+                            except:
+                                pass
+            keyboard = build_locktypes_keyboard(uid, current_page)
+            await callback.message.edit_reply_markup(keyboard)
+
+        # Default permissions
+        elif action == "df":
+            await store.reset_allowed_types(str(uid))
+            await callback.answer("🔄 Reset to default permissions")
             current_page = 0
             if callback.message.reply_markup:
                 for row in callback.message.reply_markup.inline_keyboard:
