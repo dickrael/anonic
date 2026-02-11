@@ -197,10 +197,36 @@ def get_primary_type(message: Message) -> str:
     return "text"
 
 
-def _has_custom_emoji(message: Message) -> bool:
-    """Check if message contains custom emoji entities."""
+def _render_text_with_custom_emoji(message: Message) -> str | None:
+    """Render message text/caption as HTML with <emoji> tags for custom emojis.
+
+    Returns the HTML string if custom emojis are present, None otherwise.
+    Kurigram supports: <emoji id="123456">🔥</emoji>
+    """
+    text = message.text or message.caption or ""
     entities = message.entities or message.caption_entities or []
-    return any(e.type == MessageEntityType.CUSTOM_EMOJI for e in entities)
+    if not text or not any(e.type == MessageEntityType.CUSTOM_EMOJI for e in entities):
+        return None
+
+    # Sort entities by offset (should already be, but be safe)
+    sorted_entities = sorted(
+        [e for e in entities if e.type == MessageEntityType.CUSTOM_EMOJI],
+        key=lambda e: e.offset
+    )
+
+    from html import escape
+    result = []
+    last_end = 0
+    for entity in sorted_entities:
+        # Add text before this entity (escaped for HTML)
+        result.append(escape(text[last_end:entity.offset]))
+        # Add <emoji> tag with the original character as fallback
+        emoji_text = text[entity.offset:entity.offset + entity.length]
+        result.append(f'<emoji id="{entity.custom_emoji_id}">{escape(emoji_text)}</emoji>')
+        last_end = entity.offset + entity.length
+    # Add remaining text
+    result.append(escape(text[last_end:]))
+    return "".join(result)
 
 
 async def send_message_to_target(
@@ -213,15 +239,6 @@ async def send_message_to_target(
 ) -> Message:
     """Send message to target user based on type. Returns the sent message."""
     sent_msg = None
-
-    # Messages with custom emojis: copy original to preserve entities,
-    # then send sender info as a separate message
-    if _has_custom_emoji(message):
-        await message.copy(target_id, protect_content=protect_content)
-        sent_msg = await client.send_message(
-            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
-        )
-        return sent_msg
 
     if msg_type in ("text", "link"):
         sent_msg = await client.send_message(
@@ -590,10 +607,11 @@ def register_messaging_handlers(app: Client) -> None:
             original_caption = message.caption or message.text or ""
 
             # Build caption in the RECIPIENT's language
-            has_custom = _has_custom_emoji(message)
-            if has_custom:
-                # Custom emoji: original is sent via copy, so only show sender info
-                caption = (await gstr("anonymous_caption_media", user_id=target_id)).format(
+            # If custom emojis present, render them as <emoji> HTML tags
+            custom_emoji_html = _render_text_with_custom_emoji(message)
+            if custom_emoji_html:
+                caption = (await gstr("anonymous_caption", user_id=target_id)).format(
+                    original=custom_emoji_html,
                     nickname=user['nickname']
                 )
             elif original_caption.strip():
