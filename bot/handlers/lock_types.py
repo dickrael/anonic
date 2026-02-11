@@ -29,6 +29,7 @@ TYPE_EMOJI_ID: Dict[str, int] = {
     "email": 5967280668885913944,
     "phone": 5897938112654348733,
     "cashtag": 5974217466270716579,
+    "hashtag": 5807558162361884395,
     "spoiler": 6008135256798927387,
     "emoji": 5942913498349571809,
     "emojionly": 5933613451044720529,
@@ -64,6 +65,7 @@ TYPE_INFO: Dict[str, str] = {
     "email": "Messages containing email addresses",
     "phone": "Messages containing phone numbers",
     "cashtag": "Cash tags like $USD, $BTC",
+    "hashtag": "Messages containing #hashtags",
     "spoiler": "Messages with spoiler formatting",
     # Text filters
     "emoji": "Messages containing any emoji",
@@ -99,7 +101,7 @@ TYPE_INFO: Dict[str, str] = {
 
 # Categorized types for organized display
 TYPE_CATEGORIES = [
-    ("📝", ["url", "email", "phone", "cashtag", "spoiler"]),
+    ("📝", ["url", "email", "phone", "cashtag", "hashtag", "spoiler"]),
     ("🔤", ["emoji", "emojionly", "emojicustom", "cyrillic", "zalgo"]),
     ("📷", ["photo", "video", "gif", "voice", "videonote", "audio", "document"]),
     ("🎭", ["sticker", "stickeranimated"]),

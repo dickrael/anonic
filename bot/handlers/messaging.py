@@ -145,6 +145,8 @@ def get_message_types(message: Message) -> list:
                 types.append("emojicustom")
             elif entity.type == MessageEntityType.CASHTAG:
                 types.append("cashtag")
+            elif entity.type == MessageEntityType.HASHTAG:
+                types.append("hashtag")
 
         if CASHTAG_PATTERN.search(text) and "cashtag" not in types:
             types.append("cashtag")

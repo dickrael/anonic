@@ -32,7 +32,7 @@ class JSONStore:
     VALID_TYPES = [
         "all",
         # Text content
-        "text", "url", "email", "phone", "cashtag", "spoiler",
+        "text", "url", "email", "phone", "cashtag", "hashtag", "spoiler",
         # Text filters
         "emoji", "emojionly", "emojicustom", "cyrillic", "zalgo",
         # Media
@@ -55,7 +55,7 @@ class JSONStore:
         "text", "emoji", "emojionly", "emojicustom", "cyrillic",
         "photo", "video", "gif", "voice", "videonote", "audio", "document",
         "sticker", "stickeranimated", "stickerpremium",
-        "spoiler", "url",
+        "spoiler", "url", "hashtag",
     ]
 
     def __init__(self, path: str):
