@@ -4,191 +4,191 @@ start_no_token: |
 
   <code>https://t.me/{bot_username}?start={token}</code>
 
-  👤 You'll appear as: <b>{nickname}</b>
+  <emoji id="5210726994353863536">👤</emoji> You'll appear as: <b>{nickname}</b>
 
   <i><emoji id="5472146462362048818">💡</emoji> Share this link anywhere — whoever opens it can send you a message without knowing who you are.</i>
 start_self_connect: |
-  😅 <b>That's your own link!</b>
+  <emoji id="5474514754573709786">😅</emoji> <b>That's your own link!</b>
 
   You can't send messages to yourself. Share it with others instead:
 
   <code>https://t.me/{bot_username}?start={token}</code>
 
-  👤 You'll appear as: <b>{nickname}</b>
-start_blocked: "🚫 Can't connect — this person has blocked you. Ouch."
+  <emoji id="5210726994353863536">👤</emoji> You'll appear as: <b>{nickname}</b>
+start_blocked: "<emoji id=\"5305381957524272531\">🚫</emoji> Can't connect — this person has blocked you. Ouch."
 start_invalid_token: "<emoji id=\"5375129357373165375\">🔗</emoji> This link is invalid or has expired. Ask for a new one!"
 start_connection_established: |
   <emoji id="5337080053119336309">👍</emoji> You're now chatting with <b>{nickname}</b>!
 
   Just type your message and it'll be sent anonymously.
   Done chatting? Use /disconnect
-start_connection_switched: "🔄 Switched away from <b>{old_nickname}</b>."
-disconnect_no_user: "👋 You haven't started yet! Tap /start to get your link."
-disconnect_no_connection: "ℹ️ You're not chatting with anyone right now. Enjoy the silence!"
-disconnect_success: "👋 Chat with <b>{nickname}</b> ended."
-locktypes_active_connection: "⏳ Finish your current chat first, then use /locktypes."
+start_connection_switched: "<emoji id=\"5382311255656648590\">🔄</emoji> Switched away from <b>{old_nickname}</b>."
+disconnect_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> You haven't started yet! Tap /start to get your link."
+disconnect_no_connection: "<emoji id=\"5461005184052246279\">ℹ️</emoji> You're not chatting with anyone right now. Enjoy the silence!"
+disconnect_success: "<emoji id=\"5202126386768140453\">👋</emoji> Chat with <b>{nickname}</b> ended."
+locktypes_active_connection: "<emoji id=\"5192886773948107844\">⏳</emoji> Finish your current chat first, then use /locktypes."
 locktypes_response: |
-  📋 Message types:
+  <emoji id="5291873529464122510">📋</emoji> Message types:
   {types_list}
   {blocked_types}
   {unblocked_types}
-lock_active_connection: "⏳ Finish your current chat first, then use /lock."
+lock_active_connection: "<emoji id=\"5192886773948107844\">⏳</emoji> Finish your current chat first, then use /lock."
 lock_no_args: |
-  🔒 Tell me what to block!
+  <emoji id="5231154211000950256">🔒</emoji> Tell me what to block!
 
   Example: <code>/lock -gif -poll</code>
   Block everything: <code>/lock -all</code>
-lock_success: "🔒 Blocked: <b>{types}</b>"
-lock_invalid_types: "⚠️ Skipped unknown types: <b>{types}</b>"
-unlock_active_connection: "⏳ Finish your current chat first, then use /unlock."
+lock_success: "<emoji id=\"5231154211000950256\">🔒</emoji> Blocked: <b>{types}</b>"
+lock_invalid_types: "<emoji id=\"5420323339723881652\">⚠️</emoji> Skipped unknown types: <b>{types}</b>"
+unlock_active_connection: "<emoji id=\"5192886773948107844\">⏳</emoji> Finish your current chat first, then use /unlock."
 unlock_no_args: |
-  🔓 Tell me what to unblock!
+  <emoji id="5465443379917629504">🔓</emoji> Tell me what to unblock!
 
   Example: <code>/unlock -gif -poll</code>
   Unblock everything: <code>/unlock -all</code>
-unlock_success: "🔓 Unblocked: <b>{types}</b>"
-unlock_invalid_types: "⚠️ Skipped unknown types: <b>{types}</b>"
-blocked_active_connection: "⏳ Finish your current chat first, then use /blocked."
+unlock_success: "<emoji id=\"5465443379917629504\">🔓</emoji> Unblocked: <b>{types}</b>"
+unlock_invalid_types: "<emoji id=\"5420323339723881652\">⚠️</emoji> Skipped unknown types: <b>{types}</b>"
+blocked_active_connection: "<emoji id=\"5192886773948107844\">⏳</emoji> Finish your current chat first, then use /blocked."
 start_self_blocked: |
-  🔒 You've blocked <b>{nickname}</b>.
+  <emoji id="5231154211000950256">🔒</emoji> You've blocked <b>{nickname}</b>.
 
   Use /unblock to remove the block first, then try connecting again.
-blocked_none: "👍 You haven't blocked anyone. Clean conscience!"
+blocked_none: "<emoji id=\"5465321651954526991\">👍</emoji> You haven't blocked anyone. Clean conscience!"
 blocked_list: |
-  🚫 <b>Blocked users:</b>
+  <emoji id="5305381957524272531">🚫</emoji> <b>Blocked users:</b>
   {users}
 
   <i><emoji id="5472146462362048818">💡</emoji> To unblock someone, use</i> /unblock <code>code</code>
-anonymous_no_user: "👋 You haven't started yet! Tap /start to set up your profile."
+anonymous_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> You haven't started yet! Tap /start to set up your profile."
 anonymous_no_connection: |
-  💬 No active chat.
+  <emoji id="5226431245918942763">💬</emoji> No active chat.
 
   <i>To send a message, either open someone's link or reply to a message you received.</i>
-anonymous_reply_not_found: "🤷 Couldn't find who sent that. The message may be too old."
-anonymous_blocked: "🚫 This person has blocked you."
-anonymous_target_not_found: "🤷 Recipient not found — they may have left the bot."
-anonymous_type_blocked: "🚫 <b>{type}</b> messages aren't accepted by this user."
-anonymous_flood_wait: "⏳ Whoa, slow down! Your message is queued."
-anonymous_target_blocked_bot: "😕 Can't deliver — this person has stopped the bot."
-anonymous_invalid_peer: "❌ Something went wrong with the recipient."
-anonymous_error: "❌ Couldn't send your message. Try again."
-anonymous_sent: "✅ Sent to <b>{nickname}</b>"
-anonymous_switched: "🔄 Switched from <b>{old_nickname}</b> → <b>{new_nickname}</b>."
+anonymous_reply_not_found: "<emoji id=\"5289639046958560742\">🤷</emoji> Couldn't find who sent that. The message may be too old."
+anonymous_blocked: "<emoji id=\"5305381957524272531\">🚫</emoji> This person has blocked you."
+anonymous_target_not_found: "<emoji id=\"5289639046958560742\">🤷</emoji> Recipient not found — they may have left the bot."
+anonymous_type_blocked: "<emoji id=\"5305381957524272531\">🚫</emoji> <b>{type}</b> messages aren't accepted by this user."
+anonymous_flood_wait: "<emoji id=\"5192886773948107844\">⏳</emoji> Whoa, slow down! Your message is queued."
+anonymous_target_blocked_bot: "<emoji id=\"5296574998234800495\">😕</emoji> Can't deliver — this person has stopped the bot."
+anonymous_invalid_peer: "<emoji id=\"5472367489969038040\">❌</emoji> Something went wrong with the recipient."
+anonymous_error: "<emoji id=\"5472367489969038040\">❌</emoji> Couldn't send your message. Try again."
+anonymous_sent: "<emoji id=\"5328273248448686763\">✅</emoji> Sent to <b>{nickname}</b>"
+anonymous_switched: "<emoji id=\"5382311255656648590\">🔄</emoji> Switched from <b>{old_nickname}</b> → <b>{new_nickname}</b>."
 anonymous_caption: |
   <blockquote>{original}</blockquote>
   ———
   {sparkle} from <b>{nickname}</b>
 anonymous_caption_media: "———\n{sparkle} from <b>{nickname}</b>"
-anonymous_no_connection_info: "ℹ️ <b>{nickname}</b> isn't connected. Reply to their message to start a chat."
-anonymous_switch_info: "ℹ️ Reply to switch to <b>{sender_nickname}</b> (this will disconnect you from <b>{current_nickname}</b>)."
-block_no_user: "👋 You haven't started yet! Tap /start first."
-block_active_connection: "⏳ Finish your current chat first, then use /block."
+anonymous_no_connection_info: "<emoji id=\"5461005184052246279\">ℹ️</emoji> <b>{nickname}</b> isn't connected. Reply to their message to start a chat."
+anonymous_switch_info: "<emoji id=\"5461005184052246279\">ℹ️</emoji> Reply to switch to <b>{sender_nickname}</b> (this will disconnect you from <b>{current_nickname}</b>)."
+block_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> You haven't started yet! Tap /start first."
+block_active_connection: "<emoji id=\"5192886773948107844\">⏳</emoji> Finish your current chat first, then use /block."
 block_no_reply: |
-  🔒 To block someone, reply to one of their messages with /block.
-block_self: "😅 You can't block yourself! That's not how therapy works."
-block_already_blocked: "ℹ️ <b>{nickname}</b> is already blocked."
-block_success: "🔒 <b>{nickname}</b> has been blocked. They can no longer message you."
-block_no_nickname: "🤷 Couldn't identify who sent that message."
-block_nickname_not_found: "🤷 User not found."
-unblock_no_user: "👋 You haven't started yet! Tap /start first."
-unblock_active_connection: "⏳ Finish your current chat first, then use /unblock."
+  <emoji id="5231154211000950256">🔒</emoji> To block someone, reply to one of their messages with /block.
+block_self: "<emoji id=\"5474514754573709786\">😅</emoji> You can't block yourself! That's not how therapy works."
+block_already_blocked: "<emoji id=\"5461005184052246279\">ℹ️</emoji> <b>{nickname}</b> is already blocked."
+block_success: "<emoji id=\"5231154211000950256\">🔒</emoji> <b>{nickname}</b> has been blocked. They can no longer message you."
+block_no_nickname: "<emoji id=\"5289639046958560742\">🤷</emoji> Couldn't identify who sent that message."
+block_nickname_not_found: "<emoji id=\"5289639046958560742\">🤷</emoji> User not found."
+unblock_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> You haven't started yet! Tap /start first."
+unblock_active_connection: "<emoji id=\"5192886773948107844\">⏳</emoji> Finish your current chat first, then use /unblock."
 unblock_no_args: |
-  🔓 Who do you want to unblock?
+  <emoji id="5465443379917629504">🔓</emoji> Who do you want to unblock?
 
   Usage: <code>/unblock code</code>
   See your block list: /blocked
   Unblock everyone: /unblockall
-unblock_not_blocked: "ℹ️ <code>{identifier}</code> isn't on your block list."
-unblock_success: "✅ <b>{nickname}</b> <code>{code}</code> has been unblocked."
-unblockall_confirm: "⚠️ <b>Unblock all {count} users?</b>"
+unblock_not_blocked: "<emoji id=\"5461005184052246279\">ℹ️</emoji> <code>{identifier}</code> isn't on your block list."
+unblock_success: "<emoji id=\"5328273248448686763\">✅</emoji> <b>{nickname}</b> <code>{code}</code> has been unblocked."
+unblockall_confirm: "<emoji id=\"5420323339723881652\">⚠️</emoji> <b>Unblock all {count} users?</b>"
 unblockall_success: "✅ Done! Unblocked {count} users. Fresh start, no grudges."
-report_no_user: "👋 You haven't started yet! Tap /start first."
+report_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> You haven't started yet! Tap /start first."
 report_no_reply: |
-  🚨 To report a message, reply to it with /report.
-report_no_nickname: "🤷 Couldn't identify the sender of that message."
-report_success: "✅ Report sent! Our moderators will review it."
+  <emoji id="5222453530677225961">🚨</emoji> To report a message, reply to it with /report.
+report_no_nickname: "<emoji id=\"5289639046958560742\">🤷</emoji> Couldn't identify the sender of that message."
+report_success: "<emoji id=\"5328273248448686763\">✅</emoji> Report sent! Our moderators will review it."
 report_message: |
-  🚨 <b>Report</b>
+  <emoji id="5222453530677225961">🚨</emoji> <b>Report</b>
 
   <b>From:</b> {reporter_nickname} <code>{reporter_code}</code>
   <b>About:</b> {reported_nickname} <code>{reported_code}</code>
   <b>Type:</b> {type}
   <b>Msg ID:</b> <code>{message_id}</code>
-inactivity_disconnect: "⏰ Chat with <b>{nickname}</b> ended — 5 minutes of silence. Guess the conversation died naturally."
-ban_no_user: "👋 Tap /start first."
-ban_not_owner: "🔒 This command is for the bot owner only."
+inactivity_disconnect: "<emoji id=\"5413704112220949842\">⏰</emoji> Chat with <b>{nickname}</b> ended — 5 minutes of silence. Guess the conversation died naturally."
+ban_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first."
+ban_not_owner: "<emoji id=\"5231154211000950256\">🔒</emoji> This command is for the bot owner only."
 ban_no_args: |
-  🚫 Usage: <code>/ban user_id</code>
+  <emoji id="5305381957524272531">🚫</emoji> Usage: <code>/ban user_id</code>
 
   Example: <code>/ban 123456789</code>
-ban_invalid_user: "🤷 User <code>{user_id}</code> not found."
-ban_already_banned: "ℹ️ User <code>{user_id}</code> is already banned."
-ban_success: "🚫 User <code>{user_id}</code> has been banned."
-unban_no_user: "👋 Tap /start first."
-unban_not_owner: "🔒 This command is for the bot owner only."
+ban_invalid_user: "<emoji id=\"5289639046958560742\">🤷</emoji> User <code>{user_id}</code> not found."
+ban_already_banned: "<emoji id=\"5461005184052246279\">ℹ️</emoji> User <code>{user_id}</code> is already banned."
+ban_success: "<emoji id=\"5305381957524272531\">🚫</emoji> User <code>{user_id}</code> has been banned."
+unban_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first."
+unban_not_owner: "<emoji id=\"5231154211000950256\">🔒</emoji> This command is for the bot owner only."
 unban_no_args: |
-  ✅ Usage: <code>/unban user_id</code>
+  <emoji id="5328273248448686763">✅</emoji> Usage: <code>/unban user_id</code>
 
   Example: <code>/unban 123456789</code>
-unban_not_banned: "ℹ️ User <code>{user_id}</code> isn't banned."
-unban_success: "✅ User <code>{user_id}</code> has been unbanned."
-banned: "❄️ Your account is frozen."
-start_connection_failed_frozen: "❄️ <b>{nickname}</b>'s account is frozen."
-lang_no_user: "👋 Tap /start first to get started."
-lang_select: "🌐 <b>Choose your language:</b>"
-lang_already: "ℹ️ You're already using {language}. Great choice, by the way."
-lang_changed: "✅ Language set to {language}."
-lang_invalid: "❌ Unknown language. Available: {languages}"
-lang_success: "✅ Language: {language}"
-anonymous_unsupported_type: "🚫 This media type isn't supported."
-disconnect_by_partner: "👋 <b>{nickname}</b> left the chat. Don't take it personally!"
-start_deactivated: "😕 <b>{nickname}</b>'s account has been deactivated."
-locktypes_no_user: "👋 Tap /start first to get started."
-locktypes_blocked: "🔒 {types}"
-locktypes_unblocked: "🔓 {types}"
-lock_no_user: "👋 Tap /start first to get started."
-unlock_no_user: "👋 Tap /start first to get started."
-blocked_no_user: "👋 Tap /start first to get started."
-block_deactivated: "😕 <b>{nickname}</b>'s account has been deactivated."
-report_deactivated: "😕 Moderation is currently unavailable. Try again later."
+unban_not_banned: "<emoji id=\"5461005184052246279\">ℹ️</emoji> User <code>{user_id}</code> isn't banned."
+unban_success: "<emoji id=\"5328273248448686763\">✅</emoji> User <code>{user_id}</code> has been unbanned."
+banned: "<emoji id=\"5271711170565254813\">❄️</emoji> Your account is frozen."
+start_connection_failed_frozen: "<emoji id=\"5271711170565254813\">❄️</emoji> <b>{nickname}</b>'s account is frozen."
+lang_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first to get started."
+lang_select: "<emoji id=\"5447410659077661506\">🌐</emoji> <b>Choose your language:</b>"
+lang_already: "<emoji id=\"5461005184052246279\">ℹ️</emoji> You're already using {language}. Great choice, by the way."
+lang_changed: "<emoji id=\"5328273248448686763\">✅</emoji> Language set to {language}."
+lang_invalid: "<emoji id=\"5472367489969038040\">❌</emoji> Unknown language. Available: {languages}"
+lang_success: "<emoji id=\"5328273248448686763\">✅</emoji> Language: {language}"
+anonymous_unsupported_type: "<emoji id=\"5305381957524272531\">🚫</emoji> This media type isn't supported."
+disconnect_by_partner: "<emoji id=\"5202126386768140453\">👋</emoji> <b>{nickname}</b> left the chat. Don't take it personally!"
+start_deactivated: "<emoji id=\"5296574998234800495\">😕</emoji> <b>{nickname}</b>'s account has been deactivated."
+locktypes_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first to get started."
+locktypes_blocked: "<emoji id=\"5231154211000950256\">🔒</emoji> {types}"
+locktypes_unblocked: "<emoji id=\"5465443379917629504\">🔓</emoji> {types}"
+lock_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first to get started."
+unlock_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first to get started."
+blocked_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first to get started."
+block_deactivated: "<emoji id=\"5296574998234800495\">😕</emoji> <b>{nickname}</b>'s account has been deactivated."
+report_deactivated: "<emoji id=\"5296574998234800495\">😕</emoji> Moderation is currently unavailable. Try again later."
 spam_report: |
-  🚨 <b>Spam Detected</b>
+  <emoji id="5222453530677225961">🚨</emoji> <b>Spam Detected</b>
 
   <b>Spammer:</b> {nickname}
   <b>Target:</b> {target_nickname}
   <b>Messages/min:</b> {message_count}
-spam_banned: "🚫 You've been temporarily banned for {duration} due to spam. Maybe take a breather?"
+spam_banned: "<emoji id=\"5305381957524272531\">🚫</emoji> You've been temporarily banned for {duration} due to spam. Maybe take a breather?"
 ban_warning: |
-  ⚠️ <b>Your account has been frozen.</b>
+  <emoji id="5420323339723881652">⚠️</emoji> <b>Your account has been frozen.</b>
 
   A moderator determined that your activity violated the bot's rules. You will no longer be able to send or receive messages.
-mod_banned: "🚫 <b>Banned</b> by owner."
-mod_allowed: "✅ <b>Allowed</b> by owner."
-mod_unbanned: "✅ <b>Unbanned</b> by owner."
+mod_banned: "<emoji id=\"5305381957524272531\">🚫</emoji> <b>Banned</b> by owner."
+mod_allowed: "<emoji id=\"5328273248448686763\">✅</emoji> <b>Allowed</b> by owner."
+mod_unbanned: "<emoji id=\"5328273248448686763\">✅</emoji> <b>Unbanned</b> by owner."
 mod_already_banned: "Already banned."
 mod_not_banned: "Not currently banned."
 mod_user_not_found: "User not found."
 anonymous_reply_instruction: "<emoji id=\"5467538555158943525\">💭</emoji> <i>Reply to this message to answer</i>"
-anonymous_reply_warning: "⚠️ <i>Reply to answer — this will disconnect your current chat</i>"
-revoke_no_user: "👋 Tap /start first to get started."
-revoke_wait: "⏳ You can revoke again in <b>{days}</b> days."
+anonymous_reply_warning: "<emoji id=\"5420323339723881652\">⚠️</emoji> <i>Reply to answer — this will disconnect your current chat</i>"
+revoke_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first to get started."
+revoke_wait: "<emoji id=\"5192886773948107844\">⏳</emoji> You can revoke again in <b>{days}</b> days."
 revoke_confirm: |
-  ⚠️ <b>Start fresh?</b>
+  <emoji id="5420323339723881652">⚠️</emoji> <b>Start fresh?</b>
 
   This will give you a new link and nickname. Your old link will stop working and all temporary links will be deleted.
 
   <i>Think of it as starting a new life. No going back!</i>
 revoke_success: |
-  ✅ <b>Fresh start!</b> Who even was that old you?
+  <emoji id="5328273248448686763">✅</emoji> <b>Fresh start!</b> Who even was that old you?
 
   <emoji id="5375129357373165375">🔗</emoji> Your new link:
   <code>https://t.me/{bot_username}?start={token}</code>
 
-  👤 New nickname: <b>{nickname}</b>
+  <emoji id="5210726994353863536">👤</emoji> New nickname: <b>{nickname}</b>
 
   <i><emoji id="5472146462362048818">💡</emoji> Share your new link — the old one no longer works.</i>
 help_message: |
-  👋 <b>Anonymous Messages</b>
+  <emoji id="5202126386768140453">👋</emoji> <b>Anonymous Messages</b>
 
   Send and receive messages without revealing your identity.
 
@@ -219,56 +219,56 @@ help_message: |
 
   <b>Info:</b>
   /stats — Your statistics
-security_no_user: "👋 Tap /start first to get started."
+security_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first to get started."
 security_info: |
-  🔒 <b>Message Protection</b>
+  <emoji id="5231154211000950256">🔒</emoji> <b>Message Protection</b>
 
   Status: {status}
 
   When enabled, recipients can't forward or save the messages you send.
 
   <i><emoji id="5472146462362048818">💡</emoji> Applies to all message types — text, photos, videos, etc.</i>
-security_enabled: "✅ Protection ON"
-security_disabled: "❌ Protection OFF"
-stats_no_user: "👋 Tap /start first to get started."
+security_enabled: "<emoji id=\"5328273248448686763\">✅</emoji> Protection ON"
+security_disabled: "<emoji id=\"5472367489969038040\">❌</emoji> Protection OFF"
+stats_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first to get started."
 stats_message: |
-  📊 <b>Your Statistics</b>
+  <emoji id="5190806721286657692">📊</emoji> <b>Your Statistics</b>
 
-  📤 Sent: <b>{messages_sent}</b>
-  📥 Received: <b>{messages_received}</b>
-  💬 Total: <b>{total_messages}</b>
+  <emoji id="5433614747381538714">📤</emoji> Sent: <b>{messages_sent}</b>
+  <emoji id="5433811242135331842">📥</emoji> Received: <b>{messages_received}</b>
+  <emoji id="5226431245918942763">💬</emoji> Total: <b>{total_messages}</b>
 
-  🚫 Blocked users: <b>{blocked_count}</b>
-  🔄 Identity revokes: <b>{revoke_count}</b>
+  <emoji id="5305381957524272531">🚫</emoji> Blocked users: <b>{blocked_count}</b>
+  <emoji id="5382311255656648590">🔄</emoji> Identity revokes: <b>{revoke_count}</b>
   <emoji id="5375129357373165375">🔗</emoji> Active temp links: <b>{temp_links_count}</b>
 
-  🔒 Message protection: {protect_content}
-  📅 Joined: {registered_at}
-  ⏱️ Last seen: {last_activity}
+  <emoji id="5231154211000950256">🔒</emoji> Message protection: {protect_content}
+  <emoji id="5192784923093652913">📅</emoji> Joined: {registered_at}
+  <emoji id="5382194935057372936">⏱️</emoji> Last seen: {last_activity}
 admin_stats_message: |
-  👑 <b>Admin Dashboard</b>
+  <emoji id="5431505596316665041">👑</emoji> <b>Admin Dashboard</b>
 
-  👥 Total users: <b>{total_users}</b>
-  🟢 Active (24h): <b>{active_24h}</b>
-  🔵 Active (7d): <b>{active_7d}</b>
-  💬 Total messages: <b>{total_messages}</b>
-  🚫 Banned: <b>{total_banned}</b>
+  <emoji id="5388738824538959063">👥</emoji> Total users: <b>{total_users}</b>
+  <emoji id="5416081784641168838">🟢</emoji> Active (24h): <b>{active_24h}</b>
+  <emoji id="5424892643760937442">🔵</emoji> Active (7d): <b>{active_7d}</b>
+  <emoji id="5226431245918942763">💬</emoji> Total messages: <b>{total_messages}</b>
+  <emoji id="5305381957524272531">🚫</emoji> Banned: <b>{total_banned}</b>
   <emoji id="5375129357373165375">🔗</emoji> Temp links: <b>{temp_links_count}</b>
-temp_link_no_user: "👋 Tap /start first to get started."
+temp_link_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first to get started."
 temp_link_menu: |
   <emoji id="5375129357373165375">🔗</emoji> <b>Create Temporary Link</b>
 
   Set expiration and usage limits, then create:
 temp_link_expiry_menu: |
-  ⏱️ <b>Expiration</b>
+  <emoji id="5382194935057372936">⏱️</emoji> <b>Expiration</b>
 
   How long should this link stay active?
 temp_link_uses_menu: |
-  🔢 <b>Usage Limit</b>
+  <emoji id="6026201306585110323">🔢</emoji> <b>Usage Limit</b>
 
   How many people can use this link?
 temp_link_created: |
-  ✅ <b>Link created!</b>
+  <emoji id="5328273248448686763">✅</emoji> <b>Link created!</b>
 
   <emoji id="5375129357373165375">🔗</emoji> <code>{link}</code>
 
@@ -278,7 +278,7 @@ temp_link_created: |
 temp_link_created_alert: "✅ Link created!"
 temp_link_deleted_alert: "🗑️ Link deleted"
 active_links_none: |
-  ℹ️ You don't have any active links yet.
+  <emoji id="5461005184052246279">ℹ️</emoji> You don't have any active links yet.
 
   Use /temp_link to create one.
 active_links_list: |
@@ -290,5 +290,5 @@ active_link_view: |
 
   <code>{link}</code>
 
-  📊 {info}
+  <emoji id="5190806721286657692">📊</emoji> {info}
   👁️ Used: <b>{uses}</b> times
