@@ -23,6 +23,39 @@ ITEMS_PER_PAGE = 8
 _auto_delete_tasks: Dict[int, asyncio.Task] = {}
 
 # Type descriptions for info buttons
+# Custom emoji IDs for each type (icon_custom_emoji_id on buttons)
+TYPE_EMOJI_ID: Dict[str, int] = {
+    "url": 5877465816030515018,
+    "email": 5967280668885913944,
+    "phone": 5897938112654348733,
+    "cashtag": 5974217466270716579,
+    "spoiler": 6008135256798927387,
+    "emoji": 5942913498349571809,
+    "emojionly": 5933613451044720529,
+    "emojicustom": 5942640218170461901,
+    "cyrillic": 6007963990683030781,
+    "zalgo": 6005930547006674040,
+    "photo": 6021321527952153006,
+    "video": 6005986106703613755,
+    "gif": 5945068566909815651,
+    "voice": 5897554554894946515,
+    "videonote": 5891119667388354506,
+    "audio": 5891249688933305846,
+    "document": 5877495434124988415,
+    "sticker": 5784982040432611567,
+    "stickeranimated": 5814652112600043672,
+    "location": 5944940516754853337,
+    "poll": 5875291072225087249,
+    "game": 6023852878597200124,
+    "emojigame": 6021391505854306270,
+    "forward": 5832251986635920010,
+    "forwardbot": 5832251986635920010,
+    "forwardchannel": 5832251986635920010,
+    "forwarduser": 5832251986635920010,
+    "forwardstory": 5832251986635920010,
+    "externalreply": 5888484185261216745,
+}
+
 TYPE_INFO: Dict[str, str] = {
     "all": "Toggle all message types at once",
     # Content
@@ -104,17 +137,16 @@ def build_locktypes_keyboard(user_id: int, page: int = 0) -> InlineKeyboardMarku
         status = "✅" if is_allowed else "🚫"
         toggle_style = ButtonStyle.SUCCESS if is_allowed else ButtonStyle.DANGER
 
-        # Find category emoji for this type
-        cat_emoji = "📎"
-        for emoji, types in TYPE_CATEGORIES:
-            if msg_type in types:
-                cat_emoji = emoji
-                break
+        emoji_id = TYPE_EMOJI_ID.get(msg_type)
+        name_btn_kwargs = {}
+        if emoji_id:
+            name_btn_kwargs["icon_custom_emoji_id"] = emoji_id
 
         buttons.append([
             InlineKeyboardButton(
-                f"{cat_emoji} {msg_type}",
+                msg_type,
                 callback_data=f"lt:i:{msg_type}",
+                **name_btn_kwargs,
             ),
             InlineKeyboardButton(
                 status,
