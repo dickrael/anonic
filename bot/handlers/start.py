@@ -60,7 +60,8 @@ def register_start_handlers(app: Client) -> None:
                 language_code=user_lang,
                 username=user.username,
                 first_name=user.first_name,
-                last_name=user.last_name
+                last_name=user.last_name,
+                is_premium=bool(user.is_premium)
             )
             logger.info(f"New user registered - ID: {uid}, Nickname: {nickname}, Lang: {user_lang}")
             user_data = store.get_user(uid)

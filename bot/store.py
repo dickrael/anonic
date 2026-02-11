@@ -110,7 +110,8 @@ class JSONStore:
         language_code: str = "en",
         username: str = None,
         first_name: str = None,
-        last_name: str = None
+        last_name: str = None,
+        is_premium: bool = False
     ) -> None:
         """Add a new user to the store."""
         async with self._lock:
@@ -127,6 +128,7 @@ class JSONStore:
                 "username": username,
                 "first_name": first_name,
                 "last_name": last_name,
+                "is_premium": is_premium,
                 "banned": False,
                 "ban_expires_at": None,
                 "message_timestamps": {},
@@ -201,12 +203,27 @@ class JSONStore:
                 return True
             return False
 
-    async def update_last_activity(self, telegram_id: int) -> None:
-        """Update user's last activity timestamp."""
+    async def update_last_activity(
+        self,
+        telegram_id: int,
+        username: str = None,
+        first_name: str = None,
+        last_name: str = None,
+        is_premium: bool = None
+    ) -> None:
+        """Update user's last activity timestamp and profile fields."""
         async with self._lock:
             user = self._data['users'].get(str(telegram_id))
             if user:
                 user['last_activity'] = datetime.now(timezone.utc).isoformat()
+                if username is not None:
+                    user['username'] = username
+                if first_name is not None:
+                    user['first_name'] = first_name
+                if last_name is not None:
+                    user['last_name'] = last_name
+                if is_premium is not None:
+                    user['is_premium'] = is_premium
                 await self._save()
 
     def get_by_token(self, token: str) -> Tuple[Optional[int], Optional[Dict[str, Any]]]:

@@ -391,7 +391,13 @@ def register_messaging_handlers(app: Client) -> None:
         if store.is_banned(uid):
             return
 
-        await store.update_last_activity(uid)
+        await store.update_last_activity(
+            uid,
+            username=message.from_user.username,
+            first_name=message.from_user.first_name,
+            last_name=message.from_user.last_name,
+            is_premium=bool(message.from_user.is_premium),
+        )
 
         # Determine message types
         msg_types = get_message_types(message)
@@ -680,7 +686,13 @@ def register_messaging_handlers(app: Client) -> None:
         if store.is_banned(uid):
             return
 
-        await store.update_last_activity(uid)
+        await store.update_last_activity(
+            uid,
+            username=message.from_user.username,
+            first_name=message.from_user.first_name,
+            last_name=message.from_user.last_name,
+            is_premium=bool(message.from_user.is_premium),
+        )
         logger.info(f"Unsupported message type from user {uid}")
         await message.reply(
             await gstr("anonymous_unsupported_type", message),
