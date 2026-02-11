@@ -1,12 +1,12 @@
 lang_name: "English"
 start_no_token: |
-  🔗 <b>Your anonymous link is ready!</b>
+  <emoji id="5375129357373165375">🔗</emoji> <b>Your anonymous link is ready!</b>
 
   <code>https://t.me/{bot_username}?start={token}</code>
 
   👤 You'll appear as: <b>{nickname}</b>
 
-  <i>💡 Share this link anywhere — whoever opens it can send you a message without knowing who you are.</i>
+  <i><emoji id="5472146462362048818">💡</emoji> Share this link anywhere — whoever opens it can send you a message without knowing who you are.</i>
 start_self_connect: |
   😅 <b>That's your own link!</b>
 
@@ -16,9 +16,9 @@ start_self_connect: |
 
   👤 You'll appear as: <b>{nickname}</b>
 start_blocked: "🚫 Can't connect — this person has blocked you. Ouch."
-start_invalid_token: "🔗 This link is invalid or has expired. Ask for a new one!"
+start_invalid_token: "<emoji id=\"5375129357373165375\">🔗</emoji> This link is invalid or has expired. Ask for a new one!"
 start_connection_established: |
-  ✅ You're now chatting with <b>{nickname}</b>!
+  <emoji id="5337080053119336309">👍</emoji> You're now chatting with <b>{nickname}</b>!
 
   Just type your message and it'll be sent anonymously.
   Done chatting? Use /disconnect
@@ -58,7 +58,7 @@ blocked_list: |
   🚫 <b>Blocked users:</b>
   {users}
 
-  <i>💡 To unblock someone, use</i> /unblock <code>code</code>
+  <i><emoji id="5472146462362048818">💡</emoji> To unblock someone, use</i> /unblock <code>code</code>
 anonymous_no_user: "👋 You haven't started yet! Tap /start to set up your profile."
 anonymous_no_connection: |
   💬 No active chat.
@@ -77,8 +77,8 @@ anonymous_switched: "🔄 Switched from <b>{old_nickname}</b> → <b>{new_nickna
 anonymous_caption: |
   <blockquote>{original}</blockquote>
   ———
-  ✨ from <b>{nickname}</b>
-anonymous_caption_media: "———\n✨ from <b>{nickname}</b>"
+  {sparkle} from <b>{nickname}</b>
+anonymous_caption_media: "———\n{sparkle} from <b>{nickname}</b>"
 anonymous_no_connection_info: "ℹ️ <b>{nickname}</b> isn't connected. Reply to their message to start a chat."
 anonymous_switch_info: "ℹ️ Reply to switch to <b>{sender_nickname}</b> (this will disconnect you from <b>{current_nickname}</b>)."
 block_no_user: "👋 You haven't started yet! Tap /start first."
@@ -168,7 +168,7 @@ mod_unbanned: "✅ <b>Unbanned</b> by owner."
 mod_already_banned: "Already banned."
 mod_not_banned: "Not currently banned."
 mod_user_not_found: "User not found."
-anonymous_reply_instruction: "💬 <i>Reply to this message to answer</i>"
+anonymous_reply_instruction: "<emoji id=\"5467538555158943525\">💭</emoji> <i>Reply to this message to answer</i>"
 anonymous_reply_warning: "⚠️ <i>Reply to answer — this will disconnect your current chat</i>"
 revoke_no_user: "👋 Tap /start first to get started."
 revoke_wait: "⏳ You can revoke again in <b>{days}</b> days."
@@ -181,12 +181,12 @@ revoke_confirm: |
 revoke_success: |
   ✅ <b>Fresh start!</b> Who even was that old you?
 
-  🔗 Your new link:
+  <emoji id="5375129357373165375">🔗</emoji> Your new link:
   <code>https://t.me/{bot_username}?start={token}</code>
 
   👤 New nickname: <b>{nickname}</b>
 
-  <i>💡 Share your new link — the old one no longer works.</i>
+  <i><emoji id="5472146462362048818">💡</emoji> Share your new link — the old one no longer works.</i>
 help_message: |
   👋 <b>Anonymous Messages</b>
 
@@ -227,7 +227,7 @@ security_info: |
 
   When enabled, recipients can't forward or save the messages you send.
 
-  <i>💡 Applies to all message types — text, photos, videos, etc.</i>
+  <i><emoji id="5472146462362048818">💡</emoji> Applies to all message types — text, photos, videos, etc.</i>
 security_enabled: "✅ Protection ON"
 security_disabled: "❌ Protection OFF"
 stats_no_user: "👋 Tap /start first to get started."
@@ -240,7 +240,7 @@ stats_message: |
 
   🚫 Blocked users: <b>{blocked_count}</b>
   🔄 Identity revokes: <b>{revoke_count}</b>
-  🔗 Active temp links: <b>{temp_links_count}</b>
+  <emoji id="5375129357373165375">🔗</emoji> Active temp links: <b>{temp_links_count}</b>
 
   🔒 Message protection: {protect_content}
   📅 Joined: {registered_at}
@@ -253,10 +253,10 @@ admin_stats_message: |
   🔵 Active (7d): <b>{active_7d}</b>
   💬 Total messages: <b>{total_messages}</b>
   🚫 Banned: <b>{total_banned}</b>
-  🔗 Temp links: <b>{temp_links_count}</b>
+  <emoji id="5375129357373165375">🔗</emoji> Temp links: <b>{temp_links_count}</b>
 temp_link_no_user: "👋 Tap /start first to get started."
 temp_link_menu: |
-  🔗 <b>Create Temporary Link</b>
+  <emoji id="5375129357373165375">🔗</emoji> <b>Create Temporary Link</b>
 
   Set expiration and usage limits, then create:
 temp_link_expiry_menu: |
@@ -270,11 +270,11 @@ temp_link_uses_menu: |
 temp_link_created: |
   ✅ <b>Link created!</b>
 
-  🔗 <code>{link}</code>
+  <emoji id="5375129357373165375">🔗</emoji> <code>{link}</code>
 
   {info}
 
-  <i>💡 Manage your links anytime with /activelinks</i>
+  <i><emoji id="5472146462362048818">💡</emoji> Manage your links anytime with /activelinks</i>
 temp_link_created_alert: "✅ Link created!"
 temp_link_deleted_alert: "🗑️ Link deleted"
 active_links_none: |
@@ -282,11 +282,11 @@ active_links_none: |
 
   Use /temp_link to create one.
 active_links_list: |
-  🔗 <b>Your Links ({count})</b>
+  <emoji id="5375129357373165375">🔗</emoji> <b>Your Links ({count})</b>
 
   Tap a link to view details:
 active_link_view: |
-  🔗 <b>Temporary Link</b>
+  <emoji id="5375129357373165375">🔗</emoji> <b>Temporary Link</b>
 
   <code>{link}</code>
 
