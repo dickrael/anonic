@@ -77,8 +77,8 @@ anonymous_switched: "<emoji id=\"5382311255656648590\">🔄</emoji> Перекл
 anonymous_caption: |
   <blockquote>{original}</blockquote>
   {sparkle_row}
-  от <b>{nickname}</b>
-anonymous_caption_media: "{sparkle_row}\nот <b>{nickname}</b>"
+  <emoji id="5832251986635920010">✨</emoji> от <b>{nickname}</b>
+anonymous_caption_media: "{sparkle_row}\n<emoji id=\"5832251986635920010\">✨</emoji> от <b>{nickname}</b>"
 anonymous_no_connection_info: "<emoji id=\"5461005184052246279\">ℹ️</emoji> <b>{nickname}</b> не в сети. Ответьте на сообщение, чтобы начать чат."
 anonymous_switch_info: "<emoji id=\"5461005184052246279\">ℹ️</emoji> Ответьте, чтобы переключиться на <b>{sender_nickname}</b> (отключит вас от <b>{current_nickname}</b>)."
 block_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Вы ещё не начали! Нажмите /start."
