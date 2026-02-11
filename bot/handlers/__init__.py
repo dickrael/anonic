@@ -11,6 +11,7 @@ from .help import register_help_handlers
 from .security import register_security_handlers
 from .stats import register_stats_handlers
 from .temp_links import register_temp_links_handlers
+from .restart import register_restart_handlers
 
 
 def register_all_handlers(app) -> None:
@@ -21,6 +22,7 @@ def register_all_handlers(app) -> None:
     """
     # Command handlers first
     register_start_handlers(app)
+    register_restart_handlers(app)
     register_disconnect_handlers(app)
     register_help_handlers(app)
     register_security_handlers(app)

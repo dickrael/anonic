@@ -77,28 +77,36 @@ def format_expiry(link: Dict) -> str:
     return " • ".join(parts)
 
 
-def build_main_menu() -> InlineKeyboardMarkup:
-    """Build main temp_link menu."""
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("⏱️ Set Expiration", callback_data="tl:menu:expiry")],
-        [InlineKeyboardButton("🔢 Set Usage Limit", callback_data="tl:menu:uses")],
-        [InlineKeyboardButton("🔗 Create Without Limits", callback_data="tl:create:0:0")],
-        [InlineKeyboardButton("❌", callback_data="tl:close")],
-    ])
+def build_main_menu(expiry_days: int = 0) -> InlineKeyboardMarkup:
+    """Build main temp_link menu, preserving selected expiry."""
+    expiry_label = f"⏱️ Expiration: {expiry_days} days ✅" if expiry_days > 0 else "⏱️ Set Expiration"
+    rows = [
+        [InlineKeyboardButton(expiry_label, callback_data=f"tl:menu:expiry:{expiry_days}")],
+        [InlineKeyboardButton("🔢 Set Usage Limit", callback_data=f"tl:menu:uses:{expiry_days}")],
+    ]
+    if expiry_days > 0:
+        rows.append([InlineKeyboardButton(f"🔗 Create ({expiry_days}d, unlimited uses)", callback_data=f"tl:create:{expiry_days}:0")])
+    rows.append([InlineKeyboardButton("🔗 Create Without Limits", callback_data="tl:create:0:0")])
+    rows.append([InlineKeyboardButton("❌", callback_data="tl:close")])
+    return InlineKeyboardMarkup(rows)
 
 
-def build_expiry_menu() -> InlineKeyboardMarkup:
+def build_expiry_menu(current_expiry: int = 0) -> InlineKeyboardMarkup:
     """Build expiration selection submenu."""
+    def label(days):
+        check = " ✅" if days == current_expiry else ""
+        return f"{days} day{'s' if days > 1 else ''}{check}"
+
     return InlineKeyboardMarkup([
         [
-            InlineKeyboardButton("1 day", callback_data="tl:expiry:1"),
-            InlineKeyboardButton("3 days", callback_data="tl:expiry:3"),
+            InlineKeyboardButton(label(1), callback_data="tl:expiry:1"),
+            InlineKeyboardButton(label(3), callback_data="tl:expiry:3"),
         ],
         [
-            InlineKeyboardButton("7 days", callback_data="tl:expiry:7"),
-            InlineKeyboardButton("30 days", callback_data="tl:expiry:30"),
+            InlineKeyboardButton(label(7), callback_data="tl:expiry:7"),
+            InlineKeyboardButton(label(30), callback_data="tl:expiry:30"),
         ],
-        [InlineKeyboardButton("◀️ Back", callback_data="tl:menu:main")],
+        [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:main:{current_expiry}")],
     ])
 
 
@@ -117,7 +125,7 @@ def build_uses_menu(expiry_days: int = 0) -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton("♾️ Unlimited", callback_data=f"{prefix}:0"),
         ],
-        [InlineKeyboardButton("◀️ Back", callback_data="tl:menu:main")],
+        [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:main:{expiry_days}")],
     ])
 
 
@@ -134,8 +142,22 @@ def build_expiry_then_uses_menu(expiry_days: int) -> InlineKeyboardMarkup:
             InlineKeyboardButton("50 uses", callback_data=f"tl:create:{expiry_days}:50"),
         ],
         [InlineKeyboardButton("♾️ Unlimited uses", callback_data=f"tl:create:{expiry_days}:0")],
-        [InlineKeyboardButton("◀️ Back", callback_data="tl:menu:expiry")],
+        [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:expiry:{expiry_days}")],
     ])
+
+
+def build_active_links_buttons(links: list) -> list:
+    """Build inline buttons for active links list."""
+    buttons = []
+    for i, link in enumerate(links[:10], start=1):
+        token = link['token']
+        info = format_expiry(link)
+        buttons.append([
+            InlineKeyboardButton(f"🔗 Link {i} ({info})", callback_data=f"al:view:{token[:16]}"),
+            InlineKeyboardButton("🗑️", callback_data=f"al:del:{token[:16]}"),
+        ])
+    buttons.append([InlineKeyboardButton("❌", callback_data="al:close")])
+    return buttons
 
 
 def register_temp_links_handlers(app: Client) -> None:
@@ -189,18 +211,7 @@ def register_temp_links_handlers(app: Client) -> None:
             return
 
         # Build inline keyboard with links
-        buttons = []
-        for link in links[:10]:  # Max 10 links
-            token = link['token']
-            short_token = token[:8] + "..."
-            info = format_expiry(link)
-            buttons.append([
-                InlineKeyboardButton(f"🔗 {short_token}", callback_data=f"al:view:{token[:16]}"),
-                InlineKeyboardButton("🗑️", callback_data=f"al:del:{token[:16]}"),
-            ])
-
-        buttons.append([InlineKeyboardButton("❌", callback_data="al:close")])
-
+        buttons = build_active_links_buttons(links)
         keyboard = InlineKeyboardMarkup(buttons)
         sent_msg = await message.reply(
             (await gstr("active_links_list", message)).format(count=len(links)),
@@ -232,22 +243,23 @@ def register_temp_links_handlers(app: Client) -> None:
         # Main menu navigation
         if action == "menu":
             submenu = parts[2]
+            saved_expiry = int(parts[3]) if len(parts) > 3 else 0
             if submenu == "main":
-                keyboard = build_main_menu()
+                keyboard = build_main_menu(saved_expiry)
                 await callback.message.edit_text(
                     await gstr("temp_link_menu", callback),
                     reply_markup=keyboard,
                     parse_mode=ParseMode.HTML
                 )
             elif submenu == "expiry":
-                keyboard = build_expiry_menu()
+                keyboard = build_expiry_menu(saved_expiry)
                 await callback.message.edit_text(
                     await gstr("temp_link_expiry_menu", callback),
                     reply_markup=keyboard,
                     parse_mode=ParseMode.HTML
                 )
             elif submenu == "uses":
-                keyboard = build_uses_menu(0)
+                keyboard = build_uses_menu(saved_expiry)
                 await callback.message.edit_text(
                     await gstr("temp_link_uses_menu", callback),
                     reply_markup=keyboard,
@@ -255,16 +267,16 @@ def register_temp_links_handlers(app: Client) -> None:
                 )
             await callback.answer()
 
-        # Select expiry days, then show uses menu
+        # Select expiry days, then show uses menu or go back to main with selection saved
         elif action == "expiry":
             expiry_days = int(parts[2])
-            keyboard = build_expiry_then_uses_menu(expiry_days)
+            keyboard = build_main_menu(expiry_days)
             await callback.message.edit_text(
-                await gstr("temp_link_uses_menu", callback),
+                await gstr("temp_link_menu", callback),
                 reply_markup=keyboard,
                 parse_mode=ParseMode.HTML
             )
-            await callback.answer()
+            await callback.answer(f"✅ {expiry_days} day{'s' if expiry_days > 1 else ''} selected")
 
         # Create link with settings
         elif action == "create":
@@ -340,6 +352,27 @@ def register_temp_links_handlers(app: Client) -> None:
             await callback.answer()
             return
 
+        if action == "back":
+            links = store.get_active_temp_links(uid)
+            if not links:
+                await callback.message.edit_text(
+                    await gstr("active_links_none", callback),
+                    parse_mode=ParseMode.HTML
+                )
+            else:
+                buttons = build_active_links_buttons(links)
+                await callback.message.edit_text(
+                    (await gstr("active_links_list", callback)).format(count=len(links)),
+                    reply_markup=InlineKeyboardMarkup(buttons),
+                    parse_mode=ParseMode.HTML
+                )
+            await callback.answer()
+            return
+
+        if len(parts) < 3:
+            await callback.answer("Invalid action", show_alert=True)
+            return
+
         token_prefix = parts[2]
 
         # Find full token
@@ -389,38 +422,10 @@ def register_temp_links_handlers(app: Client) -> None:
                     parse_mode=ParseMode.HTML
                 )
             else:
-                buttons = []
-                for link in links[:10]:
-                    token = link['token']
-                    short_token = token[:8] + "..."
-                    buttons.append([
-                        InlineKeyboardButton(f"🔗 {short_token}", callback_data=f"al:view:{token[:16]}"),
-                        InlineKeyboardButton("🗑️", callback_data=f"al:del:{token[:16]}"),
-                    ])
-                buttons.append([InlineKeyboardButton("❌", callback_data="al:close")])
-
+                buttons = build_active_links_buttons(links)
                 await callback.message.edit_text(
                     (await gstr("active_links_list", callback)).format(count=len(links)),
                     reply_markup=InlineKeyboardMarkup(buttons),
                     parse_mode=ParseMode.HTML
                 )
             logger.info(f"User {uid} deleted temp link: {token_prefix}...")
-
-        elif action == "back":
-            links = store.get_active_temp_links(uid)
-            buttons = []
-            for link in links[:10]:
-                token = link['token']
-                short_token = token[:8] + "..."
-                buttons.append([
-                    InlineKeyboardButton(f"🔗 {short_token}", callback_data=f"al:view:{token[:16]}"),
-                    InlineKeyboardButton("🗑️", callback_data=f"al:del:{token[:16]}"),
-                ])
-            buttons.append([InlineKeyboardButton("❌", callback_data="al:close")])
-
-            await callback.message.edit_text(
-                (await gstr("active_links_list", callback)).format(count=len(links)),
-                reply_markup=InlineKeyboardMarkup(buttons),
-                parse_mode=ParseMode.HTML
-            )
-            await callback.answer()
