@@ -37,7 +37,6 @@ def register_start_handlers(app: Client) -> None:
         logger.info(f"Handling /start from user {uid}, username: {user.username or 'None'}")
 
         if store.is_banned(uid):
-            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
             return
 
         user_data = store.get_user(uid)
@@ -167,7 +166,6 @@ def register_start_handlers(app: Client) -> None:
         uid = message.from_user.id
 
         if store.is_banned(uid):
-            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
             return
 
         user_data = store.get_user(uid)

@@ -21,7 +21,6 @@ def register_help_handlers(app: Client) -> None:
         uid = message.from_user.id
 
         if store.is_banned(uid):
-            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
             return
 
         await message.reply(

@@ -33,7 +33,6 @@ def register_blocking_handlers(app: Client) -> None:
         uid = message.from_user.id
 
         if store.is_banned(uid):
-            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
             return
 
         user = store.get_user(uid)
@@ -61,7 +60,6 @@ def register_blocking_handlers(app: Client) -> None:
         uid = message.from_user.id
 
         if store.is_banned(uid):
-            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
             return
 
         user = store.get_user(uid)
@@ -148,7 +146,6 @@ def register_blocking_handlers(app: Client) -> None:
         uid = message.from_user.id
 
         if store.is_banned(uid):
-            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
             return
 
         user = store.get_user(uid)
@@ -174,10 +171,17 @@ def register_blocking_handlers(app: Client) -> None:
             )
             return
 
+        # Get nickname + code before unblocking
+        entry = store.get_blocked_entry(recipient, identifier)
+        nickname = entry["nickname"] if entry else identifier
+        code = entry.get("special_code", "") if entry else ""
+
         await store.unblock(recipient, identifier)
         logger.info(f"User {uid} unblocked: {identifier}")
         await message.reply(
-            (await gstr("unblock_success", message)).format(identifier=identifier),
+            (await gstr("unblock_success", message)).format(
+                nickname=nickname, code=code
+            ),
             parse_mode=ParseMode.HTML
         )
 
@@ -187,7 +191,6 @@ def register_blocking_handlers(app: Client) -> None:
         uid = message.from_user.id
 
         if store.is_banned(uid):
-            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
             return
 
         user = store.get_user(uid)

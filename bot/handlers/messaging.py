@@ -389,7 +389,6 @@ def register_messaging_handlers(app: Client) -> None:
             return
 
         if store.is_banned(uid):
-            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
             return
 
         await store.update_last_activity(uid)
@@ -677,7 +676,6 @@ def register_messaging_handlers(app: Client) -> None:
             return
 
         if store.is_banned(uid):
-            await message.reply(await gstr("banned", message), parse_mode=ParseMode.HTML)
             return
 
         await store.update_last_activity(uid)

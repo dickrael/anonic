@@ -450,6 +450,16 @@ class JSONStore:
             for block in self._data['blocks'][recipient_id]
         )
 
+    def get_blocked_entry(self, recipient_id: str, identifier: str) -> Optional[dict]:
+        """Get blocked entry by special_code or nickname. Returns dict with nickname/special_code."""
+        if recipient_id not in self._data['blocks']:
+            return None
+        for block in self._data['blocks'][recipient_id]:
+            if (block.get("special_code") == identifier or
+                    identifier.lower() in block["nickname"].lower()):
+                return block
+        return None
+
     # ----- Message Type Locking -----
 
     async def lock_type(self, user_id: str, msg_type: str) -> bool:

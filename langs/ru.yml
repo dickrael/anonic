@@ -72,7 +72,7 @@ unblock_no_user: "❌ Сначала зарегистрируйтесь чере
 unblock_active_connection: "⚠️ Нельзя использовать /unblock во время связи."
 unblock_no_args: "❌ Укажите никнейм или код для разблокировки.\nИспользуйте /blocked для списка или /unblockall для разблокировки всех."
 unblock_not_blocked: "❌ <code>{identifier}</code> не заблокирован."
-unblock_success: "✅ <code>{identifier}</code> разблокирован."
+unblock_success: "✅ <b>{nickname}</b> <code>{code}</code> разблокирован."
 unblockall_confirm: "⚠️ <b>Разблокировать всех ({count})?</b>"
 unblockall_success: "✅ Разблокировано {count} пользователей."
 report_no_user: "❌ Сначала зарегистрируйтесь через /start."
