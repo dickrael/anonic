@@ -17,7 +17,6 @@ Routing Model:
 
 import asyncio
 import logging
-import random
 import re
 from datetime import timedelta
 
@@ -35,15 +34,14 @@ from .moderation import _unban_allow_buttons
 logger = logging.getLogger(__name__)
 
 SPARKLE_EMOJI_IDS = [
-    5240029979961485982, 5240198978334650444, 5240012847336942802,
-    5238163138066544182, 5240371975322363287, 5240260409251881488,
-    5240412227755863357,
+    5240037517629091229, 5240029979961485982, 5240198978334650444,
+    5240012847336942802, 5238163138066544182, 5240371975322363287,
+    5240260409251881488, 5240412227755863357,
 ]
 
 
-def _random_sparkle() -> str:
-    eid = random.choice(SPARKLE_EMOJI_IDS)
-    return f'<emoji id="{eid}">✨</emoji>'
+def _sparkle_row() -> str:
+    return ''.join(f'<emoji id="{eid}">✨</emoji>' for eid in SPARKLE_EMOJI_IDS)
 
 
 # Commands to exclude from message handling
@@ -624,24 +622,24 @@ def register_messaging_handlers(app: Client) -> None:
             # Build caption in the RECIPIENT's language
             # If custom emojis present, render them as <emoji> HTML tags
             custom_emoji_html = _render_text_with_custom_emoji(message)
-            sparkle = _random_sparkle()
+            sparkle_row = _sparkle_row()
             if custom_emoji_html:
                 caption = (await gstr("anonymous_caption", user_id=target_id)).format(
                     original=custom_emoji_html,
                     nickname=user['nickname'],
-                    sparkle=sparkle
+                    sparkle_row=sparkle_row
                 )
             elif original_caption.strip():
                 caption = (await gstr("anonymous_caption", user_id=target_id)).format(
                     original=original_caption,
                     nickname=user['nickname'],
-                    sparkle=sparkle
+                    sparkle_row=sparkle_row
                 )
             else:
                 # No text content (sticker, voice, etc.) - just show sender info
                 caption = (await gstr("anonymous_caption_media", user_id=target_id)).format(
                     nickname=user['nickname'],
-                    sparkle=sparkle
+                    sparkle_row=sparkle_row
                 )
 
             # Add reply instruction ONLY if target has no active session with sender

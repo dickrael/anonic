@@ -76,9 +76,9 @@ anonymous_sent: "<emoji id=\"5328273248448686763\">✅</emoji> Sent to <b>{nickn
 anonymous_switched: "<emoji id=\"5382311255656648590\">🔄</emoji> Switched from <b>{old_nickname}</b> → <b>{new_nickname}</b>."
 anonymous_caption: |
   <blockquote>{original}</blockquote>
-  ———
-  {sparkle} from <b>{nickname}</b>
-anonymous_caption_media: "———\n{sparkle} from <b>{nickname}</b>"
+  {sparkle_row}
+  from <b>{nickname}</b>
+anonymous_caption_media: "{sparkle_row}\nfrom <b>{nickname}</b>"
 anonymous_no_connection_info: "<emoji id=\"5461005184052246279\">ℹ️</emoji> <b>{nickname}</b> isn't connected. Reply to their message to start a chat."
 anonymous_switch_info: "<emoji id=\"5461005184052246279\">ℹ️</emoji> Reply to switch to <b>{sender_nickname}</b> (this will disconnect you from <b>{current_nickname}</b>)."
 block_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> You haven't started yet! Tap /start first."
