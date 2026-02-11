@@ -58,6 +58,7 @@ anonymous_caption: |
   <blockquote>{original}</blockquote>
   ———
   ✨ от <b>{nickname}</b>
+anonymous_caption_media: "———\n✨ от <b>{nickname}</b>"
 anonymous_no_connection_info: "ℹ️ <b>{nickname}</b> не в чате. Ответьте для подключения."
 anonymous_switch_info: "ℹ️ Ответьте для переключения на <b>{sender_nickname}</b> (отключит <b>{current_nickname}</b>)."
 block_no_user: "❌ Сначала зарегистрируйтесь через /start."

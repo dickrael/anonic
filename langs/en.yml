@@ -58,6 +58,7 @@ anonymous_caption: |
   <blockquote>{original}</blockquote>
   ———
   ✨ from <b>{nickname}</b>
+anonymous_caption_media: "———\n✨ from <b>{nickname}</b>"
 anonymous_no_connection_info: "ℹ️ <b>{nickname}</b> is not in chat. Reply to connect."
 anonymous_switch_info: "ℹ️ Reply to switch to <b>{sender_nickname}</b> (disconnects from <b>{current_nickname}</b>)."
 block_no_user: "❌ Register first using /start."

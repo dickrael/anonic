@@ -568,15 +568,17 @@ def register_messaging_handlers(app: Client) -> None:
         try:
             original_caption = message.caption or message.text or ""
 
-            # Build caption based on whether there's text content
+            # Build caption in the RECIPIENT's language
             if original_caption.strip():
-                caption = (await gstr("anonymous_caption", message)).format(
+                caption = (await gstr("anonymous_caption", user_id=target_id)).format(
                     original=original_caption,
                     nickname=user['nickname']
                 )
             else:
                 # No text content (sticker, voice, etc.) - just show sender info
-                caption = f"———\n✨ from <b>{user['nickname']}</b>"
+                caption = (await gstr("anonymous_caption_media", user_id=target_id)).format(
+                    nickname=user['nickname']
+                )
 
             # Add reply instruction ONLY if target has no active session with sender
             target_pending = store.get_pending_target(target_id)
@@ -585,10 +587,10 @@ def register_messaging_handlers(app: Client) -> None:
                 pass
             elif target_pending:
                 # Target is connected to someone else - warn about disconnection
-                caption += "\n" + (await gstr("anonymous_reply_warning", message))
+                caption += "\n" + (await gstr("anonymous_reply_warning", user_id=target_id))
             else:
                 # Target has no session - show reply instruction
-                caption += "\n" + (await gstr("anonymous_reply_instruction", message))
+                caption += "\n" + (await gstr("anonymous_reply_instruction", user_id=target_id))
 
             # Get sender's protect_content setting
             sender_protect_content = store.get_protect_content(uid)
