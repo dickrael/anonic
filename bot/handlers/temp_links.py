@@ -150,6 +150,8 @@ def build_active_links_buttons(links: list) -> list:
             InlineKeyboardButton(f"🔗 Link {i} ({info})", callback_data=f"al:view:{token[:16]}", style=ButtonStyle.PRIMARY),
             InlineKeyboardButton("🗑️", callback_data=f"al:del:{token[:16]}", style=ButtonStyle.DANGER),
         ])
+    if len(buttons) > 1:
+        buttons.append([InlineKeyboardButton("🗑️ Delete All", callback_data="al:delall", style=ButtonStyle.DANGER)])
     buttons.append([InlineKeyboardButton("❌", callback_data="al:close", style=ButtonStyle.DANGER)])
     return buttons
 
@@ -377,6 +379,31 @@ def register_temp_links_handlers(app: Client) -> None:
                     parse_mode=ParseMode.HTML
                 )
             await callback.answer()
+            return
+
+        if action == "delall":
+            # Show confirmation
+            links = store.get_active_temp_links(uid)
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton(f"✅ Yes, delete all ({len(links)})", callback_data="al:delallok", style=ButtonStyle.DANGER)],
+                [InlineKeyboardButton("◀️ Back", callback_data="al:back")],
+            ])
+            await callback.message.edit_text(
+                "⚠️ <b>Delete all temporary links?</b>\n\nThis cannot be undone.",
+                reply_markup=keyboard,
+                parse_mode=ParseMode.HTML,
+            )
+            await callback.answer()
+            return
+
+        if action == "delallok":
+            count = await store.delete_all_temp_links(uid)
+            await callback.answer(f"🗑️ Deleted {count} links")
+            await callback.message.edit_text(
+                await gstr("active_links_none", callback),
+                parse_mode=ParseMode.HTML,
+            )
+            logger.info(f"User {uid} deleted all temp links ({count})")
             return
 
         if len(parts) < 3:

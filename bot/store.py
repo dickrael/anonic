@@ -754,6 +754,19 @@ class JSONStore:
                 return True
             return False
 
+    async def delete_all_temp_links(self, user_id: int) -> int:
+        """Delete all temp links for a user. Returns count deleted."""
+        async with self._lock:
+            to_delete = [
+                token for token, link in self._data.get('temp_links', {}).items()
+                if link.get('user_id') == str(user_id)
+            ]
+            for token in to_delete:
+                del self._data['temp_links'][token]
+            if to_delete:
+                await self._save()
+            return len(to_delete)
+
     def get_user_temp_links(self, user_id: int) -> List[Dict[str, Any]]:
         """Get all temp links for a user."""
         links = []
