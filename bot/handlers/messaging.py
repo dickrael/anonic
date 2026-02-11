@@ -257,7 +257,7 @@ async def send_message_to_target(
     elif msg_type == "photo":
         sent_msg = await client.send_photo(
             target_id,
-            message.photo[-1].file_id,
+            message.photo.file_id,
             caption=caption,
             parse_mode=ParseMode.HTML,
             protect_content=protect_content
@@ -357,7 +357,7 @@ async def send_message_to_target(
         if message.photo:
             sent_msg = await client.send_photo(
                 target_id,
-                message.photo[-1].file_id,
+                message.photo.file_id,
                 caption=caption,
                 parse_mode=ParseMode.HTML,
                 protect_content=protect_content

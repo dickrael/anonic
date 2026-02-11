@@ -180,13 +180,14 @@ def reset_auto_delete(message: Message, delay: int = 60):
 
 
 def _get_current_page(callback: CallbackQuery) -> int:
-    """Extract current page number from the pagination button."""
+    """Extract current page number from the active pagination button (• N •)."""
     if callback.message and callback.message.reply_markup:
         for row in callback.message.reply_markup.inline_keyboard:
             for btn in row:
                 if btn.callback_data == "lt:noop":
                     try:
-                        return int(btn.text.split("/")[0]) - 1
+                        # Parse "• 2 •" format
+                        return int(btn.text.replace("•", "").strip()) - 1
                     except (ValueError, IndexError):
                         pass
     return 0
