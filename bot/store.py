@@ -181,6 +181,14 @@ class JSONStore:
             user['last_revoke'] = datetime.now(timezone.utc).isoformat()
             user['revoke_count'] = user['revoke_count'] + 1
 
+            # Delete all temp links (old identity links should no longer work)
+            uid_str = str(telegram_id)
+            if 'temp_links' in self._data:
+                self._data['temp_links'] = [
+                    link for link in self._data['temp_links']
+                    if str(link.get('user_id')) != uid_str
+                ]
+
             await self._save()
             return True, ""
 
