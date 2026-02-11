@@ -1,86 +1,112 @@
 lang_name: "English"
 start_no_token: |
-  🔗 Share this link to receive anonymous messages:
+  🔗 <b>Your anonymous link is ready!</b>
 
   <code>https://t.me/{bot_username}?start={token}</code>
 
-  👤 Your nickname: <b>{nickname}</b>
+  👤 You'll appear as: <b>{nickname}</b>
+
+  <i>💡 Share this link anywhere — whoever opens it can send you a message without knowing who you are.</i>
 start_self_connect: |
-  ⚠️ <b>You cannot connect with yourself!</b>
-  🔗 Share this link to receive anonymous messages:
+  😅 <b>That's your own link!</b>
+
+  You can't send messages to yourself. Share it with others instead:
 
   <code>https://t.me/{bot_username}?start={token}</code>
 
-  👤 Your nickname: <b>{nickname}</b>
-start_blocked: "❌ Unable to establish connection: you are blocked by this user."
-start_invalid_token: "❌ Invalid or expired link."
+  👤 You'll appear as: <b>{nickname}</b>
+start_blocked: "🚫 Can't connect — this person has blocked you."
+start_invalid_token: "🔗 This link is invalid or has expired. Ask for a new one!"
 start_connection_established: |
-  ✅ Connection established with <b>{nickname}</b>.
-  ℹ️ Use /disconnect to end this connection.
-start_connection_switched: "ℹ️ Your previous connection with <b>{old_nickname}</b> has been terminated."
-disconnect_no_user: "❌ Register first using /start."
-disconnect_no_connection: "❌ You have no active connection."
-disconnect_success: "✅ Connection with <b>{nickname}</b> terminated."
-locktypes_active_connection: "⚠️ Cannot use /locktypes during active connection."
+  ✅ You're now chatting with <b>{nickname}</b>!
+
+  Just type your message and it'll be sent anonymously.
+  Done chatting? Use /disconnect
+start_connection_switched: "🔄 Switched away from <b>{old_nickname}</b>."
+disconnect_no_user: "👋 You haven't started yet! Tap /start to get your link."
+disconnect_no_connection: "ℹ️ You're not chatting with anyone right now."
+disconnect_success: "👋 Chat with <b>{nickname}</b> ended."
+locktypes_active_connection: "⏳ Finish your current chat first, then use /locktypes."
 locktypes_response: |
   📋 Message types:
   {types_list}
   {blocked_types}
   {unblocked_types}
-lock_active_connection: "⚠️ Cannot use /lock during active connection."
-lock_no_args: "❌ Specify types to block (e.g., /lock -all -gif -poll)."
+lock_active_connection: "⏳ Finish your current chat first, then use /lock."
+lock_no_args: |
+  🔒 Tell me what to block!
+
+  Example: <code>/lock -gif -poll</code>
+  Block everything: <code>/lock -all</code>
 lock_success: "🔒 Blocked: <b>{types}</b>"
-lock_invalid_types: "⚠️ Ignored invalid types: <b>{types}</b>"
-unlock_active_connection: "⚠️ Cannot use /unlock during active connection."
-unlock_no_args: "❌ Specify types to unblock (e.g., /unlock -all -gif -poll)."
+lock_invalid_types: "⚠️ Skipped unknown types: <b>{types}</b>"
+unlock_active_connection: "⏳ Finish your current chat first, then use /unlock."
+unlock_no_args: |
+  🔓 Tell me what to unblock!
+
+  Example: <code>/unlock -gif -poll</code>
+  Unblock everything: <code>/unlock -all</code>
 unlock_success: "🔓 Unblocked: <b>{types}</b>"
-unlock_invalid_types: "⚠️ Ignored invalid types: <b>{types}</b>"
-blocked_active_connection: "⚠️ Cannot use /blocked during active connection."
-start_self_blocked: "🔒 You have blocked <b>{nickname}</b>. Unblock them to connect."
-blocked_none: "✅ No blocked users."
+unlock_invalid_types: "⚠️ Skipped unknown types: <b>{types}</b>"
+blocked_active_connection: "⏳ Finish your current chat first, then use /blocked."
+start_self_blocked: |
+  🔒 You've blocked <b>{nickname}</b>.
+
+  Use /unblock to remove the block first, then try connecting again.
+blocked_none: "👍 You haven't blocked anyone."
 blocked_list: |
   🚫 <b>Blocked users:</b>
   {users}
 
-  ℹ️ Use /unblock <code>code</code> to unblock
-anonymous_no_user: "❌ Register first using /start."
-anonymous_no_connection: "❌ Use your link to connect or reply to a message."
-anonymous_reply_not_found: "❌ Sender not found."
-anonymous_blocked: "❌ You are blocked by this user."
-anonymous_target_not_found: "❌ Recipient not found."
-anonymous_type_blocked: "🚫 This user doesn't accept <b>{type}</b> messages."
-anonymous_flood_wait: "⏳ Please wait, message delayed."
-anonymous_target_blocked_bot: "❌ Recipient blocked the bot."
-anonymous_invalid_peer: "❌ Invalid recipient."
-anonymous_error: "❌ Error sending message."
+  <i>💡 To unblock someone, use</i> /unblock <code>code</code>
+anonymous_no_user: "👋 You haven't started yet! Tap /start to set up your profile."
+anonymous_no_connection: |
+  💬 No active chat.
+
+  <i>To send a message, either open someone's link or reply to a message you received.</i>
+anonymous_reply_not_found: "🤷 Couldn't find who sent that. The message may be too old."
+anonymous_blocked: "🚫 This person has blocked you."
+anonymous_target_not_found: "🤷 Recipient not found — they may have left the bot."
+anonymous_type_blocked: "🚫 <b>{type}</b> messages aren't accepted by this user."
+anonymous_flood_wait: "⏳ Slow down! Your message is queued."
+anonymous_target_blocked_bot: "😕 Can't deliver — this person has stopped the bot."
+anonymous_invalid_peer: "❌ Something went wrong with the recipient."
+anonymous_error: "❌ Couldn't send your message. Try again."
 anonymous_sent: "✅ Sent to <b>{nickname}</b>"
-anonymous_switched: "Switched from <b>{old_nickname}</b> to <b>{new_nickname}</b>."
+anonymous_switched: "🔄 Switched from <b>{old_nickname}</b> → <b>{new_nickname}</b>."
 anonymous_caption: |
   <blockquote>{original}</blockquote>
   ———
   ✨ from <b>{nickname}</b>
 anonymous_caption_media: "———\n✨ from <b>{nickname}</b>"
-anonymous_no_connection_info: "ℹ️ <b>{nickname}</b> is not in chat. Reply to connect."
-anonymous_switch_info: "ℹ️ Reply to switch to <b>{sender_nickname}</b> (disconnects from <b>{current_nickname}</b>)."
-block_no_user: "❌ Register first using /start."
-block_active_connection: "⚠️ Cannot use /block during active connection."
-block_no_reply: "❌ Reply to a message to block the sender."
-block_self: "⚠️ You cannot block yourself."
-block_already_blocked: "⚠️ <b>{nickname}</b> is already blocked."
-block_success: "🔒 <b>{nickname}</b> blocked."
-block_no_nickname: "❌ Unable to identify user."
-block_nickname_not_found: "❌ User not found."
-unblock_no_user: "❌ Register first using /start."
-unblock_active_connection: "⚠️ Cannot use /unblock during active connection."
-unblock_no_args: "❌ Specify nickname or code to unblock.\nUse /blocked to see the list or /unblockall to unblock everyone."
-unblock_not_blocked: "❌ <code>{identifier}</code> is not blocked."
-unblock_success: "✅ <b>{nickname}</b> <code>{code}</code> unblocked."
+anonymous_no_connection_info: "ℹ️ <b>{nickname}</b> isn't connected. Reply to their message to start a chat."
+anonymous_switch_info: "ℹ️ Reply to switch to <b>{sender_nickname}</b> (this will disconnect you from <b>{current_nickname}</b>)."
+block_no_user: "👋 You haven't started yet! Tap /start first."
+block_active_connection: "⏳ Finish your current chat first, then use /block."
+block_no_reply: |
+  🔒 To block someone, reply to one of their messages with /block.
+block_self: "😅 You can't block yourself!"
+block_already_blocked: "ℹ️ <b>{nickname}</b> is already blocked."
+block_success: "🔒 <b>{nickname}</b> has been blocked. They can no longer message you."
+block_no_nickname: "🤷 Couldn't identify who sent that message."
+block_nickname_not_found: "🤷 User not found."
+unblock_no_user: "👋 You haven't started yet! Tap /start first."
+unblock_active_connection: "⏳ Finish your current chat first, then use /unblock."
+unblock_no_args: |
+  🔓 Who do you want to unblock?
+
+  Usage: <code>/unblock code</code>
+  See your block list: /blocked
+  Unblock everyone: /unblockall
+unblock_not_blocked: "ℹ️ <code>{identifier}</code> isn't on your block list."
+unblock_success: "✅ <b>{nickname}</b> <code>{code}</code> has been unblocked."
 unblockall_confirm: "⚠️ <b>Unblock all {count} users?</b>"
-unblockall_success: "✅ Unblocked {count} users."
-report_no_user: "❌ Register first using /start."
-report_no_reply: "❌ Reply to a message to report it."
-report_no_nickname: "❌ Unable to identify sender."
-report_success: "✅ Report sent to moderation."
+unblockall_success: "✅ Done! Unblocked {count} users."
+report_no_user: "👋 You haven't started yet! Tap /start first."
+report_no_reply: |
+  🚨 To report a message, reply to it with /report.
+report_no_nickname: "🤷 Couldn't identify the sender of that message."
+report_success: "✅ Report sent! Our moderators will review it."
 report_message: |
   🚨 <b>Report</b>
 
@@ -88,102 +114,123 @@ report_message: |
   <b>About:</b> {reported_nickname} <code>{reported_code}</code>
   <b>Type:</b> {type}
   <b>Msg ID:</b> <code>{message_id}</code>
-inactivity_disconnect: "❌ Disconnected from <b>{nickname}</b> (5 min inactive)."
-ban_no_user: "❌ Register first using /start."
-ban_not_owner: "❌ Owner only."
-ban_no_args: "❌ Specify user ID (e.g., /ban 123456789)."
-ban_invalid_user: "❌ User <code>{user_id}</code> not found."
-ban_already_banned: "⚠️ User <code>{user_id}</code> already banned."
-ban_success: "🚫 User <code>{user_id}</code> banned."
-unban_no_user: "❌ Register first using /start."
-unban_not_owner: "❌ Owner only."
-unban_no_args: "❌ Specify user ID (e.g., /unban 123456789)."
-unban_not_banned: "❌ User <code>{user_id}</code> is not banned."
-unban_success: "✅ User <code>{user_id}</code> unbanned."
+inactivity_disconnect: "⏰ Chat with <b>{nickname}</b> ended — inactive for 5 minutes."
+ban_no_user: "👋 Tap /start first."
+ban_not_owner: "🔒 This command is for the bot owner only."
+ban_no_args: |
+  🚫 Usage: <code>/ban user_id</code>
+
+  Example: <code>/ban 123456789</code>
+ban_invalid_user: "🤷 User <code>{user_id}</code> not found."
+ban_already_banned: "ℹ️ User <code>{user_id}</code> is already banned."
+ban_success: "🚫 User <code>{user_id}</code> has been banned."
+unban_no_user: "👋 Tap /start first."
+unban_not_owner: "🔒 This command is for the bot owner only."
+unban_no_args: |
+  ✅ Usage: <code>/unban user_id</code>
+
+  Example: <code>/unban 123456789</code>
+unban_not_banned: "ℹ️ User <code>{user_id}</code> isn't banned."
+unban_success: "✅ User <code>{user_id}</code> has been unbanned."
 banned: "❄️ Your account is frozen."
-start_connection_failed_frozen: "❄️ <b>{nickname}</b> is frozen."
-lang_no_user: "❌ Register first using /start."
-lang_select: "🌐 <b>Select language:</b>"
-lang_already: "ℹ️ Already using {language}."
-lang_changed: "✅ Language changed to {language}."
-lang_invalid: "❌ Invalid language. Available: {languages}"
+start_connection_failed_frozen: "❄️ <b>{nickname}</b>'s account is frozen."
+lang_no_user: "👋 Tap /start first to get started."
+lang_select: "🌐 <b>Choose your language:</b>"
+lang_already: "ℹ️ You're already using {language}."
+lang_changed: "✅ Language set to {language}."
+lang_invalid: "❌ Unknown language. Available: {languages}"
 lang_success: "✅ Language: {language}"
-anonymous_unsupported_type: "❌ Unsupported media type."
-disconnect_by_partner: "ℹ️ <b>{nickname}</b> disconnected."
-start_deactivated: "❌ <b>{nickname}</b> account deactivated."
-locktypes_no_user: "❌ Register first using /start."
+anonymous_unsupported_type: "🚫 This media type isn't supported."
+disconnect_by_partner: "👋 <b>{nickname}</b> left the chat."
+start_deactivated: "😕 <b>{nickname}</b>'s account has been deactivated."
+locktypes_no_user: "👋 Tap /start first to get started."
 locktypes_blocked: "🔒 {types}"
 locktypes_unblocked: "🔓 {types}"
-lock_no_user: "❌ Register first using /start."
-unlock_no_user: "❌ Register first using /start."
-blocked_no_user: "❌ Register first using /start."
-block_deactivated: "⚠️ <b>{nickname}</b> account deactivated."
-report_deactivated: "❌ Moderation unavailable."
+lock_no_user: "👋 Tap /start first to get started."
+unlock_no_user: "👋 Tap /start first to get started."
+blocked_no_user: "👋 Tap /start first to get started."
+block_deactivated: "😕 <b>{nickname}</b>'s account has been deactivated."
+report_deactivated: "😕 Moderation is currently unavailable. Try again later."
 spam_report: |
   🚨 <b>Spam Detected</b>
 
   <b>Spammer:</b> {nickname}
   <b>Target:</b> {target_nickname}
   <b>Messages/min:</b> {message_count}
-spam_banned: "🚫 Banned for {duration} (spam)."
-ban_warning: "⚠️ Your account has been frozen due to a violation of the bot's rules."
+spam_banned: "🚫 You've been temporarily banned for {duration} due to spam."
+ban_warning: |
+  ⚠️ <b>Your account has been frozen.</b>
+
+  A moderator determined that your activity violated the bot's rules. You will no longer be able to send or receive messages.
 mod_banned: "🚫 <b>Banned</b> by owner."
 mod_allowed: "✅ <b>Allowed</b> by owner."
 mod_unbanned: "✅ <b>Unbanned</b> by owner."
 mod_already_banned: "Already banned."
 mod_not_banned: "Not currently banned."
 mod_user_not_found: "User not found."
-anonymous_reply_instruction: "💬 <i>Reply to answer</i>"
-anonymous_reply_warning: "⚠️ <i>Reply to answer (disconnects current chat)</i>"
-revoke_no_user: "❌ Register first using /start."
-revoke_wait: "⏳ Wait <b>{days}</b> days to revoke again."
-revoke_confirm: "⚠️ <b>Revoke identity?</b>\n\nYou'll get a new link and nickname. Old link stops working."
-revoke_success: |
-  ✅ <b>Identity revoked!</b>
+anonymous_reply_instruction: "💬 <i>Reply to this message to answer</i>"
+anonymous_reply_warning: "⚠️ <i>Reply to answer — this will disconnect your current chat</i>"
+revoke_no_user: "👋 Tap /start first to get started."
+revoke_wait: "⏳ You can revoke again in <b>{days}</b> days."
+revoke_confirm: |
+  ⚠️ <b>Start fresh?</b>
 
-  🔗 New link:
+  This will give you a new link and nickname. Your old link will stop working and all temporary links will be deleted.
+
+  <i>This cannot be undone.</i>
+revoke_success: |
+  ✅ <b>Fresh start!</b>
+
+  🔗 Your new link:
   <code>https://t.me/{bot_username}?start={token}</code>
 
   👤 New nickname: <b>{nickname}</b>
-help_message: |
-  👋 <b>Anonymous Messaging Bot</b>
 
-  Share your link to receive anonymous messages. Reply to answer.
+  <i>💡 Share your new link — the old one no longer works.</i>
+help_message: |
+  👋 <b>Anonymous Messages</b>
+
+  Send and receive messages without revealing your identity.
+
+  <b>Getting started:</b>
+  1️⃣ Share your link (get it with /start)
+  2️⃣ Someone opens it and sends you a message
+  3️⃣ Reply to their message to chat back
+  4️⃣ Use /disconnect when you're done
 
   <b>Commands:</b>
-  /start - Get your anonymous link
-  /help - Show this help
-  /stats - Your statistics
-  /disconnect - End current chat
-  /block - Block sender (reply)
-  /unblock - Unblock by code
-  /unblockall - Unblock all users
-  /blocked - View blocked
-  /security - Message protection
-  /temp_link - Create temp link
-  /activelinks - Manage temp links
-  /locktypes - Message type settings
-  /revoke - New identity (weekly)
-  /report - Report (reply)
-  /lang - Change language
+  /start — Get your anonymous link
+  /help — This help page
+  /disconnect — End current chat
+  /lang — Change language
 
-  <b>How it works:</b>
-  1. Share your link with someone
-  2. They send you a message
-  3. Reply to their message to respond
-  4. Use /disconnect to end the chat
-security_no_user: "❌ Register first using /start."
+  <b>Privacy & Safety:</b>
+  /block — Block a sender (reply to their msg)
+  /unblock — Unblock by code
+  /blocked — See your block list
+  /report — Report a message (reply to it)
+  /security — Prevent forwarding of your messages
+
+  <b>Customize:</b>
+  /locktypes — Choose what message types you accept
+  /temp_link — Create a temporary link
+  /activelinks — Manage your temp links
+  /revoke — New identity & link (once per week)
+
+  <b>Info:</b>
+  /stats — Your statistics
+security_no_user: "👋 Tap /start first to get started."
 security_info: |
   🔒 <b>Message Protection</b>
 
   Status: {status}
 
-  When enabled, your messages cannot be forwarded or saved by recipients.
+  When enabled, recipients can't forward or save the messages you send.
 
-  <i>Protects text, photos, videos, and other media you send.</i>
-security_enabled: "✅ Protection enabled"
-security_disabled: "❌ Protection disabled"
-stats_no_user: "❌ Register first using /start."
+  <i>💡 Applies to all message types — text, photos, videos, etc.</i>
+security_enabled: "✅ Protection ON"
+security_disabled: "❌ Protection OFF"
+stats_no_user: "👋 Tap /start first to get started."
 stats_message: |
   📊 <b>Your Statistics</b>
 
@@ -191,15 +238,15 @@ stats_message: |
   📥 Received: <b>{messages_received}</b>
   💬 Total: <b>{total_messages}</b>
 
-  🚫 Blocked: <b>{blocked_count}</b>
-  🔄 Revokes: <b>{revoke_count}</b>
-  🔗 Temp links: <b>{temp_links_count}</b>
+  🚫 Blocked users: <b>{blocked_count}</b>
+  🔄 Identity revokes: <b>{revoke_count}</b>
+  🔗 Active temp links: <b>{temp_links_count}</b>
 
-  🔒 Protection: {protect_content}
-  📅 Registered: {registered_at}
-  ⏱️ Last active: {last_activity}
+  🔒 Message protection: {protect_content}
+  📅 Joined: {registered_at}
+  ⏱️ Last seen: {last_activity}
 admin_stats_message: |
-  👑 <b>Admin Statistics</b>
+  👑 <b>Admin Dashboard</b>
 
   👥 Total users: <b>{total_users}</b>
   🟢 Active (24h): <b>{active_24h}</b>
@@ -207,34 +254,37 @@ admin_stats_message: |
   💬 Total messages: <b>{total_messages}</b>
   🚫 Banned: <b>{total_banned}</b>
   🔗 Temp links: <b>{temp_links_count}</b>
-temp_link_no_user: "❌ Register first using /start."
+temp_link_no_user: "👋 Tap /start first to get started."
 temp_link_menu: |
   🔗 <b>Create Temporary Link</b>
 
-  Choose link settings:
+  Set expiration and usage limits, then create:
 temp_link_expiry_menu: |
-  ⏱️ <b>Set Expiration</b>
+  ⏱️ <b>Expiration</b>
 
-  Select when the link expires:
+  How long should this link stay active?
 temp_link_uses_menu: |
-  🔢 <b>Set Usage Limit</b>
+  🔢 <b>Usage Limit</b>
 
-  Select max number of uses:
+  How many people can use this link?
 temp_link_created: |
-  ✅ <b>Temporary link created!</b>
+  ✅ <b>Link created!</b>
 
   🔗 <code>{link}</code>
 
   {info}
 
-  Use /activelinks to manage your links.
+  <i>💡 Manage your links anytime with /activelinks</i>
 temp_link_created_alert: "✅ Link created!"
 temp_link_deleted_alert: "🗑️ Link deleted"
-active_links_none: "ℹ️ No active temporary links. Use /temp_link to create one."
-active_links_list: |
-  🔗 <b>Active Links ({count})</b>
+active_links_none: |
+  ℹ️ You don't have any active links yet.
 
-  Click to view details, 🗑️ to delete:
+  Use /temp_link to create one.
+active_links_list: |
+  🔗 <b>Your Links ({count})</b>
+
+  Tap a link to view details:
 active_link_view: |
   🔗 <b>Temporary Link</b>
 
