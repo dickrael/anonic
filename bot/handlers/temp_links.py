@@ -81,12 +81,13 @@ def build_main_menu(expiry_days: int = 0, max_uses: int = 0) -> InlineKeyboardMa
     """Build main temp_link menu showing current selections + Create button."""
     expiry_label = f"⏱️ {expiry_days} days" if expiry_days > 0 else "⏱️ No expiration"
     uses_label = f"🔢 {max_uses} uses" if max_uses > 0 else "🔢 Unlimited"
-    # Encode both settings: tl:menu:expiry:EXP:USES / tl:menu:uses:EXP:USES
+    has_limits = expiry_days > 0 or max_uses > 0
+    create_label = "🔗 Create" if has_limits else "🔗 Create without limits"
     s = f"{expiry_days}:{max_uses}"
     return InlineKeyboardMarkup([
         [InlineKeyboardButton(expiry_label, callback_data=f"tl:menu:expiry:{s}")],
         [InlineKeyboardButton(uses_label, callback_data=f"tl:menu:uses:{s}")],
-        [InlineKeyboardButton("🔗 Create", callback_data=f"tl:create:{s}")],
+        [InlineKeyboardButton(create_label, callback_data=f"tl:create:{s}")],
         [InlineKeyboardButton("❌", callback_data="tl:close")],
     ])
 

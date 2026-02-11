@@ -88,7 +88,7 @@ def get_message_types(message: Message) -> list:
         if message.sticker.is_animated:
             types.append("stickeranimated")
         if message.sticker.is_video:
-            types.append("stickeranimated")
+            types.append("stickeranimated")  # video stickers grouped with animated
         if hasattr(message.sticker, 'premium_animation') and message.sticker.premium_animation:
             types.append("stickerpremium")
 
@@ -113,18 +113,8 @@ def get_message_types(message: Message) -> list:
         types.append("poll")
 
     # --- Interactive types ---
-    if message.game:
-        types.append("game")
     if message.dice:
         types.append("emojigame")
-    if message.reply_markup:
-        if hasattr(message.reply_markup, 'inline_keyboard'):
-            types.append("inline")
-            types.append("button")
-
-    # --- External reply ---
-    if message.external_reply:
-        types.append("externalreply")
 
     # --- Text content analysis ---
     if text:
