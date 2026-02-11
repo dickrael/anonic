@@ -47,11 +47,9 @@ def register_restart_handlers(app: Client) -> None:
 
         logger.info(f"Owner {uid} triggered restart. Git: {git_output}")
 
-        # Small delay so user sees the message
-        await asyncio.sleep(1)
+        # Schedule restart outside the handler to avoid "Task cannot await on itself"
+        async def _do_restart():
+            await asyncio.sleep(1)
+            os.execv(sys.executable, [sys.executable, "-m", "bot"])
 
-        # Stop the bot gracefully, then re-exec the process
-        if client.is_connected:
-            await client.stop()
-
-        os.execv(sys.executable, [sys.executable, "-m", "bot"])
+        asyncio.get_event_loop().create_task(_do_restart())
