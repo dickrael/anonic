@@ -3,9 +3,12 @@
 import logging
 
 from pyrogram import Client, filters
-from pyrogram.types import Message
-from pyrogram.enums import ParseMode
-from pyrogram.errors import InputUserDeactivated
+from pyrogram.types import (
+    Message, CallbackQuery,
+    InlineKeyboardMarkup, InlineKeyboardButton,
+)
+from pyrogram.enums import ParseMode, ButtonStyle
+from pyrogram.errors import InputUserDeactivated, UserIsBlocked, PeerIdInvalid
 
 from ..store import get_store
 from ..strings import gstr
@@ -13,6 +16,44 @@ from ..config import config
 from ..utils import extract_nickname_from_message
 
 logger = logging.getLogger(__name__)
+
+
+def _ban_allow_buttons(user_id: int) -> InlineKeyboardMarkup:
+    """Ban / Allow buttons for a report."""
+    return InlineKeyboardMarkup([[
+        InlineKeyboardButton(
+            "🚫 Ban", callback_data=f"mod:ban:{user_id}",
+            style=ButtonStyle.DANGER,
+        ),
+        InlineKeyboardButton(
+            "✅ Allow", callback_data=f"mod:allow:{user_id}",
+            style=ButtonStyle.SUCCESS,
+        ),
+    ]])
+
+
+def _unban_button(user_id: int) -> InlineKeyboardMarkup:
+    """Unban button shown after a ban action."""
+    return InlineKeyboardMarkup([[
+        InlineKeyboardButton(
+            "✅ Unban", callback_data=f"mod:unban:{user_id}",
+            style=ButtonStyle.SUCCESS,
+        ),
+    ]])
+
+
+def _unban_allow_buttons(user_id: int) -> InlineKeyboardMarkup:
+    """Unban / Allow buttons for spam auto-ban reports."""
+    return InlineKeyboardMarkup([[
+        InlineKeyboardButton(
+            "✅ Unban", callback_data=f"mod:unban:{user_id}",
+            style=ButtonStyle.SUCCESS,
+        ),
+        InlineKeyboardButton(
+            "✅ Allow", callback_data=f"mod:allow:{user_id}",
+            style=ButtonStyle.SUCCESS,
+        ),
+    ]])
 
 
 def register_moderation_handlers(app: Client) -> None:
@@ -177,10 +218,12 @@ def register_moderation_handlers(app: Client) -> None:
                 type=replied_message.media or 'text',
                 message_id=forwarded_message.id
             )
+            buttons = _ban_allow_buttons(reported_id) if reported_id else None
             await client.send_message(
                 config.moderation_chat_id,
                 report_text,
-                parse_mode=ParseMode.HTML
+                parse_mode=ParseMode.HTML,
+                reply_markup=buttons,
             )
             logger.info(
                 f"Report from {reporter_nickname} ({reporter_special_code}) about "
@@ -196,3 +239,94 @@ def register_moderation_handlers(app: Client) -> None:
         except Exception as e:
             logger.error(f"Report failed: {type(e).__name__}: {e}")
             await message.reply(await gstr("anonymous_error", message), parse_mode=ParseMode.HTML)
+
+    # --- Callback handler for mod: buttons in moderation chat ---
+    @app.on_callback_query(filters.regex(r"^mod:"))
+    async def mod_callback(client: Client, callback: CallbackQuery):
+        # Only owner can use these buttons
+        if callback.from_user.id != config.owner_id:
+            await callback.answer("Owner only.", show_alert=True)
+            return
+
+        parts = callback.data.split(":")
+        if len(parts) != 3:
+            await callback.answer("Invalid action.", show_alert=True)
+            return
+
+        action = parts[1]
+        try:
+            target_uid = int(parts[2])
+        except ValueError:
+            await callback.answer("Invalid user ID.", show_alert=True)
+            return
+
+        store = get_store()
+        original_text = callback.message.text or callback.message.caption or ""
+
+        if action == "ban":
+            target = store.get_user(target_uid)
+            if not target:
+                await callback.answer(await gstr("mod_user_not_found", callback), show_alert=True)
+                return
+
+            if store.is_banned(target_uid):
+                await callback.answer(await gstr("mod_already_banned", callback), show_alert=True)
+                return
+
+            await store.ban_user(target_uid)
+            logger.info(f"User {target_uid} banned via mod button by owner {callback.from_user.id}")
+
+            # Send warning DM to banned user
+            try:
+                await client.send_message(
+                    target_uid,
+                    await gstr("ban_warning", callback),
+                    parse_mode=ParseMode.HTML,
+                )
+            except (UserIsBlocked, PeerIdInvalid, InputUserDeactivated) as e:
+                logger.warning(f"Could not send ban warning to {target_uid}: {type(e).__name__}")
+            except Exception as e:
+                logger.error(f"Failed to send ban warning to {target_uid}: {type(e).__name__}: {e}")
+
+            # Edit report message: append status, show Unban button
+            new_text = original_text + "\n\n" + (await gstr("mod_banned", callback))
+            await callback.message.edit_text(
+                new_text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=_unban_button(target_uid),
+            )
+            await callback.answer()
+
+        elif action == "allow":
+            # Edit report message: append status, remove buttons
+            new_text = original_text + "\n\n" + (await gstr("mod_allowed", callback))
+            await callback.message.edit_text(
+                new_text,
+                parse_mode=ParseMode.HTML,
+            )
+            await callback.answer()
+
+        elif action == "unban":
+            target = store.get_user(target_uid)
+            if not target:
+                await callback.answer(await gstr("mod_user_not_found", callback), show_alert=True)
+                return
+
+            if not store.is_banned(target_uid):
+                await callback.answer(await gstr("mod_not_banned", callback), show_alert=True)
+                return
+
+            await store.unban_user(target_uid)
+            logger.info(f"User {target_uid} unbanned via mod button by owner {callback.from_user.id}")
+
+            # Edit report message: append status, show Ban button again
+            new_text = original_text + "\n\n" + (await gstr("mod_unbanned", callback))
+            await callback.message.edit_text(
+                new_text,
+                parse_mode=ParseMode.HTML,
+                reply_markup=_ban_allow_buttons(target_uid),
+            )
+            await callback.answer()
+
+        else:
+            await callback.answer("Unknown action.", show_alert=True)

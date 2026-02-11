@@ -29,6 +29,7 @@ from ..store import get_store
 from ..strings import gstr
 from ..config import config
 from .common import can_connect
+from .moderation import _unban_allow_buttons
 
 logger = logging.getLogger(__name__)
 
@@ -553,7 +554,8 @@ def register_messaging_handlers(app: Client) -> None:
                 await client.send_message(
                     config.moderation_chat_id,
                     report_text,
-                    parse_mode=ParseMode.HTML
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=_unban_allow_buttons(uid),
                 )
             except Exception as e:
                 logger.error(f"Failed to send spam report: {type(e).__name__}: {e}")

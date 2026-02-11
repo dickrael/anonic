@@ -124,6 +124,13 @@ spam_report: |
   <b>Target:</b> {target_nickname}
   <b>Messages/min:</b> {message_count}
 spam_banned: "🚫 Banned for {duration} (spam)."
+ban_warning: "⚠️ Your account has been frozen due to a violation of the bot's rules."
+mod_banned: "🚫 <b>Banned</b> by owner."
+mod_allowed: "✅ <b>Allowed</b> by owner."
+mod_unbanned: "✅ <b>Unbanned</b> by owner."
+mod_already_banned: "Already banned."
+mod_not_banned: "Not currently banned."
+mod_user_not_found: "User not found."
 anonymous_reply_instruction: "💬 <i>Reply to answer</i>"
 anonymous_reply_warning: "⚠️ <i>Reply to answer (disconnects current chat)</i>"
 revoke_no_user: "❌ Register first using /start."
