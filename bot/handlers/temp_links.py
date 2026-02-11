@@ -79,15 +79,15 @@ def format_expiry(link: Dict) -> str:
 
 def build_main_menu(expiry_days: int = 0, max_uses: int = 0) -> InlineKeyboardMarkup:
     """Build main temp_link menu showing current selections + Create button."""
-    expiry_label = f"⏱️ {expiry_days} days" if expiry_days > 0 else "⏱️ No expiration"
-    uses_label = f"🔢 {max_uses} uses" if max_uses > 0 else "🔢 Unlimited"
+    expiry_label = f"{expiry_days} days" if expiry_days > 0 else "No expiration"
+    uses_label = f"{max_uses} uses" if max_uses > 0 else "Unlimited"
     has_limits = expiry_days > 0 or max_uses > 0
-    create_label = "🔗 Create" if has_limits else "🔗 Create without limits"
+    create_label = "Create" if has_limits else "Create without limits"
     s = f"{expiry_days}:{max_uses}"
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton(expiry_label, callback_data=f"tl:menu:expiry:{s}", style=ButtonStyle.PRIMARY)],
-        [InlineKeyboardButton(uses_label, callback_data=f"tl:menu:uses:{s}", style=ButtonStyle.PRIMARY)],
-        [InlineKeyboardButton(create_label, callback_data=f"tl:create:{s}", style=ButtonStyle.SUCCESS)],
+        [InlineKeyboardButton(expiry_label, callback_data=f"tl:menu:expiry:{s}", style=ButtonStyle.PRIMARY, icon_custom_emoji_id=5780517739756000213)],
+        [InlineKeyboardButton(uses_label, callback_data=f"tl:menu:uses:{s}", style=ButtonStyle.PRIMARY, icon_custom_emoji_id=5780517739756000213)],
+        [InlineKeyboardButton(create_label, callback_data=f"tl:create:{s}", style=ButtonStyle.SUCCESS, icon_custom_emoji_id=5877465816030515018)],
         [InlineKeyboardButton("Close", callback_data="tl:close", style=ButtonStyle.DANGER, icon_custom_emoji_id=5985346521103604145)],
     ])
 
@@ -98,21 +98,22 @@ def build_expiry_menu(expiry_days: int = 0, max_uses: int = 0) -> InlineKeyboard
 
     def btn(days):
         selected = days == expiry_days
-        check = " ✅" if selected else ""
         return InlineKeyboardButton(
-            f"{days} day{'s' if days > 1 else ''}{check}",
+            f"{days} day{'s' if days > 1 else ''}",
             callback_data=f"tl:expiry:{days}:{s_uses}",
             style=ButtonStyle.SUCCESS if selected else ButtonStyle.DEFAULT,
+            icon_custom_emoji_id=5427009714745517609 if selected else None,
         )
 
     no_exp_selected = expiry_days == 0
     return InlineKeyboardMarkup([
         [btn(1), btn(3)],
         [btn(7), btn(30)],
-        [InlineKeyboardButton("♾️ No expiration" + (" ✅" if no_exp_selected else ""),
+        [InlineKeyboardButton("No expiration",
                               callback_data=f"tl:expiry:0:{s_uses}",
-                              style=ButtonStyle.SUCCESS if no_exp_selected else ButtonStyle.DEFAULT)],
-        [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:main:{expiry_days}:{s_uses}")],
+                              style=ButtonStyle.SUCCESS if no_exp_selected else ButtonStyle.DEFAULT,
+                              icon_custom_emoji_id=5780517739756000213 if not no_exp_selected else 5427009714745517609)],
+        [InlineKeyboardButton("Back", callback_data=f"tl:menu:main:{expiry_days}:{s_uses}", icon_custom_emoji_id=5400169738263352182)],
     ])
 
 
@@ -122,21 +123,22 @@ def build_uses_menu(expiry_days: int = 0, max_uses: int = 0) -> InlineKeyboardMa
 
     def btn(n):
         selected = n == max_uses
-        check = " ✅" if selected else ""
-        label = f"{n} use{'s' if n > 1 else ''}{check}"
+        label = f"{n} use{'s' if n > 1 else ''}"
         return InlineKeyboardButton(
             label, callback_data=f"tl:uses:{s_exp}:{n}",
             style=ButtonStyle.SUCCESS if selected else ButtonStyle.DEFAULT,
+            icon_custom_emoji_id=5427009714745517609 if selected else None,
         )
 
     unlim_selected = max_uses == 0
     return InlineKeyboardMarkup([
         [btn(1), btn(5)],
         [btn(10), btn(50)],
-        [InlineKeyboardButton("♾️ Unlimited" + (" ✅" if unlim_selected else ""),
+        [InlineKeyboardButton("Unlimited",
                               callback_data=f"tl:uses:{s_exp}:0",
-                              style=ButtonStyle.SUCCESS if unlim_selected else ButtonStyle.DEFAULT)],
-        [InlineKeyboardButton("◀️ Back", callback_data=f"tl:menu:main:{s_exp}:{max_uses}")],
+                              style=ButtonStyle.SUCCESS if unlim_selected else ButtonStyle.DEFAULT,
+                              icon_custom_emoji_id=5780517739756000213 if not unlim_selected else 5427009714745517609)],
+        [InlineKeyboardButton("Back", callback_data=f"tl:menu:main:{s_exp}:{max_uses}", icon_custom_emoji_id=5400169738263352182)],
     ])
 
 
@@ -147,11 +149,11 @@ def build_active_links_buttons(links: list) -> list:
         token = link['token']
         info = format_expiry(link)
         buttons.append([
-            InlineKeyboardButton(f"🔗 Link {i} ({info})", callback_data=f"al:view:{token[:16]}", style=ButtonStyle.PRIMARY),
-            InlineKeyboardButton("🗑️", callback_data=f"al:del:{token[:16]}", style=ButtonStyle.DANGER),
+            InlineKeyboardButton(f"Link {i} ({info})", callback_data=f"al:view:{token[:16]}", style=ButtonStyle.PRIMARY, icon_custom_emoji_id=5877465816030515018),
+            InlineKeyboardButton(" ", callback_data=f"al:del:{token[:16]}", style=ButtonStyle.DANGER, icon_custom_emoji_id=5841541824803509441),
         ])
     if len(buttons) > 1:
-        buttons.append([InlineKeyboardButton("🗑️ Delete All", callback_data="al:delall", style=ButtonStyle.DANGER)])
+        buttons.append([InlineKeyboardButton("Delete All", callback_data="al:delall", style=ButtonStyle.DANGER, icon_custom_emoji_id=5841541824803509441)])
     buttons.append([InlineKeyboardButton("Close", callback_data="al:close", style=ButtonStyle.DANGER, icon_custom_emoji_id=5985346521103604145)])
     return buttons
 
@@ -384,7 +386,7 @@ def register_temp_links_handlers(app: Client) -> None:
             links = store.get_active_temp_links(uid)
             keyboard = InlineKeyboardMarkup([
                 [InlineKeyboardButton(f"Yes, delete all ({len(links)})", callback_data="al:delallok", style=ButtonStyle.DANGER, icon_custom_emoji_id=5427009714745517609)],
-                [InlineKeyboardButton("◀️ Back", callback_data="al:back")],
+                [InlineKeyboardButton("Back", callback_data="al:back", icon_custom_emoji_id=5400169738263352182)],
             ])
             await callback.message.edit_text(
                 "⚠️ <b>Delete all temporary links?</b>\n\nThis cannot be undone.",
@@ -430,8 +432,8 @@ def register_temp_links_handlers(app: Client) -> None:
             info = format_expiry(link_data)
 
             keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🗑️ Delete", callback_data=f"al:del:{token_prefix}", style=ButtonStyle.DANGER)],
-                [InlineKeyboardButton("◀️ Back", callback_data="al:back")],
+                [InlineKeyboardButton("Delete", callback_data=f"al:del:{token_prefix}", style=ButtonStyle.DANGER, icon_custom_emoji_id=5841541824803509441)],
+                [InlineKeyboardButton("Back", callback_data="al:back", icon_custom_emoji_id=5400169738263352182)],
             ])
 
             await callback.message.edit_text(

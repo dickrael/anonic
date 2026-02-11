@@ -44,9 +44,10 @@ def register_security_handlers(app: Client) -> None:
         keyboard = InlineKeyboardMarkup([
             [
                 InlineKeyboardButton(
-                    "🔓 Disable" if current_status else "🔒 Enable",
+                    "Disable" if current_status else "Enable",
                     callback_data=f"security:toggle",
                     style=ButtonStyle.DANGER if current_status else ButtonStyle.SUCCESS,
+                    icon_custom_emoji_id=6034962180875490251 if current_status else 5879895758202735862,
                 ),
             ],
             [
