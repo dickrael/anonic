@@ -9,6 +9,7 @@ from pyrogram.types import (
     Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 )
 from pyrogram.enums import ParseMode, ButtonStyle
+from pyrogram.errors import MessageNotModified
 
 from ..store import get_store
 from ..strings import gstr
@@ -177,6 +178,30 @@ def reset_auto_delete(message: Message, delay: int = 60):
     schedule_auto_delete(message, delay)
 
 
+def _get_current_page(callback: CallbackQuery) -> int:
+    """Extract current page number from the pagination button."""
+    if callback.message and callback.message.reply_markup:
+        for row in callback.message.reply_markup.inline_keyboard:
+            for btn in row:
+                if btn.callback_data == "lt:noop":
+                    try:
+                        return int(btn.text.split("/")[0]) - 1
+                    except (ValueError, IndexError):
+                        pass
+    return 0
+
+
+async def _refresh_keyboard(callback: CallbackQuery, user_id: int, page: int = None):
+    """Rebuild and update the keyboard, ignoring MessageNotModified."""
+    if page is None:
+        page = _get_current_page(callback)
+    keyboard = build_locktypes_keyboard(user_id, page)
+    try:
+        await callback.message.edit_reply_markup(keyboard)
+    except MessageNotModified:
+        pass
+
+
 def register_lock_handlers(app: Client) -> None:
     """Register lock/unlock type command handlers."""
 
@@ -240,19 +265,7 @@ def register_lock_handlers(app: Client) -> None:
                 await store.unlock_type(str(uid), msg_type)
                 await callback.answer(f"✅ {msg_type} unlocked")
 
-            # Get current page from button
-            current_page = 0
-            if callback.message.reply_markup:
-                for row in callback.message.reply_markup.inline_keyboard:
-                    for btn in row:
-                        if btn.callback_data == "lt:noop":
-                            try:
-                                current_page = int(btn.text.split("/")[0]) - 1
-                            except:
-                                pass
-
-            keyboard = build_locktypes_keyboard(uid, current_page)
-            await callback.message.edit_reply_markup(keyboard)
+            await _refresh_keyboard(callback, uid)
 
         # Info about type
         elif action == "i" and len(parts) > 2:
@@ -265,57 +278,26 @@ def register_lock_handlers(app: Client) -> None:
         # Pagination
         elif action == "p" and len(parts) > 2:
             page = int(parts[2])
-            keyboard = build_locktypes_keyboard(uid, page)
-            await callback.message.edit_reply_markup(keyboard)
+            await _refresh_keyboard(callback, uid, page)
             await callback.answer()
 
         # Unlock all
         elif action == "ua":
             await store.unlock_type(str(uid), "all")
             await callback.answer("✅ All types unlocked")
-            current_page = 0
-            if callback.message.reply_markup:
-                for row in callback.message.reply_markup.inline_keyboard:
-                    for btn in row:
-                        if btn.callback_data == "lt:noop":
-                            try:
-                                current_page = int(btn.text.split("/")[0]) - 1
-                            except:
-                                pass
-            keyboard = build_locktypes_keyboard(uid, current_page)
-            await callback.message.edit_reply_markup(keyboard)
+            await _refresh_keyboard(callback, uid)
 
         # Default permissions
         elif action == "df":
             await store.reset_allowed_types(str(uid))
             await callback.answer("🔄 Reset to default permissions")
-            current_page = 0
-            if callback.message.reply_markup:
-                for row in callback.message.reply_markup.inline_keyboard:
-                    for btn in row:
-                        if btn.callback_data == "lt:noop":
-                            try:
-                                current_page = int(btn.text.split("/")[0]) - 1
-                            except:
-                                pass
-            keyboard = build_locktypes_keyboard(uid, current_page)
-            await callback.message.edit_reply_markup(keyboard)
+            await _refresh_keyboard(callback, uid)
 
         # Lock all
         elif action == "la":
             await store.lock_type(str(uid), "all")
             await callback.answer("🚫 All types locked")
-            current_page = 0
-            if callback.message.reply_markup:
-                for row in callback.message.reply_markup.inline_keyboard:
-                    for btn in row:
-                        if btn.callback_data == "lt:noop":
-                            try:
-                                current_page = int(btn.text.split("/")[0]) - 1
-                            except:
-                                pass
-            keyboard = build_locktypes_keyboard(uid, current_page)
-            await callback.message.edit_reply_markup(keyboard)
+            await _refresh_keyboard(callback, uid)
 
         # Close
         elif action == "c":
