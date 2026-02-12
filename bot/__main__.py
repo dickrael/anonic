@@ -50,8 +50,8 @@ async def init_bot() -> None:
     # Load nicknames
     load_nicknames()
 
-    # Initialize store
-    store = init_store(config.data_file)
+    # Initialize store (async — creates tables)
+    store = await init_store(config.data_file)
 
     # Set up strings to use store for language lookup
     strings.set_store_getter(get_store)

@@ -7,14 +7,14 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 if TYPE_CHECKING:
     from pyrogram import Client
-    from .store import JSONStore
+    from .store import SQLiteStore
 
 logger = logging.getLogger(__name__)
 
 scheduler = AsyncIOScheduler()
 
 
-async def cleanup_expired_pending_targets(store: "JSONStore") -> None:
+async def cleanup_expired_pending_targets(store: "SQLiteStore") -> None:
     """Clean up pending targets that weren't used within timeout."""
     try:
         deleted = await store.cleanup_expired_pending_targets(timeout_minutes=5)
@@ -24,7 +24,7 @@ async def cleanup_expired_pending_targets(store: "JSONStore") -> None:
         logger.error(f"Error cleaning up pending targets: {type(e).__name__}: {e}")
 
 
-async def cleanup_old_messages(store: "JSONStore") -> None:
+async def cleanup_old_messages(store: "SQLiteStore") -> None:
     """Clean up old message tracking entries."""
     try:
         deleted = await store.cleanup_old_messages(max_age_hours=24)
@@ -34,7 +34,7 @@ async def cleanup_old_messages(store: "JSONStore") -> None:
         logger.error(f"Error cleaning up old messages: {type(e).__name__}: {e}")
 
 
-def start_scheduler(app: "Client", store: "JSONStore", strings_dict: dict) -> None:
+def start_scheduler(app: "Client", store: "SQLiteStore", strings_dict: dict) -> None:
     """Start the cleanup schedulers."""
     # Cleanup expired pending targets every minute
     scheduler.add_job(

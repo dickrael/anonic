@@ -26,7 +26,7 @@ def load_config() -> Config:
     bot_token = os.getenv("BOT_TOKEN")
     moderation_chat_id = os.getenv("MODERATION_CHAT_ID")
     owner_id_str = os.getenv("OWNER_ID")
-    data_file = os.getenv("DATA_FILE", "data.json")
+    data_file = os.getenv("DATA_FILE", "data.db")
 
     missing = []
     if not api_id_str:
