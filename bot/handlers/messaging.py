@@ -537,6 +537,12 @@ def register_messaging_handlers(app: Client) -> None:
             if not can_connect_result:
                 logger.warning(f"Message blocked: {uid} -> {target_id}, reason: {reason}")
                 nickname = target['nickname'] if target else "User"
+
+                # Auto-disconnect when blocked by target
+                if reason == "blocked":
+                    await store.clear_pending_target(uid)
+                    logger.info(f"Auto-disconnected {uid} from {target_id} (blocked)")
+
                 if reason == "banned":
                     await message.reply(
                         (await gstr("start_connection_failed_frozen", message)).format(nickname=nickname),
@@ -565,6 +571,8 @@ def register_messaging_handlers(app: Client) -> None:
                 return
         except (UserIsBlocked, InputUserDeactivated) as e:
             logger.warning(f"Target unreachable {uid} -> {target_id}: {type(e).__name__}")
+            await store.clear_pending_target(uid)
+            logger.info(f"Auto-disconnected {uid} from {target_id} ({type(e).__name__})")
             await message.reply(
                 (await gstr(
                     "start_deactivated" if isinstance(e, InputUserDeactivated) else "anonymous_blocked",
@@ -681,6 +689,8 @@ def register_messaging_handlers(app: Client) -> None:
 
         except UserIsBlocked:
             logger.warning(f"Message failed: {target_id} blocked bot")
+            await store.clear_pending_target(uid)
+            logger.info(f"Auto-disconnected {uid} from {target_id} (UserIsBlocked)")
             await message.reply(
                 await gstr("anonymous_target_blocked_bot", message),
                 parse_mode=ParseMode.HTML
@@ -688,6 +698,8 @@ def register_messaging_handlers(app: Client) -> None:
 
         except InputUserDeactivated:
             logger.warning(f"Message failed: {target_id} deactivated")
+            await store.clear_pending_target(uid)
+            logger.info(f"Auto-disconnected {uid} from {target_id} (InputUserDeactivated)")
             await message.reply(
                 (await gstr("start_deactivated", message)).format(
                     nickname=target['nickname'] if target else "User"
