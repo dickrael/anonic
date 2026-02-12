@@ -76,6 +76,24 @@ async def init_bot() -> None:
             await app.set_bot_commands(BOT_COMMANDS)
             logger.info("Bot commands menu set")
 
+            # Set bot info for all available languages
+            for lang_code in strings.get_available_languages():
+                lang_data = strings.strings.get(lang_code, {})
+                name = lang_data.get("bot_name", "")
+                desc = lang_data.get("bot_description", "")
+                short_desc = lang_data.get("bot_short_description", "")
+                lc = "" if lang_code == "en" else lang_code
+                try:
+                    if name:
+                        await app.set_bot_name(name, language_code=lc)
+                    if desc:
+                        await app.set_bot_info_description(desc, language_code=lc)
+                    if short_desc:
+                        await app.set_bot_info_short_description(short_desc, language_code=lc)
+                    logger.info(f"Bot info set for '{lang_code}'")
+                except Exception as e:
+                    logger.warning(f"Failed to set bot info for '{lang_code}': {e}")
+
             # Start scheduler
             start_scheduler(app, store, strings.strings)
 

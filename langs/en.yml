@@ -292,3 +292,6 @@ active_link_view: |
 
   <emoji id="5190806721286657692">📊</emoji> {info}
   👁️ Used: <b>{uses}</b> times
+bot_name: "Anonymous Messages"
+bot_description: "Ever wonder what your friends really think about you? Let them tell you honestly — completely anonymous, no names, no judgments. Share your link, get real opinions, and chat back without anyone knowing who's who."
+bot_short_description: "Send & receive anonymous messages. Share your link — get honest opinions!"
