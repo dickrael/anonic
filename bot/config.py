@@ -30,7 +30,7 @@ def load_config() -> Config:
     owner_id_str = os.getenv("OWNER_ID")
     data_file = os.getenv("DATA_FILE", "data.db")
     webapp_url = os.getenv("WEBAPP_URL", "https://lazez.uz/miniapp")
-    webapp_port_str = os.getenv("WEBAPP_PORT", "8080")
+    webapp_port_str = os.getenv("WEBAPP_PORT", "46620")
 
     missing = []
     if not api_id_str:

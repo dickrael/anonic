@@ -99,7 +99,7 @@ async def init_bot() -> None:
             # Start scheduler
             start_scheduler(app, store, strings.strings)
 
-            # Start FastAPI webapp server
+            # Start FastAPI webapp server (disable signal handlers to not interfere with pyrogram)
             uvicorn_config = uvicorn.Config(
                 webapp_app,
                 host="0.0.0.0",
@@ -107,6 +107,7 @@ async def init_bot() -> None:
                 log_level="info",
             )
             server = uvicorn.Server(uvicorn_config)
+            server.install_signal_handlers = lambda: None
             asyncio.create_task(server.serve())
             logger.info(f"WebApp API server started on port {config.webapp_port}")
 

@@ -43,7 +43,8 @@
       <div class="empty-state">
         <div class="empty-icon">🔒</div>
         <div class="empty-title">Open in Telegram</div>
-        <div class="empty-hint">This page must be opened from the Telegram app.</div>
+        <div class="empty-hint" id="auth-error-hint">This page must be opened from the Telegram app.</div>
+        <pre id="debug-info" style="font-size:11px; color:var(--tg-theme-hint-color); margin-top:16px; text-align:left; word-break:break-all; white-space:pre-wrap;"></pre>
       </div>
     </div>
   </div>
@@ -66,6 +67,21 @@
       if (!initData) {
         loadingEl.style.display = "none";
         authErrorEl.style.display = "block";
+        // Debug info to diagnose
+        var debug = document.getElementById("debug-info");
+        var info = [];
+        info.push("TG object: " + (TG ? "yes" : "no"));
+        if (TG) {
+          info.push("platform: " + (TG.platform || "N/A"));
+          info.push("version: " + (TG.version || "N/A"));
+          info.push("initData: '" + (TG.initData || "") + "'");
+          info.push("initDataUnsafe: " + JSON.stringify(TG.initDataUnsafe || {}));
+          info.push("colorScheme: " + (TG.colorScheme || "N/A"));
+        }
+        info.push("hash: " + window.location.hash);
+        info.push("search: " + window.location.search);
+        info.push("href: " + window.location.href);
+        debug.textContent = info.join("\n");
         return;
       }
 
