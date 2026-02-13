@@ -8,10 +8,25 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=9">
+  <link rel="stylesheet" href="css/style.css?v=10">
   <style>
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
-    .dashboard { padding-top: 8px; }
+    .dashboard {
+      padding-top: 8px;
+      position: relative;
+    }
+    /* Floating gradient blobs behind content */
+    .bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .bg-blob-1 { width: 200px; height: 200px; top: -40px; left: -40px; }
+    .bg-blob-2 { width: 180px; height: 180px; bottom: 60px; right: -50px; }
+    .bg-blob-3 { width: 140px; height: 140px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
     /* ===== Profile Header ===== */
     .profile-header {
@@ -63,7 +78,10 @@
       margin-bottom: 20px;
     }
     .stat-card {
-      background: var(--tg-theme-secondary-bg-color);
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 16px;
       padding: 18px 14px;
       text-align: center;
@@ -72,6 +90,12 @@
       opacity: 0;
       transform: scale(0.85) translateY(16px);
       animation: statPopIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    @media (prefers-color-scheme: light) {
+      .stat-card {
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+      }
     }
     .stat-card::after {
       content: '';
@@ -124,13 +148,22 @@
       animation: fadeSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.65s forwards;
     }
     .info-card {
-      background: var(--tg-theme-secondary-bg-color);
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 14px;
       padding: 14px 16px;
       margin-bottom: 8px;
       display: flex;
       align-items: center;
       gap: 12px;
+    }
+    @media (prefers-color-scheme: light) {
+      .info-card {
+        background: rgba(255, 255, 255, 0.55);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+      }
     }
     .info-icon { font-size: 22px; flex-shrink: 0; }
     .info-content { flex: 1; min-width: 0; }
@@ -205,6 +238,11 @@
       <div class="skeleton skeleton-info"></div>
     </div>
 
+    <!-- Background blobs (colored dynamically by JS) -->
+    <div class="bg-blob bg-blob-1" id="blob1"></div>
+    <div class="bg-blob bg-blob-2" id="blob2"></div>
+    <div class="bg-blob bg-blob-3" id="blob3"></div>
+
     <!-- Dashboard -->
     <div id="dashboard" class="dashboard" style="display:none">
       <div class="profile-header">
@@ -277,8 +315,8 @@
     </div>
   </div>
 
-  <script src="js/telegram.js?v=9"></script>
-  <script src="js/api.js?v=9"></script>
+  <script src="js/telegram.js?v=10"></script>
+  <script src="js/api.js?v=10"></script>
   <script>
   (function() {
     "use strict";
@@ -367,6 +405,11 @@
         var avatarEl = document.querySelector(".profile-avatar");
         avatarEl.style.background = "linear-gradient(135deg, " + grad[0] + ", " + grad[1] + ")";
         avatarEl.style.boxShadow = "0 6px 24px " + grad[0] + "40";
+
+        // Color the background blobs
+        document.getElementById("blob1").style.background = grad[0];
+        document.getElementById("blob2").style.background = grad[1];
+        document.getElementById("blob3").style.background = grad[0];
         document.getElementById("profile-nickname").textContent = nick;
         document.getElementById("profile-since").textContent = "Member since " + (data.registered_at || "—");
 
