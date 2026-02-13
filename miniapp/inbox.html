@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Inbox — Incognitus</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
   <div class="container" id="app">
@@ -49,8 +49,8 @@
     </div>
   </div>
 
-  <script src="js/telegram.js"></script>
-  <script src="js/api.js"></script>
+  <script src="js/telegram.js?v=3"></script>
+  <script src="js/api.js?v=3"></script>
   <script>
     (function() {
       initWebApp();
@@ -100,12 +100,12 @@
         var pageSize = 50;
 
         function relativeTime(isoStr) {
-          // Python isoformat uses +00:00, JS needs Z or +00:00 — only add Z if no timezone info
-          var s = isoStr;
-          if (!s.endsWith("Z") && s.indexOf("+") === -1 && s.indexOf("T") !== -1) {
-            s += "Z";
-          }
+          if (!isoStr) return "";
+          // Normalize Python dates: "2026-01-01T00:00:00+00:00" → "2026-01-01T00:00:00Z"
+          var s = isoStr.replace(/\+00:00$/, "Z");
+          if (s.indexOf("Z") === -1 && s.indexOf("+") === -1) s += "Z";
           var date = new Date(s);
+          if (isNaN(date.getTime())) return isoStr;
           var now = new Date();
           var diff = Math.floor((now - date) / 1000);
           if (diff < 60) return "just now";

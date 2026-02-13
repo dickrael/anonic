@@ -837,7 +837,7 @@ class SQLiteStore:
         message_type: str = "text",
     ) -> int:
         """Persist a message for the webapp inbox. Returns the new row id."""
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         cur = await self._write_conn.execute(
             """INSERT INTO webapp_messages
                (sender_id, receiver_id, sender_nickname, message_text, message_type, created_at)
@@ -860,7 +860,15 @@ class SQLiteStore:
                LIMIT ? OFFSET ?""",
             (user_id, limit, offset),
         ).fetchall()
-        return [dict(r) for r in rows]
+        results = []
+        for r in rows:
+            d = dict(r)
+            # Normalize dates for JS: +00:00 -> Z
+            ca = d.get("created_at", "")
+            if ca.endswith("+00:00"):
+                d["created_at"] = ca[:-6] + "Z"
+            results.append(d)
+        return results
 
     async def mark_message_read(self, message_id: int, user_id: int) -> bool:
         """Mark a single inbox message as read."""
