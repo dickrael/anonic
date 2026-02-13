@@ -52,6 +52,17 @@ async function markRead(messageId, initData) {
   return res.json();
 }
 
+async function fetchStats(initData) {
+  const res = await fetch(`${API_BASE}/api/inbox/stats`, {
+    headers: { "X-Init-Data": initData },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to load stats");
+  }
+  return res.json();
+}
+
 async function replyToMessage(messageId, text, initData) {
   const res = await fetch(`${API_BASE}/api/inbox/reply`, {
     method: "POST",

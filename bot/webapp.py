@@ -192,6 +192,16 @@ async def get_inbox(request: Request):
     return {"messages": messages, "unread_count": unread_count}
 
 
+@app.get("/api/inbox/stats")
+async def get_inbox_stats(request: Request):
+    """Get user's inbox statistics for dashboard."""
+    user = get_user_from_init_data(request)
+    user_id = user["id"]
+    store = get_store()
+    stats = store.get_inbox_stats(user_id)
+    return stats
+
+
 @app.post("/api/inbox/read/{message_id}")
 async def mark_read(message_id: int, request: Request):
     """Mark a message as read."""

@@ -5,8 +5,70 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Inbox — Incognitus</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
   <style>
+    /* ===== Stats Grid ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--tg-theme-secondary-bg-color);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+      opacity: 0;
+      transform: scale(0.8) translateY(12px);
+      animation: statPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+    @keyframes statPopIn {
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .stat-icon {
+      font-size: 28px;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--tg-theme-text-color);
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: var(--tg-theme-hint-color);
+      font-weight: 500;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ===== Recent Section ===== */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--tg-theme-hint-color);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* ===== Reply Area ===== */
     .reply-row { display:flex; gap:8px; margin-top:10px; }
     .reply-input {
       flex:1; padding:8px 12px;
@@ -24,35 +86,79 @@
     }
     .reply-btn:disabled { opacity:0.5; }
     .reply-status { font-size:12px; margin-top:4px; min-height:16px; }
+
+    /* ===== Skeleton Stats ===== */
+    .skeleton-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .skeleton-stat {
+      height: 90px;
+      border-radius: 16px;
+    }
+    .skeleton-section-title {
+      width: 120px;
+      height: 16px;
+      margin-bottom: 12px;
+    }
   </style>
 </head>
 <body>
   <div class="container" id="app">
+    <!-- Loading skeleton -->
     <div id="loading" class="page-content">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div class="skeleton" style="width:100px;height:28px"></div>
-        <div class="skeleton" style="width:40px;height:22px;border-radius:12px"></div>
+      <div class="skeleton-stats">
+        <div class="skeleton skeleton-stat"></div>
+        <div class="skeleton skeleton-stat"></div>
+        <div class="skeleton skeleton-stat"></div>
+        <div class="skeleton skeleton-stat"></div>
       </div>
+      <div class="skeleton skeleton-section-title"></div>
       <div class="skeleton skeleton-card"></div>
       <div class="skeleton skeleton-card"></div>
       <div class="skeleton skeleton-card"></div>
     </div>
 
-    <div id="inbox" style="display:none">
-      <div class="inbox-header">
-        <div class="inbox-title">Inbox</div>
+    <!-- Dashboard -->
+    <div id="dashboard" style="display:none">
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <span class="stat-icon">💬</span>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Messages</div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">🔔</span>
+          <div class="stat-value" id="stat-unread">0</div>
+          <div class="stat-label">Unread</div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">👤</span>
+          <div class="stat-value" id="stat-senders">0</div>
+          <div class="stat-label">Senders</div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">📅</span>
+          <div class="stat-value" id="stat-today">0</div>
+          <div class="stat-label">Today</div>
+        </div>
+      </div>
+
+      <div class="section-header">
+        <div class="section-title">Recent Messages</div>
         <div class="unread-badge" id="unread-badge" style="display:none">0</div>
       </div>
       <div class="message-list" id="message-list"></div>
-      <button class="btn-secondary" id="load-more-btn" style="display:none;width:100%;margin-top:12px;text-align:center">Load more</button>
+
+      <div id="no-messages" style="display:none;text-align:center;padding:24px 0;">
+        <div style="font-size:36px;margin-bottom:8px">📭</div>
+        <div style="font-size:14px;color:var(--tg-theme-hint-color)">No messages yet — share your link!</div>
+      </div>
     </div>
 
-    <div id="empty-state" class="empty-state" style="display:none">
-      <div class="empty-icon">📭</div>
-      <div class="empty-title">No messages yet</div>
-      <div class="empty-hint">Share your link to get started!</div>
-    </div>
-
+    <!-- Auth error -->
     <div id="auth-error" style="display:none">
       <div class="empty-state">
         <div class="empty-icon">🔒</div>
@@ -63,8 +169,8 @@
     </div>
   </div>
 
-  <script src="js/telegram.js?v=4"></script>
-  <script src="js/api.js?v=4"></script>
+  <script src="js/telegram.js?v=5"></script>
+  <script src="js/api.js?v=5"></script>
   <script>
   (function() {
     "use strict";
@@ -129,54 +235,73 @@
       return el.innerHTML;
     }
 
+    // Animated count-up
+    function animateCounter(el, target, duration) {
+      if (target === 0) { el.textContent = "0"; return; }
+      var start = 0;
+      var startTime = null;
+      duration = duration || 800;
+
+      function step(timestamp) {
+        if (!startTime) startTime = timestamp;
+        var progress = Math.min((timestamp - startTime) / duration, 1);
+        // Ease out cubic
+        var eased = 1 - Math.pow(1 - progress, 3);
+        var current = Math.round(start + (target - start) * eased);
+        el.textContent = current;
+        if (progress < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+
     // ---- App ----
     function startApp(initData) {
-      var loadingEl  = document.getElementById("loading");
-      var inboxEl    = document.getElementById("inbox");
-      var emptyEl    = document.getElementById("empty-state");
-      var listEl     = document.getElementById("message-list");
-      var badgeEl    = document.getElementById("unread-badge");
-      var moreBtn    = document.getElementById("load-more-btn");
+      var loadingEl   = document.getElementById("loading");
+      var dashboardEl = document.getElementById("dashboard");
+      var listEl      = document.getElementById("message-list");
+      var badgeEl     = document.getElementById("unread-badge");
+      var noMsgEl     = document.getElementById("no-messages");
 
-      var knownIds = {};       // track rendered message ids
-      var expandedId = null;   // currently expanded message id
-      var allMessages = [];    // all loaded messages
+      var statTotalEl   = document.getElementById("stat-total");
+      var statUnreadEl  = document.getElementById("stat-unread");
+      var statSendersEl = document.getElementById("stat-senders");
+      var statTodayEl   = document.getElementById("stat-today");
+
+      var knownIds = {};
+      var expandedId = null;
+      var allMessages = [];
       var pollTimer = null;
+      var firstLoad = true;
 
-      function renderList(messages, animate) {
-        messages.forEach(function(msg, i) {
-          if (knownIds[msg.id]) return;
-          knownIds[msg.id] = true;
-          allMessages.push(msg);
+      function renderCard(msg, animate, delay) {
+        if (knownIds[msg.id]) return null;
+        knownIds[msg.id] = true;
+        allMessages.push(msg);
 
-          var card = document.createElement("div");
-          card.className = "message-card";
-          card.setAttribute("data-id", msg.id);
-          if (animate) card.style.animationDelay = (i * 50) + "ms";
+        var card = document.createElement("div");
+        card.className = "message-card";
+        card.setAttribute("data-id", msg.id);
+        if (animate && delay !== undefined) card.style.animationDelay = delay + "ms";
 
-          var html = '<div class="message-card-header">'
-            + '<span class="sender-badge">' + esc(msg.sender_nickname) + '</span>';
-          if (msg.message_type !== "text")
-            html += '<span class="message-type-badge">' + esc(msg.message_type) + '</span>';
-          html += '<span class="message-time">' + relativeTime(msg.created_at) + '</span>';
-          if (!msg.read) html += '<span class="unread-dot"></span>';
-          html += '</div>';
-          html += '<div class="message-preview">' + esc(msg.message_text) + '</div>';
+        var html = '<div class="message-card-header">'
+          + '<span class="sender-badge">' + esc(msg.sender_nickname) + '</span>';
+        if (msg.message_type !== "text")
+          html += '<span class="message-type-badge">' + esc(msg.message_type) + '</span>';
+        html += '<span class="message-time">' + relativeTime(msg.created_at) + '</span>';
+        if (!msg.read) html += '<span class="unread-dot"></span>';
+        html += '</div>';
+        html += '<div class="message-preview">' + esc(msg.message_text) + '</div>';
 
-          card.innerHTML = html;
-          listEl.appendChild(card);
-        });
+        card.innerHTML = html;
+        return card;
       }
 
-      // Event delegation on the list — no .closest() needed
+      // Event delegation
       listEl.addEventListener("click", function(e) {
-        // Find which card was clicked
         var target = e.target;
-        // If clicking reply input or button, ignore
         var tag = target.tagName;
         if (tag === "INPUT" || tag === "BUTTON") return;
 
-        // Walk up to find .message-card
         var card = target;
         while (card && !card.classList.contains("message-card")) {
           card = card.parentElement;
@@ -192,24 +317,20 @@
 
         hapticFeedback("impact");
 
-        // If already expanded, collapse
         if (expandedId === msgId) {
           collapseCard(card);
           expandedId = null;
           return;
         }
 
-        // Collapse previous
         if (expandedId !== null) {
           var prev = listEl.querySelector('[data-id="' + expandedId + '"]');
           if (prev) collapseCard(prev);
         }
 
-        // Expand this card
         expandedId = msgId;
         expandCard(card, msg);
 
-        // Mark read
         if (!msg.read) {
           msg.read = 1;
           var dot = card.querySelector(".unread-dot");
@@ -229,13 +350,11 @@
       function expandCard(card, msg) {
         card.classList.add("expanded");
 
-        // Full message text
         var full = document.createElement("div");
         full.className = "message-expanded";
         full.textContent = msg.message_text;
         card.appendChild(full);
 
-        // Reply area (skip for anonymous web senders)
         if (msg.sender_id && msg.sender_id !== 0) {
           var ra = document.createElement("div");
           ra.className = "reply-area";
@@ -262,7 +381,6 @@
           ra.appendChild(status);
           card.appendChild(ra);
 
-          // Stop click from bubbling when interacting with reply
           input.addEventListener("click", function(e) { e.stopPropagation(); });
           btn.addEventListener("click", function(e) { e.stopPropagation(); });
 
@@ -298,77 +416,91 @@
         }
       }
 
-      function loadInbox(offset, isRefresh) {
-        fetchInbox(initData, offset).then(function(data) {
-          loadingEl.style.display = "none";
+      function loadDashboard() {
+        // Fetch stats and recent messages in parallel
+        var statsPromise = fetchStats(initData);
+        var inboxPromise = fetchInbox(initData, 0);
 
-          if (data.messages.length === 0 && offset === 0 && !isRefresh) {
-            emptyEl.style.display = "block";
-            return;
+        Promise.all([statsPromise, inboxPromise]).then(function(results) {
+          var stats = results[0];
+          var inbox = results[1];
+
+          loadingEl.style.display = "none";
+          dashboardEl.style.display = "block";
+
+          // Animate stat counters
+          if (firstLoad) {
+            animateCounter(statTotalEl, stats.total_messages, 900);
+            animateCounter(statUnreadEl, stats.unread, 700);
+            animateCounter(statSendersEl, stats.unique_senders, 800);
+            animateCounter(statTodayEl, stats.today, 600);
+            firstLoad = false;
+          } else {
+            // On poll refresh, just update instantly
+            statTotalEl.textContent = stats.total_messages;
+            statUnreadEl.textContent = stats.unread;
+            statSendersEl.textContent = stats.unique_senders;
+            statTodayEl.textContent = stats.today;
           }
 
-          // Hide empty state if we now have messages
-          emptyEl.style.display = "none";
-          inboxEl.style.display = "block";
-
-          if (data.unread_count > 0) {
-            badgeEl.textContent = data.unread_count;
+          // Unread badge
+          if (stats.unread > 0) {
+            badgeEl.textContent = stats.unread;
             badgeEl.style.display = "";
           } else {
             badgeEl.style.display = "none";
           }
 
-          // For refresh, prepend new messages at top
-          if (isRefresh && data.messages.length > 0) {
-            var newMsgs = [];
-            for (var i = 0; i < data.messages.length; i++) {
-              if (!knownIds[data.messages[i].id]) newMsgs.push(data.messages[i]);
-            }
-            // Insert new messages at top of list
-            newMsgs.reverse().forEach(function(msg) {
-              if (knownIds[msg.id]) return;
-              knownIds[msg.id] = true;
-              allMessages.unshift(msg);
-
-              var card = document.createElement("div");
-              card.className = "message-card";
-              card.setAttribute("data-id", msg.id);
-              card.style.animation = "popBounce 0.4s cubic-bezier(0.4, 0, 0.2, 1) both";
-
-              var html = '<div class="message-card-header">'
-                + '<span class="sender-badge">' + esc(msg.sender_nickname) + '</span>';
-              if (msg.message_type !== "text")
-                html += '<span class="message-type-badge">' + esc(msg.message_type) + '</span>';
-              html += '<span class="message-time">' + relativeTime(msg.created_at) + '</span>';
-              if (!msg.read) html += '<span class="unread-dot"></span>';
-              html += '</div>';
-              html += '<div class="message-preview">' + esc(msg.message_text) + '</div>';
-
-              card.innerHTML = html;
-              if (listEl.firstChild) {
-                listEl.insertBefore(card, listEl.firstChild);
-              } else {
-                listEl.appendChild(card);
-              }
-            });
+          // Recent messages (show max 5)
+          var recent = inbox.messages.slice(0, 5);
+          if (recent.length === 0) {
+            noMsgEl.style.display = "block";
           } else {
-            renderList(data.messages, !isRefresh);
+            noMsgEl.style.display = "none";
+
+            // Check for new messages on refresh
+            var hasNew = false;
+            for (var i = 0; i < recent.length; i++) {
+              if (!knownIds[recent[i].id]) { hasNew = true; break; }
+            }
+
+            if (hasNew) {
+              // Prepend new ones at top
+              for (var j = recent.length - 1; j >= 0; j--) {
+                var msg = recent[j];
+                if (knownIds[msg.id]) continue;
+                var card = renderCard(msg, false, 0);
+                if (!card) continue;
+                card.style.animation = "popBounce 0.4s cubic-bezier(0.4, 0, 0.2, 1) both";
+                if (listEl.firstChild) {
+                  listEl.insertBefore(card, listEl.firstChild);
+                } else {
+                  listEl.appendChild(card);
+                }
+              }
+
+              // Trim list to max 5 visible cards
+              while (listEl.children.length > 5) {
+                listEl.removeChild(listEl.lastChild);
+              }
+            } else if (listEl.children.length === 0) {
+              // First load: render all with staggered animation
+              for (var k = 0; k < recent.length; k++) {
+                var c = renderCard(recent[k], true, k * 80);
+                if (c) listEl.appendChild(c);
+              }
+            }
           }
 
-          if (data.messages.length >= 50) {
-            moreBtn.style.display = "";
-          } else if (!isRefresh) {
-            moreBtn.style.display = "none";
-          }
-
-          // Start polling if not already
+          // Start polling
           if (!pollTimer) {
             pollTimer = setInterval(function() {
-              loadInbox(0, true);
+              loadDashboard();
             }, 5000);
           }
+
         }).catch(function(err) {
-          if (!isRefresh) {
+          if (firstLoad) {
             loadingEl.style.display = "none";
             document.getElementById("auth-error").style.display = "block";
             document.getElementById("auth-error-hint").textContent = "Error: " + err.message;
@@ -377,11 +509,7 @@
         });
       }
 
-      moreBtn.addEventListener("click", function() {
-        loadInbox(allMessages.length, false);
-      });
-
-      loadInbox(0, false);
+      loadDashboard();
     }
 
     boot();

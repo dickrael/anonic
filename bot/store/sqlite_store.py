@@ -887,6 +887,37 @@ class SQLiteStore:
         )
         return cur.fetchone()[0]
 
+    def get_inbox_stats(self, user_id: int) -> Dict[str, Any]:
+        """Get inbox statistics for dashboard display."""
+        row = self._read_conn.execute(
+            "SELECT COUNT(*) FROM webapp_messages WHERE receiver_id = ?",
+            (user_id,),
+        ).fetchone()
+        total = row[0]
+
+        unread = self.get_unread_count(user_id)
+
+        row = self._read_conn.execute(
+            "SELECT COUNT(DISTINCT sender_nickname) FROM webapp_messages WHERE receiver_id = ?",
+            (user_id,),
+        ).fetchone()
+        unique_senders = row[0]
+
+        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
+        row = self._read_conn.execute(
+            "SELECT COUNT(*) FROM webapp_messages WHERE receiver_id = ? AND created_at >= ?",
+            (user_id, today_start),
+        ).fetchone()
+        today = row[0]
+
+        return {
+            "total_messages": total,
+            "unread": unread,
+            "unique_senders": unique_senders,
+            "today": today,
+        }
+
     async def cleanup_expired_temp_links(self) -> int:
         now = datetime.now(timezone.utc).isoformat()
         # Delete inactive links
