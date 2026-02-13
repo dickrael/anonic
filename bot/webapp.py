@@ -94,13 +94,13 @@ class SendMessageRequest(BaseModel):
 # ---- Endpoints ----
 
 @app.get("/api/health")
-def health():
+async def health():
     """Health check."""
     return {"status": "ok", "port": config.webapp_port}
 
 
 @app.get("/api/link/{token}")
-def get_link_info(token: str):
+async def get_link_info(token: str):
     """Get recipient nickname for share page."""
     store = get_store()
 
@@ -171,7 +171,7 @@ async def send_message(body: SendMessageRequest):
 
 
 @app.get("/api/inbox")
-def get_inbox(request: Request):
+async def get_inbox(request: Request):
     """Get user's inbox messages (requires initData)."""
     user = get_user_from_init_data(request)
     user_id = user["id"]
@@ -202,7 +202,7 @@ async def mark_read(message_id: int, request: Request):
 
 
 @app.get("/api/debug/validate")
-def debug_validate(request: Request):
+async def debug_validate(request: Request):
     """Debug endpoint: check if initData is valid without failing."""
     init_data = request.headers.get("X-Init-Data", "")
     if not init_data:
