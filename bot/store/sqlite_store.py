@@ -911,6 +911,7 @@ class SQLiteStore:
 
         return {
             "nickname": user.get("nickname", ""),
+            "lang": user.get("lang", "en"),
             "messages_sent": user.get("messages_sent", 0),
             "messages_received": user.get("messages_received", 0),
             "days_since_registration": days_since,
