@@ -21,11 +21,8 @@ app = FastAPI(title="Incognitus WebApp API", docs_url=None, redoc_url=None)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://lazez.uz",
-        "https://www.lazez.uz",
-    ],
-    allow_methods=["GET", "POST"],
+    allow_origins=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -39,6 +36,7 @@ def validate_init_data(init_data: str) -> dict | None:
         parsed = parse_qs(init_data, keep_blank_values=True)
         received_hash = parsed.get("hash", [None])[0]
         if not received_hash:
+            logger.warning("initData missing hash param")
             return None
 
         # Build data-check-string: sorted key=value pairs excluding hash
@@ -59,10 +57,12 @@ def validate_init_data(init_data: str) -> dict | None:
         ).hexdigest()
 
         if not hmac.compare_digest(computed_hash, received_hash):
+            logger.warning(f"initData HMAC mismatch: computed={computed_hash[:16]}... received={received_hash[:16]}...")
             return None
 
         user_json = parsed.get("user", [None])[0]
         if not user_json:
+            logger.warning("initData missing user param")
             return None
 
         return json.loads(unquote(user_json))
@@ -76,9 +76,11 @@ def get_user_from_init_data(request: Request) -> dict:
     init_data = request.headers.get("X-Init-Data", "")
     if not init_data:
         raise HTTPException(status_code=401, detail="Missing initData")
+    logger.info(f"Validating initData ({len(init_data)} chars)")
     user = validate_init_data(init_data)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid initData")
+    logger.info(f"Authenticated user: {user.get('id')}")
     return user
 
 
@@ -90,6 +92,12 @@ class SendMessageRequest(BaseModel):
 
 
 # ---- Endpoints ----
+
+@app.get("/api/health")
+def health():
+    """Health check."""
+    return {"status": "ok", "port": config.webapp_port}
+
 
 @app.get("/api/link/{token}")
 def get_link_info(token: str):
@@ -191,3 +199,25 @@ async def mark_read(message_id: int, request: Request):
         raise HTTPException(status_code=404, detail="Message not found")
 
     return {"ok": True}
+
+
+@app.get("/api/debug/validate")
+def debug_validate(request: Request):
+    """Debug endpoint: check if initData is valid without failing."""
+    init_data = request.headers.get("X-Init-Data", "")
+    if not init_data:
+        return {"valid": False, "reason": "no initData header", "length": 0}
+
+    parsed = parse_qs(init_data, keep_blank_values=True)
+    has_hash = "hash" in parsed
+    has_user = "user" in parsed
+    user = validate_init_data(init_data)
+
+    return {
+        "valid": user is not None,
+        "length": len(init_data),
+        "has_hash": has_hash,
+        "has_user": has_user,
+        "keys": list(parsed.keys()),
+        "user_id": user.get("id") if user else None,
+    }

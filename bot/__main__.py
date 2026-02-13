@@ -46,6 +46,11 @@ logger = logging.getLogger(__name__)
 # Suppress APScheduler INFO logs
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 
+# Ensure uvicorn logs show in terminal
+logging.getLogger("uvicorn").setLevel(logging.INFO)
+logging.getLogger("uvicorn.error").setLevel(logging.INFO)
+logging.getLogger("uvicorn.access").setLevel(logging.INFO)
+
 
 async def init_bot() -> None:
     """Initialize and start the bot."""
@@ -102,9 +107,10 @@ async def init_bot() -> None:
             # Start FastAPI webapp server (disable signal handlers to not interfere with pyrogram)
             uvicorn_config = uvicorn.Config(
                 webapp_app,
-                host="127.0.0.1",
+                host="0.0.0.0",
                 port=config.webapp_port,
                 log_level="info",
+                access_log=True,
             )
             webapp_server = uvicorn.Server(uvicorn_config)
             webapp_server.install_signal_handlers = lambda: None
