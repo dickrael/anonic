@@ -9,6 +9,7 @@ from urllib.parse import parse_qs, unquote
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from pyrogram.enums import ParseMode
 
 from .config import config
 from .store import get_store
@@ -166,7 +167,7 @@ async def send_message(body: SendMessageRequest):
         await client.send_message(
             target_id,
             caption,
-            parse_mode="html",
+            parse_mode=ParseMode.HTML,
         )
     except Exception as e:
         logger.warning(f"Failed to send webapp message to {target_id}: {e}")
@@ -261,7 +262,7 @@ async def reply_to_message(body: ReplyMessageRequest, request: Request):
             sparkle_row=sparkle,
         )
         caption += "\n" + (await gstr("anonymous_reply_instruction", user_id=sender_id))
-        sent = await client.send_message(sender_id, caption, parse_mode="html")
+        sent = await client.send_message(sender_id, caption, parse_mode=ParseMode.HTML)
         # Store for reply routing
         await store.store_message(sent.id, user_id, sender_id)
     except Exception as e:
