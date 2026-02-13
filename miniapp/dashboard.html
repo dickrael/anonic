@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=10">
+  <link rel="stylesheet" href="css/style.css?v=11">
   <style>
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     .dashboard {
@@ -315,8 +315,8 @@
     </div>
   </div>
 
-  <script src="js/telegram.js?v=10"></script>
-  <script src="js/api.js?v=10"></script>
+  <script src="js/telegram.js?v=11"></script>
+  <script src="js/api.js?v=11"></script>
   <script>
   (function() {
     "use strict";
@@ -426,7 +426,8 @@
         var dayText = days === 1 ? "1 day" : days + " days";
         document.getElementById("info-days").textContent = dayText;
 
-        var fullLink = "https://t.me/incognitusbot?start=" + (data.link_token || "");
+        var botUser = data.bot_username || "incognitusbot";
+        var fullLink = "https://t.me/" + botUser + "?start=" + (data.link_token || "");
         document.getElementById("info-link").textContent = fullLink;
 
         // Copy button

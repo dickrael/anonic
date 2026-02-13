@@ -153,4 +153,6 @@ async def get_dashboard(request: Request):
     stats = store.get_dashboard_stats(user_id)
     if not stats:
         raise HTTPException(status_code=404, detail="User not found")
+    client = get_client()
+    stats["bot_username"] = client.me.username if client.me else "incognitusbot"
     return stats
