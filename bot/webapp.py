@@ -158,6 +158,6 @@ async def get_dashboard(request: Request):
     global _bot_username
     if not _bot_username:
         client = get_client()
-        _bot_username = client.me.username if client.me else "incognitusbot"
+        _bot_username = client.me.username if client.me else "ClearSayBot"
     stats["bot_username"] = _bot_username
     return stats

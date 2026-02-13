@@ -77,6 +77,18 @@ function hapticFeedback(type) {
   } catch (e) {}
 }
 
+/** Show/hide Telegram native loading indicator. */
+function showLoading() {
+  if (TG && TG.MainButton) {
+    try { TG.MainButton.showProgress(); } catch(e) {}
+  }
+}
+function hideLoading() {
+  if (TG && TG.MainButton) {
+    try { TG.MainButton.hideProgress(); } catch(e) {}
+  }
+}
+
 /** Close the mini app. */
 function closeMiniApp() {
   if (TG) TG.close();
