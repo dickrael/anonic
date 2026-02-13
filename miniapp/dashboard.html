@@ -8,25 +8,69 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=11">
+  <link rel="stylesheet" href="css/style.css?v=12">
   <style>
     * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+
+    /* ===== Gradient Background ===== */
+    body {
+      background: linear-gradient(145deg, #0f0c29, #302b63, #24243e) !important;
+      min-height: 100vh;
+    }
+    /* Light mode: soft pastel gradient */
+    body.theme-light {
+      background: linear-gradient(145deg, #e8eaf6, #f3e5f5, #e0f2f1) !important;
+    }
+
     .dashboard {
       padding-top: 8px;
       position: relative;
     }
-    /* Floating gradient blobs behind content */
+
+    /* Floating gradient blobs */
     .bg-blob {
       position: fixed;
       border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.15;
+      filter: blur(90px);
+      opacity: 0.25;
       pointer-events: none;
-      z-index: -1;
+      z-index: 0;
+      animation: blobFloat 8s ease-in-out infinite alternate;
     }
-    .bg-blob-1 { width: 200px; height: 200px; top: -40px; left: -40px; }
-    .bg-blob-2 { width: 180px; height: 180px; bottom: 60px; right: -50px; }
-    .bg-blob-3 { width: 140px; height: 140px; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .bg-blob-1 { width: 220px; height: 220px; top: -50px; left: -50px; animation-delay: 0s; }
+    .bg-blob-2 { width: 200px; height: 200px; bottom: 40px; right: -60px; animation-delay: -3s; }
+    .bg-blob-3 { width: 160px; height: 160px; top: 45%; left: 50%; transform: translate(-50%, -50%); animation-delay: -5s; }
+    body.theme-light .bg-blob { opacity: 0.35; }
+
+    @keyframes blobFloat {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(15px, -20px) scale(1.1); }
+    }
+    .bg-blob-3 {
+      animation-name: blobFloat3;
+    }
+    @keyframes blobFloat3 {
+      0% { transform: translate(-50%, -50%) scale(1); }
+      100% { transform: translate(-40%, -55%) scale(1.15); }
+    }
+
+    /* Dark gradient bg needs light text */
+    .dashboard { color: #f0f0f5; }
+    .dashboard .profile-nickname { color: #ffffff; }
+    .dashboard .profile-member-since { color: rgba(255,255,255,0.55); }
+    .dashboard .stat-value { color: #ffffff !important; }
+    .dashboard .stat-label { color: rgba(255,255,255,0.5); }
+    .dashboard .info-label { color: rgba(255,255,255,0.5); }
+    .dashboard .info-value { color: #f0f0f5; }
+
+    /* Light mode: use dark text */
+    body.theme-light .dashboard { color: #1a1a2e; }
+    body.theme-light .dashboard .profile-nickname { color: #1a1a2e; }
+    body.theme-light .dashboard .profile-member-since { color: rgba(0,0,0,0.45); }
+    body.theme-light .dashboard .stat-value { color: #1a1a2e !important; }
+    body.theme-light .dashboard .stat-label { color: rgba(0,0,0,0.45); }
+    body.theme-light .dashboard .info-label { color: rgba(0,0,0,0.45); }
+    body.theme-light .dashboard .info-value { color: #1a1a2e; }
 
     /* ===== Profile Header ===== */
     .profile-header {
@@ -79,9 +123,9 @@
     }
     .stat-card {
       background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 16px;
       padding: 18px 14px;
       text-align: center;
@@ -91,11 +135,10 @@
       transform: scale(0.85) translateY(16px);
       animation: statPopIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
     }
-    @media (prefers-color-scheme: light) {
-      .stat-card {
-        background: rgba(255, 255, 255, 0.55);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-      }
+    body.theme-light .stat-card {
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
     }
     .stat-card::after {
       content: '';
@@ -149,9 +192,9 @@
     }
     .info-card {
       background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 14px;
       padding: 14px 16px;
       margin-bottom: 8px;
@@ -159,11 +202,10 @@
       align-items: center;
       gap: 12px;
     }
-    @media (prefers-color-scheme: light) {
-      .info-card {
-        background: rgba(255, 255, 255, 0.55);
-        border: 1px solid rgba(255, 255, 255, 0.6);
-      }
+    body.theme-light .info-card {
+      background: rgba(255, 255, 255, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.7);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
     }
     .info-icon { font-size: 22px; flex-shrink: 0; }
     .info-content { flex: 1; min-width: 0; }
@@ -315,12 +357,27 @@
     </div>
   </div>
 
-  <script src="js/telegram.js?v=11"></script>
-  <script src="js/api.js?v=11"></script>
+  <script src="js/telegram.js?v=12"></script>
+  <script src="js/api.js?v=12"></script>
   <script>
   (function() {
     "use strict";
     initWebApp();
+
+    // Detect light/dark theme from Telegram
+    (function detectTheme() {
+      var tg = window.Telegram && window.Telegram.WebApp;
+      var bg = (tg && tg.themeParams && tg.themeParams.bg_color) || "";
+      // Parse hex color brightness
+      if (bg) {
+        var hex = bg.replace("#", "");
+        var r = parseInt(hex.substring(0, 2), 16) || 0;
+        var g = parseInt(hex.substring(2, 4), 16) || 0;
+        var b = parseInt(hex.substring(4, 6), 16) || 0;
+        var brightness = (r * 299 + g * 587 + b * 114) / 1000;
+        if (brightness > 128) document.body.classList.add("theme-light");
+      }
+    })();
 
     function tryGetInitData() {
       var d = getInitData();

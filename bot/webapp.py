@@ -18,6 +18,8 @@ from .strings import gstr
 
 logger = logging.getLogger(__name__)
 
+_bot_username: str = ""
+
 app = FastAPI(title="Incognitus WebApp API", docs_url=None, redoc_url=None)
 
 app.add_middleware(
@@ -153,6 +155,9 @@ async def get_dashboard(request: Request):
     stats = store.get_dashboard_stats(user_id)
     if not stats:
         raise HTTPException(status_code=404, detail="User not found")
-    client = get_client()
-    stats["bot_username"] = client.me.username if client.me else "incognitusbot"
+    global _bot_username
+    if not _bot_username:
+        client = get_client()
+        _bot_username = client.me.username if client.me else "incognitusbot"
+    stats["bot_username"] = _bot_username
     return stats
