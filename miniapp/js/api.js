@@ -26,55 +26,13 @@ async function sendMessage(token, text) {
   return res.json();
 }
 
-async function fetchInbox(initData, offset = 0) {
-  const url = new URL(`${API_BASE}/api/inbox`);
-  if (offset > 0) url.searchParams.set("offset", offset);
-
-  const res = await fetch(url, {
+async function fetchDashboard(initData) {
+  const res = await fetch(`${API_BASE}/api/dashboard`, {
     headers: { "X-Init-Data": initData },
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Failed to load inbox");
-  }
-  return res.json();
-}
-
-async function markRead(messageId, initData) {
-  const res = await fetch(`${API_BASE}/api/inbox/read/${messageId}`, {
-    method: "POST",
-    headers: { "X-Init-Data": initData },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Failed to mark read");
-  }
-  return res.json();
-}
-
-async function fetchStats(initData) {
-  const res = await fetch(`${API_BASE}/api/inbox/stats`, {
-    headers: { "X-Init-Data": initData },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Failed to load stats");
-  }
-  return res.json();
-}
-
-async function replyToMessage(messageId, text, initData) {
-  const res = await fetch(`${API_BASE}/api/inbox/reply`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Init-Data": initData,
-    },
-    body: JSON.stringify({ message_id: messageId, text }),
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Failed to send reply");
+    throw new Error(err.detail || "Failed to load dashboard");
   }
   return res.json();
 }

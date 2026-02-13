@@ -887,35 +887,37 @@ class SQLiteStore:
         )
         return cur.fetchone()[0]
 
-    def get_inbox_stats(self, user_id: int) -> Dict[str, Any]:
-        """Get inbox statistics for dashboard display."""
-        row = self._read_conn.execute(
-            "SELECT COUNT(*) FROM webapp_messages WHERE receiver_id = ?",
-            (user_id,),
-        ).fetchone()
-        total = row[0]
+    def get_dashboard_stats(self, user_id: int) -> Dict[str, Any]:
+        """Get full dashboard statistics for mini app."""
+        user = self.get_user(user_id)
+        if not user:
+            return {}
 
-        unread = self.get_unread_count(user_id)
+        now = datetime.now(timezone.utc)
 
-        row = self._read_conn.execute(
-            "SELECT COUNT(DISTINCT sender_nickname) FROM webapp_messages WHERE receiver_id = ?",
-            (user_id,),
-        ).fetchone()
-        unique_senders = row[0]
+        # Parse registration date for "member since" / days count
+        reg_str = user.get("registered_at", "")
+        days_since = 0
+        registered_at = reg_str
+        try:
+            if reg_str:
+                reg_dt = datetime.fromisoformat(reg_str.replace("Z", "+00:00"))
+                days_since = (now - reg_dt).days
+                registered_at = reg_dt.strftime("%b %d, %Y")
+        except Exception:
+            pass
 
-        now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M:%SZ")
-        row = self._read_conn.execute(
-            "SELECT COUNT(*) FROM webapp_messages WHERE receiver_id = ? AND created_at >= ?",
-            (user_id, today_start),
-        ).fetchone()
-        today = row[0]
+        blocked_count = self.get_blocked_count(str(user_id))
 
         return {
-            "total_messages": total,
-            "unread": unread,
-            "unique_senders": unique_senders,
-            "today": today,
+            "nickname": user.get("nickname", ""),
+            "messages_sent": user.get("messages_sent", 0),
+            "messages_received": user.get("messages_received", 0),
+            "days_since_registration": days_since,
+            "registered_at": registered_at,
+            "blocked_count": blocked_count,
+            "revoke_count": user.get("revoke_count", 0),
+            "link_token": user.get("token", ""),
         }
 
     async def cleanup_expired_temp_links(self) -> int:

@@ -292,7 +292,7 @@ active_link_view: |
 
   <emoji id="5190806721286657692">📊</emoji> {info}
   👁️ Used: <b>{uses}</b> times
-webapp_inbox_button: "📬 Open Inbox"
+webapp_inbox_button: "📊 Dashboard"
 webapp_send_placeholder: "Type your anonymous message..."
 webapp_send_button: "Send"
 webapp_send_success: "Message sent!"
