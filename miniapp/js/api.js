@@ -51,3 +51,19 @@ async function markRead(messageId, initData) {
   }
   return res.json();
 }
+
+async function replyToMessage(messageId, text, initData) {
+  const res = await fetch(`${API_BASE}/api/inbox/reply`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Init-Data": initData,
+    },
+    body: JSON.stringify({ message_id: messageId, text }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || "Failed to send reply");
+  }
+  return res.json();
+}

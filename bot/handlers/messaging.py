@@ -48,7 +48,8 @@ def _sparkle_row() -> str:
 EXCLUDED_COMMANDS = [
     "start", "help", "disconnect", "locktypes", "lock", "unlock",
     "blocked", "block", "unblock", "unblockall", "report", "ban", "unban",
-    "lang", "revoke", "security", "stats", "adminstats", "temp_link", "activelinks"
+    "lang", "revoke", "security", "stats", "adminstats", "temp_link", "activelinks",
+    "re", "pr_update",
 ]
 
 # Zalgo detection pattern (combining characters)

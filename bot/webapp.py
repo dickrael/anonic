@@ -91,6 +91,11 @@ class SendMessageRequest(BaseModel):
     text: str
 
 
+class ReplyMessageRequest(BaseModel):
+    message_id: int
+    text: str
+
+
 # ---- Endpoints ----
 
 @app.get("/api/health")
@@ -197,6 +202,74 @@ async def mark_read(message_id: int, request: Request):
     success = await store.mark_message_read(message_id, user_id)
     if not success:
         raise HTTPException(status_code=404, detail="Message not found")
+
+    return {"ok": True}
+
+
+@app.post("/api/inbox/reply")
+async def reply_to_message(body: ReplyMessageRequest, request: Request):
+    """Reply to an inbox message from the webapp."""
+    user = get_user_from_init_data(request)
+    user_id = user["id"]
+    store = get_store()
+
+    if not body.text or not body.text.strip():
+        raise HTTPException(status_code=400, detail="Reply cannot be empty")
+    if len(body.text) > 4096:
+        raise HTTPException(status_code=400, detail="Reply too long (max 4096)")
+
+    # Find the original message to get sender_id
+    messages = store.get_inbox_messages(user_id, limit=1000, offset=0)
+    target_msg = None
+    for msg in messages:
+        if msg["id"] == body.message_id:
+            target_msg = msg
+            break
+
+    if not target_msg:
+        raise HTTPException(status_code=404, detail="Message not found")
+
+    sender_id = target_msg["sender_id"]
+    if sender_id == 0:
+        raise HTTPException(status_code=400, detail="Cannot reply to anonymous web visitors")
+
+    sender = store.get_user(sender_id)
+    if not sender:
+        raise HTTPException(status_code=404, detail="Sender no longer exists")
+
+    replier = store.get_user(user_id)
+    replier_nickname = replier["nickname"] if replier else "User"
+
+    # Send reply via bot
+    try:
+        client = get_client()
+        from .handlers.messaging import _sparkle_row
+        sparkle = _sparkle_row()
+        caption = (await gstr("anonymous_caption", user_id=sender_id)).format(
+            original=body.text.strip(),
+            nickname=replier_nickname,
+            sparkle_row=sparkle,
+        )
+        caption += "\n" + (await gstr("anonymous_reply_instruction", user_id=sender_id))
+        sent = await client.send_message(sender_id, caption, parse_mode="html")
+        # Store for reply routing
+        await store.store_message(sent.id, user_id, sender_id)
+    except Exception as e:
+        logger.warning(f"Failed to send reply to {sender_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to deliver reply")
+
+    # Also store in webapp inbox of the sender
+    await store.store_webapp_message(
+        sender_id=user_id,
+        receiver_id=sender_id,
+        sender_nickname=replier_nickname,
+        message_text=body.text.strip(),
+        message_type="text",
+    )
+
+    # Update stats
+    await store.increment_messages_sent(user_id)
+    await store.increment_messages_received(sender_id)
 
     return {"ok": True}
 

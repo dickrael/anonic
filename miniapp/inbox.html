@@ -100,7 +100,12 @@
         var pageSize = 50;
 
         function relativeTime(isoStr) {
-          var date = new Date(isoStr + (isoStr.endsWith("Z") ? "" : "Z"));
+          // Python isoformat uses +00:00, JS needs Z or +00:00 — only add Z if no timezone info
+          var s = isoStr;
+          if (!s.endsWith("Z") && s.indexOf("+") === -1 && s.indexOf("T") !== -1) {
+            s += "Z";
+          }
+          var date = new Date(s);
           var now = new Date();
           var diff = Math.floor((now - date) / 1000);
           if (diff < 60) return "just now";
@@ -136,13 +141,18 @@
 
           card.innerHTML = header + preview;
 
-          card.addEventListener("click", function() {
+          card.addEventListener("click", function(e) {
+            // Don't toggle if clicking inside reply area
+            if (e.target.closest(".reply-area")) return;
+
             hapticFeedback("impact");
 
             if (card.classList.contains("expanded")) {
               card.classList.remove("expanded");
               var expanded = card.querySelector(".message-expanded");
               if (expanded) expanded.remove();
+              var replyArea = card.querySelector(".reply-area");
+              if (replyArea) replyArea.remove();
               var prev = card.querySelector(".message-preview");
               if (prev) prev.style.display = "";
               return;
@@ -153,6 +163,57 @@
             full.className = "message-expanded";
             full.textContent = msg.message_text;
             card.appendChild(full);
+
+            // Add reply area (only for non-web visitors)
+            if (msg.sender_id !== 0) {
+              var replyDiv = document.createElement("div");
+              replyDiv.className = "reply-area";
+              replyDiv.innerHTML =
+                '<div style="display:flex; gap:8px; margin-top:10px;">' +
+                  '<input type="text" class="reply-input" placeholder="Reply..." maxlength="4096" style="flex:1; padding:8px 12px; border:1.5px solid var(--tg-theme-secondary-bg-color); border-radius:10px; background:var(--tg-theme-bg-color); color:var(--tg-theme-text-color); font-size:14px; font-family:inherit; outline:none;">' +
+                  '<button class="reply-btn" style="padding:8px 16px; border:none; border-radius:10px; background:var(--tg-theme-button-color); color:var(--tg-theme-button-text-color); font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap;">Send</button>' +
+                '</div>' +
+                '<div class="reply-status" style="font-size:12px; margin-top:4px;"></div>';
+              card.appendChild(replyDiv);
+
+              var replyInput = replyDiv.querySelector(".reply-input");
+              var replyBtn = replyDiv.querySelector(".reply-btn");
+              var replyStatus = replyDiv.querySelector(".reply-status");
+
+              replyInput.addEventListener("click", function(e) { e.stopPropagation(); });
+              replyInput.addEventListener("keydown", function(e) {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  replyBtn.click();
+                }
+              });
+
+              replyBtn.addEventListener("click", function(e) {
+                e.stopPropagation();
+                var text = replyInput.value.trim();
+                if (!text) return;
+                replyBtn.disabled = true;
+                replyBtn.textContent = "...";
+                replyStatus.textContent = "";
+                replyStatus.style.color = "";
+
+                replyToMessage(msg.id, text, initData).then(function() {
+                  hapticFeedback("success");
+                  replyInput.value = "";
+                  replyStatus.style.color = "#34c759";
+                  replyStatus.textContent = "Sent!";
+                  replyBtn.disabled = false;
+                  replyBtn.textContent = "Send";
+                  setTimeout(function() { replyStatus.textContent = ""; }, 2000);
+                }).catch(function(err) {
+                  hapticFeedback("error");
+                  replyStatus.style.color = "var(--tg-theme-destructive-text-color)";
+                  replyStatus.textContent = err.message;
+                  replyBtn.disabled = false;
+                  replyBtn.textContent = "Send";
+                });
+              });
+            }
 
             if (!msg.read) {
               msg.read = 1;
