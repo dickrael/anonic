@@ -5,299 +5,387 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Inbox — Incognitus</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=3">
+  <link rel="stylesheet" href="css/style.css?v=4">
+  <style>
+    .reply-row { display:flex; gap:8px; margin-top:10px; }
+    .reply-input {
+      flex:1; padding:8px 12px;
+      border:1.5px solid var(--tg-theme-secondary-bg-color);
+      border-radius:10px; background:var(--tg-theme-bg-color);
+      color:var(--tg-theme-text-color); font-size:14px;
+      font-family:inherit; outline:none;
+    }
+    .reply-input:focus { border-color: var(--tg-theme-button-color); }
+    .reply-btn {
+      padding:8px 16px; border:none; border-radius:10px;
+      background:var(--tg-theme-button-color);
+      color:var(--tg-theme-button-text-color);
+      font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap;
+    }
+    .reply-btn:disabled { opacity:0.5; }
+    .reply-status { font-size:12px; margin-top:4px; min-height:16px; }
+  </style>
 </head>
 <body>
   <div class="container" id="app">
-    <!-- Loading skeleton -->
     <div id="loading" class="page-content">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-        <div class="skeleton" style="width:100px; height:28px;"></div>
-        <div class="skeleton" style="width:40px; height:22px; border-radius:12px;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="skeleton" style="width:100px;height:28px"></div>
+        <div class="skeleton" style="width:40px;height:22px;border-radius:12px"></div>
       </div>
-      <div class="skeleton skeleton-card"></div>
       <div class="skeleton skeleton-card"></div>
       <div class="skeleton skeleton-card"></div>
       <div class="skeleton skeleton-card"></div>
     </div>
 
-    <!-- Inbox content -->
-    <div id="inbox" style="display:none;">
+    <div id="inbox" style="display:none">
       <div class="inbox-header">
         <div class="inbox-title">Inbox</div>
-        <div class="unread-badge" id="unread-badge" style="display:none;">0</div>
+        <div class="unread-badge" id="unread-badge" style="display:none">0</div>
       </div>
       <div class="message-list" id="message-list"></div>
-      <button class="btn-secondary" id="load-more-btn" style="display:none; width:100%; margin-top:12px; text-align:center;">Load more</button>
+      <button class="btn-secondary" id="load-more-btn" style="display:none;width:100%;margin-top:12px;text-align:center">Load more</button>
     </div>
 
-    <!-- Empty state -->
-    <div id="empty-state" class="empty-state" style="display:none;">
+    <div id="empty-state" class="empty-state" style="display:none">
       <div class="empty-icon">📭</div>
       <div class="empty-title">No messages yet</div>
       <div class="empty-hint">Share your link to get started!</div>
     </div>
 
-    <!-- Auth error -->
-    <div id="auth-error" style="display:none;">
+    <div id="auth-error" style="display:none">
       <div class="empty-state">
         <div class="empty-icon">🔒</div>
         <div class="empty-title">Open in Telegram</div>
         <div class="empty-hint" id="auth-error-hint">This page must be opened from the Telegram app.</div>
-        <pre id="debug-info" style="font-size:11px; color:var(--tg-theme-hint-color); margin-top:16px; text-align:left; word-break:break-all; white-space:pre-wrap;"></pre>
+        <pre id="debug-info" style="font-size:11px;color:var(--tg-theme-hint-color);margin-top:16px;text-align:left;word-break:break-all;white-space:pre-wrap"></pre>
       </div>
     </div>
   </div>
 
-  <script src="js/telegram.js?v=3"></script>
-  <script src="js/api.js?v=3"></script>
+  <script src="js/telegram.js?v=4"></script>
+  <script src="js/api.js?v=4"></script>
   <script>
-    (function() {
-      initWebApp();
+  (function() {
+    "use strict";
+    initWebApp();
 
-      // Retry getting initData — some clients need a moment
-      function tryGetInitData(attempts) {
-        var data = getInitData();
-        if (data) return data;
-        // Also try reading from Telegram.WebApp directly (in case our helper missed it)
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
-          return window.Telegram.WebApp.initData;
-        }
-        return "";
-      }
+    // ---- Auth ----
+    function tryGetInitData() {
+      var d = getInitData();
+      if (d) return d;
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData)
+        return window.Telegram.WebApp.initData;
+      return "";
+    }
 
-      function showDebug() {
-        var debug = document.getElementById("debug-info");
-        var info = [];
-        var tg = window.Telegram && window.Telegram.WebApp;
-        info.push("TG SDK loaded: " + (window.Telegram ? "yes" : "no"));
-        info.push("TG.WebApp: " + (tg ? "yes" : "no"));
-        if (tg) {
-          info.push("platform: " + (tg.platform || "N/A"));
-          info.push("version: " + (tg.version || "N/A"));
-          info.push("colorScheme: " + (tg.colorScheme || "N/A"));
-          info.push("initData length: " + (tg.initData || "").length);
-          info.push("initData: '" + (tg.initData || "").substring(0, 200) + "'");
-          info.push("initDataUnsafe: " + JSON.stringify(tg.initDataUnsafe || {}));
-          info.push("themeParams: " + JSON.stringify(tg.themeParams || {}));
-        }
-        info.push("URL hash: " + window.location.hash.substring(0, 200));
-        info.push("URL search: " + window.location.search);
-        info.push("URL: " + window.location.href.substring(0, 200));
-        info.push("userAgent: " + navigator.userAgent.substring(0, 100));
-        debug.textContent = info.join("\n");
-      }
-
-      function startApp(initData) {
-        var loadingEl = document.getElementById("loading");
-        var inboxEl = document.getElementById("inbox");
-        var emptyEl = document.getElementById("empty-state");
-        var messageList = document.getElementById("message-list");
-        var unreadBadge = document.getElementById("unread-badge");
-        var loadMoreBtn = document.getElementById("load-more-btn");
-
-        var currentOffset = 0;
-        var pageSize = 50;
-
-        function relativeTime(isoStr) {
-          if (!isoStr) return "";
-          // Normalize Python dates: "2026-01-01T00:00:00+00:00" → "2026-01-01T00:00:00Z"
-          var s = isoStr.replace(/\+00:00$/, "Z");
-          if (s.indexOf("Z") === -1 && s.indexOf("+") === -1) s += "Z";
-          var date = new Date(s);
-          if (isNaN(date.getTime())) return isoStr;
-          var now = new Date();
-          var diff = Math.floor((now - date) / 1000);
-          if (diff < 60) return "just now";
-          if (diff < 3600) return Math.floor(diff / 60) + "m ago";
-          if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
-          if (diff < 604800) return Math.floor(diff / 86400) + "d ago";
-          return date.toLocaleDateString();
-        }
-
-        function escapeHtml(text) {
-          var div = document.createElement("div");
-          div.textContent = text;
-          return div.innerHTML;
-        }
-
-        function renderCard(msg, index) {
-          var card = document.createElement("div");
-          card.className = "message-card";
-          card.style.animationDelay = (index * 50) + "ms";
-
-          var header = '<div class="message-card-header">';
-          header += '<span class="sender-badge">' + escapeHtml(msg.sender_nickname) + '</span>';
-          if (msg.message_type !== "text") {
-            header += '<span class="message-type-badge">' + escapeHtml(msg.message_type) + '</span>';
-          }
-          header += '<span class="message-time">' + relativeTime(msg.created_at) + '</span>';
-          if (!msg.read) {
-            header += '<span class="unread-dot"></span>';
-          }
-          header += '</div>';
-
-          var preview = '<div class="message-preview">' + escapeHtml(msg.message_text) + '</div>';
-
-          card.innerHTML = header + preview;
-
-          card.addEventListener("click", function(e) {
-            // Don't toggle if clicking inside reply area
-            if (e.target.closest(".reply-area")) return;
-
-            hapticFeedback("impact");
-
-            if (card.classList.contains("expanded")) {
-              card.classList.remove("expanded");
-              var expanded = card.querySelector(".message-expanded");
-              if (expanded) expanded.remove();
-              var replyArea = card.querySelector(".reply-area");
-              if (replyArea) replyArea.remove();
-              var prev = card.querySelector(".message-preview");
-              if (prev) prev.style.display = "";
-              return;
-            }
-
-            card.classList.add("expanded");
-            var full = document.createElement("div");
-            full.className = "message-expanded";
-            full.textContent = msg.message_text;
-            card.appendChild(full);
-
-            // Add reply area (only for non-web visitors)
-            if (msg.sender_id !== 0) {
-              var replyDiv = document.createElement("div");
-              replyDiv.className = "reply-area";
-              replyDiv.innerHTML =
-                '<div style="display:flex; gap:8px; margin-top:10px;">' +
-                  '<input type="text" class="reply-input" placeholder="Reply..." maxlength="4096" style="flex:1; padding:8px 12px; border:1.5px solid var(--tg-theme-secondary-bg-color); border-radius:10px; background:var(--tg-theme-bg-color); color:var(--tg-theme-text-color); font-size:14px; font-family:inherit; outline:none;">' +
-                  '<button class="reply-btn" style="padding:8px 16px; border:none; border-radius:10px; background:var(--tg-theme-button-color); color:var(--tg-theme-button-text-color); font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap;">Send</button>' +
-                '</div>' +
-                '<div class="reply-status" style="font-size:12px; margin-top:4px;"></div>';
-              card.appendChild(replyDiv);
-
-              var replyInput = replyDiv.querySelector(".reply-input");
-              var replyBtn = replyDiv.querySelector(".reply-btn");
-              var replyStatus = replyDiv.querySelector(".reply-status");
-
-              replyInput.addEventListener("click", function(e) { e.stopPropagation(); });
-              replyInput.addEventListener("keydown", function(e) {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  replyBtn.click();
-                }
-              });
-
-              replyBtn.addEventListener("click", function(e) {
-                e.stopPropagation();
-                var text = replyInput.value.trim();
-                if (!text) return;
-                replyBtn.disabled = true;
-                replyBtn.textContent = "...";
-                replyStatus.textContent = "";
-                replyStatus.style.color = "";
-
-                replyToMessage(msg.id, text, initData).then(function() {
-                  hapticFeedback("success");
-                  replyInput.value = "";
-                  replyStatus.style.color = "#34c759";
-                  replyStatus.textContent = "Sent!";
-                  replyBtn.disabled = false;
-                  replyBtn.textContent = "Send";
-                  setTimeout(function() { replyStatus.textContent = ""; }, 2000);
-                }).catch(function(err) {
-                  hapticFeedback("error");
-                  replyStatus.style.color = "var(--tg-theme-destructive-text-color)";
-                  replyStatus.textContent = err.message;
-                  replyBtn.disabled = false;
-                  replyBtn.textContent = "Send";
-                });
-              });
-            }
-
-            if (!msg.read) {
-              msg.read = 1;
-              var dot = card.querySelector(".unread-dot");
-              if (dot) dot.remove();
-              markRead(msg.id, initData).catch(function() {});
-            }
-          });
-
-          return card;
-        }
-
-        function loadInbox(offset) {
-          fetchInbox(initData, offset).then(function(data) {
-            loadingEl.style.display = "none";
-
-            if (data.messages.length === 0 && offset === 0) {
-              emptyEl.style.display = "block";
-              return;
-            }
-
-            inboxEl.style.display = "block";
-
-            if (data.unread_count > 0) {
-              unreadBadge.textContent = data.unread_count;
-              unreadBadge.style.display = "";
-            }
-
-            data.messages.forEach(function(msg, i) {
-              messageList.appendChild(renderCard(msg, i));
-            });
-
-            currentOffset = offset + data.messages.length;
-
-            if (data.messages.length >= pageSize) {
-              loadMoreBtn.style.display = "";
-            } else {
-              loadMoreBtn.style.display = "none";
-            }
-          }).catch(function(err) {
-            loadingEl.style.display = "none";
-            document.getElementById("auth-error").style.display = "block";
-            document.getElementById("auth-error-hint").textContent = "API error: " + err.message;
-            showDebug();
-          });
-        }
-
-        loadMoreBtn.addEventListener("click", function() {
-          loadInbox(currentOffset);
-        });
-
-        loadInbox(0);
-      }
-
-      // Try immediately, then retry after a short delay if empty
-      var initData = tryGetInitData();
-      if (initData) {
-        startApp(initData);
-        return;
-      }
-
-      // Retry after 500ms — some Telegram clients are slow to inject initData
+    function boot() {
+      var data = tryGetInitData();
+      if (data) { startApp(data); return; }
       setTimeout(function() {
-        initData = tryGetInitData();
-        if (initData) {
-          startApp(initData);
-          return;
-        }
-
-        // Final attempt after 1.5s
+        data = tryGetInitData();
+        if (data) { startApp(data); return; }
         setTimeout(function() {
-          initData = tryGetInitData();
-          if (initData) {
-            startApp(initData);
-            return;
-          }
-
-          // Give up — show error with debug
+          data = tryGetInitData();
+          if (data) { startApp(data); return; }
           document.getElementById("loading").style.display = "none";
           document.getElementById("auth-error").style.display = "block";
           showDebug();
         }, 1000);
       }, 500);
-    })();
+    }
+
+    function showDebug() {
+      var d = document.getElementById("debug-info");
+      var tg = window.Telegram && window.Telegram.WebApp;
+      var lines = ["TG: " + (tg ? "yes" : "no")];
+      if (tg) {
+        lines.push("platform: " + tg.platform);
+        lines.push("initData len: " + (tg.initData || "").length);
+        lines.push("user: " + JSON.stringify((tg.initDataUnsafe || {}).user || null));
+      }
+      lines.push("url: " + location.href.substring(0, 150));
+      d.textContent = lines.join("\n");
+    }
+
+    // ---- Helpers ----
+    function relativeTime(iso) {
+      if (!iso) return "";
+      var s = iso.replace(/\+00:00$/, "Z");
+      if (s.indexOf("Z") < 0 && s.indexOf("+") < 0) s += "Z";
+      var d = new Date(s);
+      if (isNaN(d)) return iso;
+      var sec = Math.floor((Date.now() - d.getTime()) / 1000);
+      if (sec < 60) return "just now";
+      if (sec < 3600) return Math.floor(sec / 60) + "m ago";
+      if (sec < 86400) return Math.floor(sec / 3600) + "h ago";
+      if (sec < 604800) return Math.floor(sec / 86400) + "d ago";
+      return d.toLocaleDateString();
+    }
+
+    function esc(t) {
+      var el = document.createElement("span");
+      el.textContent = t;
+      return el.innerHTML;
+    }
+
+    // ---- App ----
+    function startApp(initData) {
+      var loadingEl  = document.getElementById("loading");
+      var inboxEl    = document.getElementById("inbox");
+      var emptyEl    = document.getElementById("empty-state");
+      var listEl     = document.getElementById("message-list");
+      var badgeEl    = document.getElementById("unread-badge");
+      var moreBtn    = document.getElementById("load-more-btn");
+
+      var knownIds = {};       // track rendered message ids
+      var expandedId = null;   // currently expanded message id
+      var allMessages = [];    // all loaded messages
+      var pollTimer = null;
+
+      function renderList(messages, animate) {
+        messages.forEach(function(msg, i) {
+          if (knownIds[msg.id]) return;
+          knownIds[msg.id] = true;
+          allMessages.push(msg);
+
+          var card = document.createElement("div");
+          card.className = "message-card";
+          card.setAttribute("data-id", msg.id);
+          if (animate) card.style.animationDelay = (i * 50) + "ms";
+
+          var html = '<div class="message-card-header">'
+            + '<span class="sender-badge">' + esc(msg.sender_nickname) + '</span>';
+          if (msg.message_type !== "text")
+            html += '<span class="message-type-badge">' + esc(msg.message_type) + '</span>';
+          html += '<span class="message-time">' + relativeTime(msg.created_at) + '</span>';
+          if (!msg.read) html += '<span class="unread-dot"></span>';
+          html += '</div>';
+          html += '<div class="message-preview">' + esc(msg.message_text) + '</div>';
+
+          card.innerHTML = html;
+          listEl.appendChild(card);
+        });
+      }
+
+      // Event delegation on the list — no .closest() needed
+      listEl.addEventListener("click", function(e) {
+        // Find which card was clicked
+        var target = e.target;
+        // If clicking reply input or button, ignore
+        var tag = target.tagName;
+        if (tag === "INPUT" || tag === "BUTTON") return;
+
+        // Walk up to find .message-card
+        var card = target;
+        while (card && !card.classList.contains("message-card")) {
+          card = card.parentElement;
+        }
+        if (!card) return;
+
+        var msgId = parseInt(card.getAttribute("data-id"));
+        var msg = null;
+        for (var i = 0; i < allMessages.length; i++) {
+          if (allMessages[i].id === msgId) { msg = allMessages[i]; break; }
+        }
+        if (!msg) return;
+
+        hapticFeedback("impact");
+
+        // If already expanded, collapse
+        if (expandedId === msgId) {
+          collapseCard(card);
+          expandedId = null;
+          return;
+        }
+
+        // Collapse previous
+        if (expandedId !== null) {
+          var prev = listEl.querySelector('[data-id="' + expandedId + '"]');
+          if (prev) collapseCard(prev);
+        }
+
+        // Expand this card
+        expandedId = msgId;
+        expandCard(card, msg);
+
+        // Mark read
+        if (!msg.read) {
+          msg.read = 1;
+          var dot = card.querySelector(".unread-dot");
+          if (dot) dot.parentElement.removeChild(dot);
+          markRead(msg.id, initData).catch(function() {});
+        }
+      });
+
+      function collapseCard(card) {
+        card.classList.remove("expanded");
+        var exp = card.querySelector(".message-expanded");
+        if (exp) exp.parentElement.removeChild(exp);
+        var ra = card.querySelector(".reply-area");
+        if (ra) ra.parentElement.removeChild(ra);
+      }
+
+      function expandCard(card, msg) {
+        card.classList.add("expanded");
+
+        // Full message text
+        var full = document.createElement("div");
+        full.className = "message-expanded";
+        full.textContent = msg.message_text;
+        card.appendChild(full);
+
+        // Reply area (skip for anonymous web senders)
+        if (msg.sender_id && msg.sender_id !== 0) {
+          var ra = document.createElement("div");
+          ra.className = "reply-area";
+
+          var row = document.createElement("div");
+          row.className = "reply-row";
+
+          var input = document.createElement("input");
+          input.type = "text";
+          input.className = "reply-input";
+          input.placeholder = "Reply to " + msg.sender_nickname + "...";
+          input.maxLength = 4096;
+
+          var btn = document.createElement("button");
+          btn.className = "reply-btn";
+          btn.textContent = "Send";
+
+          var status = document.createElement("div");
+          status.className = "reply-status";
+
+          row.appendChild(input);
+          row.appendChild(btn);
+          ra.appendChild(row);
+          ra.appendChild(status);
+          card.appendChild(ra);
+
+          // Stop click from bubbling when interacting with reply
+          input.addEventListener("click", function(e) { e.stopPropagation(); });
+          btn.addEventListener("click", function(e) { e.stopPropagation(); });
+
+          input.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") { e.preventDefault(); doReply(); }
+          });
+
+          btn.addEventListener("click", doReply);
+
+          function doReply() {
+            var text = input.value.trim();
+            if (!text || btn.disabled) return;
+            btn.disabled = true;
+            btn.textContent = "...";
+            status.textContent = "";
+
+            replyToMessage(msg.id, text, initData).then(function() {
+              hapticFeedback("success");
+              input.value = "";
+              status.style.color = "#34c759";
+              status.textContent = "Sent!";
+              btn.disabled = false;
+              btn.textContent = "Send";
+              setTimeout(function() { status.textContent = ""; }, 2000);
+            }).catch(function(err) {
+              hapticFeedback("error");
+              status.style.color = "var(--tg-theme-destructive-text-color)";
+              status.textContent = err.message || "Failed";
+              btn.disabled = false;
+              btn.textContent = "Send";
+            });
+          }
+        }
+      }
+
+      function loadInbox(offset, isRefresh) {
+        fetchInbox(initData, offset).then(function(data) {
+          loadingEl.style.display = "none";
+
+          if (data.messages.length === 0 && offset === 0 && !isRefresh) {
+            emptyEl.style.display = "block";
+            return;
+          }
+
+          // Hide empty state if we now have messages
+          emptyEl.style.display = "none";
+          inboxEl.style.display = "block";
+
+          if (data.unread_count > 0) {
+            badgeEl.textContent = data.unread_count;
+            badgeEl.style.display = "";
+          } else {
+            badgeEl.style.display = "none";
+          }
+
+          // For refresh, prepend new messages at top
+          if (isRefresh && data.messages.length > 0) {
+            var newMsgs = [];
+            for (var i = 0; i < data.messages.length; i++) {
+              if (!knownIds[data.messages[i].id]) newMsgs.push(data.messages[i]);
+            }
+            // Insert new messages at top of list
+            newMsgs.reverse().forEach(function(msg) {
+              if (knownIds[msg.id]) return;
+              knownIds[msg.id] = true;
+              allMessages.unshift(msg);
+
+              var card = document.createElement("div");
+              card.className = "message-card";
+              card.setAttribute("data-id", msg.id);
+              card.style.animation = "popBounce 0.4s cubic-bezier(0.4, 0, 0.2, 1) both";
+
+              var html = '<div class="message-card-header">'
+                + '<span class="sender-badge">' + esc(msg.sender_nickname) + '</span>';
+              if (msg.message_type !== "text")
+                html += '<span class="message-type-badge">' + esc(msg.message_type) + '</span>';
+              html += '<span class="message-time">' + relativeTime(msg.created_at) + '</span>';
+              if (!msg.read) html += '<span class="unread-dot"></span>';
+              html += '</div>';
+              html += '<div class="message-preview">' + esc(msg.message_text) + '</div>';
+
+              card.innerHTML = html;
+              if (listEl.firstChild) {
+                listEl.insertBefore(card, listEl.firstChild);
+              } else {
+                listEl.appendChild(card);
+              }
+            });
+          } else {
+            renderList(data.messages, !isRefresh);
+          }
+
+          if (data.messages.length >= 50) {
+            moreBtn.style.display = "";
+          } else if (!isRefresh) {
+            moreBtn.style.display = "none";
+          }
+
+          // Start polling if not already
+          if (!pollTimer) {
+            pollTimer = setInterval(function() {
+              loadInbox(0, true);
+            }, 5000);
+          }
+        }).catch(function(err) {
+          if (!isRefresh) {
+            loadingEl.style.display = "none";
+            document.getElementById("auth-error").style.display = "block";
+            document.getElementById("auth-error-hint").textContent = "Error: " + err.message;
+            showDebug();
+          }
+        });
+      }
+
+      moreBtn.addEventListener("click", function() {
+        loadInbox(allMessages.length, false);
+      });
+
+      loadInbox(0, false);
+    }
+
+    boot();
+  })();
   </script>
 </body>
 </html>
