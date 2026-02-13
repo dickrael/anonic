@@ -5,8 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Dashboard — Incognitus</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=9">
   <style>
+    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
     .dashboard { padding-top: 8px; }
 
     /* ===== Profile Header ===== */
@@ -37,10 +41,18 @@
       font-size: 20px;
       font-weight: 700;
       margin-bottom: 2px;
+      opacity: 0;
+      animation: textReveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.35s forwards;
     }
     .profile-member-since {
       font-size: 13px;
       color: var(--tg-theme-hint-color);
+      opacity: 0;
+      animation: textReveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
+    }
+    @keyframes textReveal {
+      from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
     }
 
     /* ===== Stats Grid ===== */
@@ -88,6 +100,13 @@
       color: var(--tg-theme-text-color);
       line-height: 1;
       font-variant-numeric: tabular-nums;
+      opacity: 0;
+      filter: blur(6px);
+      transition: opacity 0.4s ease, filter 0.4s ease;
+    }
+    .stat-value.revealed {
+      opacity: 1;
+      filter: blur(0);
     }
     .stat-label {
       font-size: 11px;
@@ -258,8 +277,8 @@
     </div>
   </div>
 
-  <script src="js/telegram.js?v=8"></script>
-  <script src="js/api.js?v=8"></script>
+  <script src="js/telegram.js?v=9"></script>
+  <script src="js/api.js?v=9"></script>
   <script>
   (function() {
     "use strict";
@@ -300,19 +319,23 @@
       d.textContent = lines.join("\n");
     }
 
-    // Animated count-up with easing
-    function animateValue(el, target, duration) {
-      if (target === 0) { el.textContent = "0"; return; }
-      var startTime = null;
-      duration = duration || 1000;
-      function step(ts) {
-        if (!startTime) startTime = ts;
-        var p = Math.min((ts - startTime) / duration, 1);
-        var eased = 1 - Math.pow(1 - p, 4); // ease-out quart
-        el.textContent = Math.round(target * eased);
-        if (p < 1) requestAnimationFrame(step);
-      }
-      requestAnimationFrame(step);
+    // Animated count-up with easing + blur reveal
+    function animateValue(el, target, duration, delay) {
+      delay = delay || 0;
+      setTimeout(function() {
+        el.classList.add("revealed");
+        if (target === 0) { el.textContent = "0"; return; }
+        var startTime = null;
+        duration = duration || 1000;
+        function step(ts) {
+          if (!startTime) startTime = ts;
+          var p = Math.min((ts - startTime) / duration, 1);
+          var eased = 1 - Math.pow(1 - p, 4);
+          el.textContent = Math.round(target * eased);
+          if (p < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }, delay);
     }
 
     function startApp(initData) {
@@ -326,17 +349,32 @@
         // Profile header
         var nick = data.nickname || "?";
         var avatarEmojis = ["🦊","🐼","🦋","🐬","🦄","🐧","🦁","🐸","🦉","🐺","🦈","🐙","🦜","🐹","🦝","🐯","🐨","🦩","🐻","🐰","🦀","🐝","🐳","🦎","🐿️","🦇","🐮","🐔","🐲","🎭","🎪","🎨","🎯","🎲","🌈","🌸","🍄","🌵","🔮","🪐","💎","🧊","🎀","🪸"];
-        var emojiIdx = 0;
-        for (var ci = 0; ci < nick.length; ci++) emojiIdx += nick.charCodeAt(ci);
-        document.getElementById("avatar-letter").textContent = avatarEmojis[emojiIdx % avatarEmojis.length];
+        var hash = 0;
+        for (var ci = 0; ci < nick.length; ci++) hash = hash * 31 + nick.charCodeAt(ci);
+        hash = Math.abs(hash);
+        document.getElementById("avatar-letter").textContent = avatarEmojis[hash % avatarEmojis.length];
+
+        // Random gradient for avatar
+        var gradients = [
+          ["#FF6B6B","#EE5A24"],["#A29BFE","#6C5CE7"],["#55E6C1","#1ABC9C"],
+          ["#FECA57","#FF9F43"],["#FF9FF3","#F368E0"],["#48DBFB","#0ABDE3"],
+          ["#FF6348","#FF4757"],["#7BED9F","#2ED573"],["#70A1FF","#1E90FF"],
+          ["#FFA502","#E17055"],["#DCDDE1","#A4B0BD"],["#FD79A8","#E84393"],
+          ["#BADC58","#6AB04C"],["#F8C291","#E55039"],["#82CCDD","#3C6382"],
+          ["#B8E994","#78E08F"],["#FDA7DF","#D980FA"],["#F7D794","#F5CD79"]
+        ];
+        var grad = gradients[hash % gradients.length];
+        var avatarEl = document.querySelector(".profile-avatar");
+        avatarEl.style.background = "linear-gradient(135deg, " + grad[0] + ", " + grad[1] + ")";
+        avatarEl.style.boxShadow = "0 6px 24px " + grad[0] + "40";
         document.getElementById("profile-nickname").textContent = nick;
         document.getElementById("profile-since").textContent = "Member since " + (data.registered_at || "—");
 
-        // Animate stat counters
-        animateValue(document.getElementById("stat-received"), data.messages_received || 0, 1000);
-        animateValue(document.getElementById("stat-sent"), data.messages_sent || 0, 900);
-        animateValue(document.getElementById("stat-blocked"), data.blocked_count || 0, 800);
-        animateValue(document.getElementById("stat-revokes"), data.revoke_count || 0, 700);
+        // Animate stat counters with staggered blur reveal
+        animateValue(document.getElementById("stat-received"), data.messages_received || 0, 1000, 300);
+        animateValue(document.getElementById("stat-sent"), data.messages_sent || 0, 900, 450);
+        animateValue(document.getElementById("stat-blocked"), data.blocked_count || 0, 800, 600);
+        animateValue(document.getElementById("stat-revokes"), data.revoke_count || 0, 700, 750);
 
         // Info cards
         document.getElementById("info-registered").textContent = data.registered_at || "—";
