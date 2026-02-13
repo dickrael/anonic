@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Dashboard — Incognitus</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link rel="stylesheet" href="css/style.css?v=7">
+  <link rel="stylesheet" href="css/style.css?v=8">
   <style>
     .dashboard { padding-top: 8px; }
 
@@ -30,9 +30,8 @@
       animation: popBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s forwards;
     }
     .profile-avatar span {
-      font-size: 30px;
-      color: #fff;
-      font-weight: 700;
+      font-size: 36px;
+      line-height: 1;
     }
     .profile-nickname {
       font-size: 20px;
@@ -259,8 +258,8 @@
     </div>
   </div>
 
-  <script src="js/telegram.js?v=7"></script>
-  <script src="js/api.js?v=7"></script>
+  <script src="js/telegram.js?v=8"></script>
+  <script src="js/api.js?v=8"></script>
   <script>
   (function() {
     "use strict";
@@ -326,7 +325,10 @@
 
         // Profile header
         var nick = data.nickname || "?";
-        document.getElementById("avatar-letter").textContent = nick.charAt(0).toUpperCase();
+        var avatarEmojis = ["🦊","🐼","🦋","🐬","🦄","🐧","🦁","🐸","🦉","🐺","🦈","🐙","🦜","🐹","🦝","🐯","🐨","🦩","🐻","🐰","🦀","🐝","🐳","🦎","🐿️","🦇","🐮","🐔","🐲","🎭","🎪","🎨","🎯","🎲","🌈","🌸","🍄","🌵","🔮","🪐","💎","🧊","🎀","🪸"];
+        var emojiIdx = 0;
+        for (var ci = 0; ci < nick.length; ci++) emojiIdx += nick.charCodeAt(ci);
+        document.getElementById("avatar-letter").textContent = avatarEmojis[emojiIdx % avatarEmojis.length];
         document.getElementById("profile-nickname").textContent = nick;
         document.getElementById("profile-since").textContent = "Member since " + (data.registered_at || "—");
 
