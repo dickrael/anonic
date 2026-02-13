@@ -4,10 +4,11 @@ import asyncio
 import logging
 
 from pyrogram import Client, filters
-from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from pyrogram.enums import ParseMode, ButtonStyle
 from pyrogram.errors import UserIsBlocked, InputUserDeactivated
 
+from ..config import config
 from ..store import get_store
 from ..strings import gstr, strings
 from ..utils import generate_token, generate_nickname
@@ -152,13 +153,20 @@ def register_start_handlers(app: Client) -> None:
             return
 
         logger.info(f"User {uid} returning existing link")
+        inbox_button = InlineKeyboardMarkup([
+            [InlineKeyboardButton(
+                await gstr("webapp_inbox_button", message),
+                web_app=WebAppInfo(url=f"{config.webapp_url}/inbox.html"),
+            )]
+        ])
         await message.reply(
             (await gstr("start_no_token", message)).format(
                 bot_username=client.me.username,
                 token=user_data['token'],
                 nickname=user_data['nickname']
             ),
-            parse_mode=ParseMode.HTML
+            parse_mode=ParseMode.HTML,
+            reply_markup=inbox_button,
         )
 
     @app.on_message(filters.command("revoke") & filters.private)

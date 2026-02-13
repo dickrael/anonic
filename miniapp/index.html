@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Send Anonymous Message — Incognitus</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container" id="app">
+    <!-- Loading skeleton -->
+    <div id="loading" class="page-content">
+      <div class="skeleton skeleton-avatar"></div>
+      <div class="skeleton skeleton-title"></div>
+      <div class="skeleton skeleton-subtitle"></div>
+      <div class="skeleton skeleton-textarea"></div>
+      <div class="skeleton skeleton-button"></div>
+    </div>
+
+    <!-- Main form (hidden until loaded) -->
+    <div id="form-state" class="page-content" style="display:none;">
+      <div class="avatar-circle">
+        <span id="avatar-letter">?</span>
+      </div>
+      <div class="page-title" id="nickname-display"></div>
+      <div class="page-subtitle">Send an anonymous message</div>
+
+      <div id="error-msg" class="error-text" style="display:none;"></div>
+
+      <div class="message-input-wrapper">
+        <textarea
+          id="message-input"
+          class="message-input"
+          placeholder="Type your anonymous message..."
+          maxlength="4096"
+        ></textarea>
+        <div class="char-counter" id="char-counter">0 / 4096</div>
+      </div>
+
+      <button class="btn-primary" id="send-btn" disabled>Send</button>
+    </div>
+
+    <!-- Success state (hidden until sent) -->
+    <div id="success-state" class="success-state" style="display:none;">
+      <svg class="checkmark-svg" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="32"/>
+        <path d="M20 33 L28 41 L44 25"/>
+      </svg>
+      <div class="success-text">Message sent!</div>
+      <div class="success-hint">Your message was delivered anonymously.</div>
+      <a href="https://t.me/incognitusbot" class="btn-secondary">Create your own link</a>
+    </div>
+
+    <!-- Invalid link state -->
+    <div id="error-state" class="page-content" style="display:none;">
+      <div style="text-align:center; padding-top: 48px;">
+        <div class="empty-icon">🔗</div>
+        <div class="empty-title">Invalid Link</div>
+        <div class="empty-hint">This link is invalid or has expired.</div>
+        <a href="https://t.me/incognitusbot" class="btn-secondary">Get your own link</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/telegram.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    (function() {
+      initWebApp();
+
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token") || params.get("t") || "";
+
+      const loadingEl = document.getElementById("loading");
+      const formEl = document.getElementById("form-state");
+      const successEl = document.getElementById("success-state");
+      const errorStateEl = document.getElementById("error-state");
+      const errorMsgEl = document.getElementById("error-msg");
+      const nicknameEl = document.getElementById("nickname-display");
+      const avatarLetter = document.getElementById("avatar-letter");
+      const input = document.getElementById("message-input");
+      const counter = document.getElementById("char-counter");
+      const sendBtn = document.getElementById("send-btn");
+
+      if (!token) {
+        loadingEl.style.display = "none";
+        errorStateEl.style.display = "block";
+        return;
+      }
+
+      // Fetch link info
+      fetchLink(token).then(function(data) {
+        nicknameEl.textContent = data.nickname;
+        avatarLetter.textContent = data.nickname.charAt(0).toUpperCase();
+        loadingEl.style.display = "none";
+        formEl.style.display = "block";
+        input.focus();
+      }).catch(function() {
+        loadingEl.style.display = "none";
+        errorStateEl.style.display = "block";
+      });
+
+      // Character counter
+      input.addEventListener("input", function() {
+        var len = input.value.length;
+        counter.textContent = len + " / 4096";
+        counter.classList.toggle("warning", len > 3800);
+        sendBtn.disabled = len === 0 || len > 4096;
+      });
+
+      // Send
+      sendBtn.addEventListener("click", function() {
+        if (sendBtn.disabled) return;
+        var text = input.value.trim();
+        if (!text) return;
+
+        sendBtn.disabled = true;
+        sendBtn.innerHTML = '<span class="spinner"></span> Sending...';
+        errorMsgEl.style.display = "none";
+
+        sendMessage(token, text).then(function() {
+          hapticFeedback("success");
+          formEl.style.display = "none";
+          successEl.style.display = "block";
+        }).catch(function(err) {
+          hapticFeedback("error");
+          errorMsgEl.textContent = err.message || "Failed to send. Try again.";
+          errorMsgEl.style.display = "block";
+          sendBtn.disabled = false;
+          sendBtn.textContent = "Send";
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

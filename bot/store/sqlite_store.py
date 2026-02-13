@@ -826,6 +826,59 @@ class SQLiteStore:
             result.append(link)
         return result
 
+    # ---- Webapp Messages ----
+
+    async def store_webapp_message(
+        self,
+        sender_id: int,
+        receiver_id: int,
+        sender_nickname: str,
+        message_text: str,
+        message_type: str = "text",
+    ) -> int:
+        """Persist a message for the webapp inbox. Returns the new row id."""
+        now = datetime.now(timezone.utc).isoformat()
+        cur = await self._write_conn.execute(
+            """INSERT INTO webapp_messages
+               (sender_id, receiver_id, sender_nickname, message_text, message_type, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (sender_id, receiver_id, sender_nickname, message_text, message_type, now),
+        )
+        await self._write_conn.commit()
+        return cur.lastrowid
+
+    def get_inbox_messages(
+        self, user_id: int, limit: int = 50, offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """Fetch inbox messages for a user, newest first."""
+        rows = self._read_conn.execute(
+            """SELECT id, sender_id, sender_nickname, message_text, message_type,
+                      created_at, read
+               FROM webapp_messages
+               WHERE receiver_id = ?
+               ORDER BY created_at DESC
+               LIMIT ? OFFSET ?""",
+            (user_id, limit, offset),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    async def mark_message_read(self, message_id: int, user_id: int) -> bool:
+        """Mark a single inbox message as read."""
+        cur = await self._write_conn.execute(
+            "UPDATE webapp_messages SET read = 1 WHERE id = ? AND receiver_id = ?",
+            (message_id, user_id),
+        )
+        await self._write_conn.commit()
+        return cur.rowcount > 0
+
+    def get_unread_count(self, user_id: int) -> int:
+        """Count unread inbox messages for a user."""
+        cur = self._read_conn.execute(
+            "SELECT COUNT(*) FROM webapp_messages WHERE receiver_id = ? AND read = 0",
+            (user_id,),
+        )
+        return cur.fetchone()[0]
+
     async def cleanup_expired_temp_links(self) -> int:
         now = datetime.now(timezone.utc).isoformat()
         # Delete inactive links

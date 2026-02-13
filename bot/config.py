@@ -15,6 +15,8 @@ class Config:
     moderation_chat_id: int
     owner_id: int
     data_file: str
+    webapp_url: str
+    webapp_port: int
 
 
 def load_config() -> Config:
@@ -27,6 +29,8 @@ def load_config() -> Config:
     moderation_chat_id = os.getenv("MODERATION_CHAT_ID")
     owner_id_str = os.getenv("OWNER_ID")
     data_file = os.getenv("DATA_FILE", "data.db")
+    webapp_url = os.getenv("WEBAPP_URL", "https://lazez.uz/miniapp")
+    webapp_port_str = os.getenv("WEBAPP_PORT", "8080")
 
     missing = []
     if not api_id_str:
@@ -48,8 +52,9 @@ def load_config() -> Config:
         api_id = int(api_id_str)
         owner_id = int(owner_id_str)
         moderation_chat_id_int = int(moderation_chat_id)
+        webapp_port = int(webapp_port_str)
     except ValueError:
-        sys.stderr.write("API_ID, OWNER_ID and MODERATION_CHAT_ID must be integers.\n")
+        sys.stderr.write("API_ID, OWNER_ID, MODERATION_CHAT_ID and WEBAPP_PORT must be integers.\n")
         sys.exit(1)
 
     return Config(
@@ -59,6 +64,8 @@ def load_config() -> Config:
         moderation_chat_id=moderation_chat_id_int,
         owner_id=owner_id,
         data_file=data_file,
+        webapp_url=webapp_url,
+        webapp_port=webapp_port,
     )
 
 

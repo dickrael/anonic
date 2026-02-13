@@ -676,6 +676,12 @@ def register_messaging_handlers(app: Client) -> None:
                 await store.store_message(sent_msg.id, uid, target_id)
                 logger.debug(f"Stored message {sent_msg.id} for reply routing: {uid} -> {target_id}")
 
+            # Persist to webapp inbox
+            await store.store_webapp_message(
+                uid, target_id, user['nickname'],
+                original_caption or f"[{primary_type}]", primary_type,
+            )
+
             # Update message stats
             await store.increment_messages_sent(uid)
             await store.increment_messages_received(target_id)

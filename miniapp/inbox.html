@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Inbox — Incognitus</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="container" id="app">
+    <!-- Loading skeleton -->
+    <div id="loading" class="page-content">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+        <div class="skeleton" style="width:100px; height:28px;"></div>
+        <div class="skeleton" style="width:40px; height:22px; border-radius:12px;"></div>
+      </div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+      <div class="skeleton skeleton-card"></div>
+    </div>
+
+    <!-- Inbox content -->
+    <div id="inbox" style="display:none;">
+      <div class="inbox-header">
+        <div class="inbox-title">Inbox</div>
+        <div class="unread-badge" id="unread-badge" style="display:none;">0</div>
+      </div>
+      <div class="message-list" id="message-list"></div>
+      <button class="btn-secondary" id="load-more-btn" style="display:none; width:100%; margin-top:12px; text-align:center;">Load more</button>
+    </div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="empty-state" style="display:none;">
+      <div class="empty-icon">📭</div>
+      <div class="empty-title">No messages yet</div>
+      <div class="empty-hint">Share your link to get started!</div>
+    </div>
+
+    <!-- Auth error -->
+    <div id="auth-error" style="display:none;">
+      <div class="empty-state">
+        <div class="empty-icon">🔒</div>
+        <div class="empty-title">Open in Telegram</div>
+        <div class="empty-hint">This page must be opened from the Telegram app.</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/telegram.js"></script>
+  <script src="js/api.js"></script>
+  <script>
+    (function() {
+      initWebApp();
+
+      var initData = getInitData();
+      var loadingEl = document.getElementById("loading");
+      var inboxEl = document.getElementById("inbox");
+      var emptyEl = document.getElementById("empty-state");
+      var authErrorEl = document.getElementById("auth-error");
+      var messageList = document.getElementById("message-list");
+      var unreadBadge = document.getElementById("unread-badge");
+      var loadMoreBtn = document.getElementById("load-more-btn");
+
+      if (!initData) {
+        loadingEl.style.display = "none";
+        authErrorEl.style.display = "block";
+        return;
+      }
+
+      var currentOffset = 0;
+      var pageSize = 50;
+
+      function relativeTime(isoStr) {
+        var date = new Date(isoStr + (isoStr.endsWith("Z") ? "" : "Z"));
+        var now = new Date();
+        var diff = Math.floor((now - date) / 1000);
+        if (diff < 60) return "just now";
+        if (diff < 3600) return Math.floor(diff / 60) + "m ago";
+        if (diff < 86400) return Math.floor(diff / 3600) + "h ago";
+        if (diff < 604800) return Math.floor(diff / 86400) + "d ago";
+        return date.toLocaleDateString();
+      }
+
+      function escapeHtml(text) {
+        var div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      function renderCard(msg, index) {
+        var card = document.createElement("div");
+        card.className = "message-card";
+        card.style.animationDelay = (index * 50) + "ms";
+
+        var header = '<div class="message-card-header">';
+        header += '<span class="sender-badge">' + escapeHtml(msg.sender_nickname) + '</span>';
+        if (msg.message_type !== "text") {
+          header += '<span class="message-type-badge">' + escapeHtml(msg.message_type) + '</span>';
+        }
+        header += '<span class="message-time">' + relativeTime(msg.created_at) + '</span>';
+        if (!msg.read) {
+          header += '<span class="unread-dot"></span>';
+        }
+        header += '</div>';
+
+        var preview = '<div class="message-preview">' + escapeHtml(msg.message_text) + '</div>';
+
+        card.innerHTML = header + preview;
+
+        // Expand on click
+        card.addEventListener("click", function() {
+          hapticFeedback("impact");
+
+          if (card.classList.contains("expanded")) {
+            // Collapse
+            card.classList.remove("expanded");
+            var expanded = card.querySelector(".message-expanded");
+            if (expanded) expanded.remove();
+            var prev = card.querySelector(".message-preview");
+            if (prev) prev.style.display = "";
+            return;
+          }
+
+          card.classList.add("expanded");
+          var full = document.createElement("div");
+          full.className = "message-expanded";
+          full.textContent = msg.message_text;
+          card.appendChild(full);
+
+          // Mark as read
+          if (!msg.read) {
+            msg.read = 1;
+            var dot = card.querySelector(".unread-dot");
+            if (dot) dot.remove();
+            markRead(msg.id, initData).catch(function() {});
+          }
+        });
+
+        return card;
+      }
+
+      function loadInbox(offset) {
+        fetchInbox(initData, offset).then(function(data) {
+          loadingEl.style.display = "none";
+
+          if (data.messages.length === 0 && offset === 0) {
+            emptyEl.style.display = "block";
+            return;
+          }
+
+          inboxEl.style.display = "block";
+
+          if (data.unread_count > 0) {
+            unreadBadge.textContent = data.unread_count;
+            unreadBadge.style.display = "";
+          }
+
+          data.messages.forEach(function(msg, i) {
+            messageList.appendChild(renderCard(msg, i));
+          });
+
+          currentOffset = offset + data.messages.length;
+
+          if (data.messages.length >= pageSize) {
+            loadMoreBtn.style.display = "";
+          } else {
+            loadMoreBtn.style.display = "none";
+          }
+        }).catch(function(err) {
+          loadingEl.style.display = "none";
+          authErrorEl.style.display = "block";
+        });
+      }
+
+      loadMoreBtn.addEventListener("click", function() {
+        loadInbox(currentOffset);
+      });
+
+      loadInbox(0);
+    })();
+  </script>
+</body>
+</html>

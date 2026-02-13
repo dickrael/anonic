@@ -70,6 +70,17 @@ CREATE TABLE IF NOT EXISTS message_timestamps (
     target_id INTEGER NOT NULL,
     timestamp TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS webapp_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER NOT NULL,
+    receiver_id INTEGER NOT NULL,
+    sender_nickname TEXT NOT NULL,
+    message_text TEXT NOT NULL,
+    message_type TEXT DEFAULT 'text',
+    created_at TEXT NOT NULL,
+    read INTEGER DEFAULT 0
+);
 """
 
 INDEXES_SQL = [
@@ -81,4 +92,5 @@ INDEXES_SQL = [
     "CREATE INDEX IF NOT EXISTS idx_pending_targets_created ON pending_targets(created_at);",
     "CREATE INDEX IF NOT EXISTS idx_temp_links_user ON temp_links(user_id);",
     "CREATE INDEX IF NOT EXISTS idx_message_timestamps_user_target ON message_timestamps(user_id, target_id);",
+    "CREATE INDEX IF NOT EXISTS idx_webapp_messages_receiver ON webapp_messages(receiver_id, created_at);",
 ]

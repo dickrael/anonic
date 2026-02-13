@@ -292,6 +292,14 @@ active_link_view: |
 
   <emoji id="5190806721286657692">📊</emoji> {info}
   👁️ Used: <b>{uses}</b> times
+webapp_inbox_button: "📬 Open Inbox"
+webapp_send_placeholder: "Type your anonymous message..."
+webapp_send_button: "Send"
+webapp_send_success: "Message sent!"
+webapp_send_error: "Failed to send. Try again."
+webapp_link_invalid: "This link is invalid or expired."
+webapp_inbox_empty: "No messages yet — share your link to get started!"
+webapp_new_message: "🌐 <i>New anonymous message via web!</i>"
 bot_name: "Incognitus"
 bot_description: "Ever wonder what your friends really think about you? Let them tell you honestly — completely anonymous, no names, no judgments. Share your link, get real opinions, and chat back without anyone knowing who's who."
 bot_short_description: "Send & receive anonymous messages. Share your link — get honest opinions!"

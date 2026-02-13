@@ -3,6 +3,7 @@
 import asyncio
 import logging
 
+import uvicorn
 from pyrogram import idle
 from pyrogram.types import BotCommand
 
@@ -13,6 +14,7 @@ from .strings import strings
 from .utils import load_nicknames
 from .scheduler import start_scheduler, stop_scheduler
 from .handlers import register_all_handlers
+from .webapp import app as webapp_app
 
 
 # Bot commands for the Telegram menu
@@ -96,6 +98,17 @@ async def init_bot() -> None:
 
             # Start scheduler
             start_scheduler(app, store, strings.strings)
+
+            # Start FastAPI webapp server
+            uvicorn_config = uvicorn.Config(
+                webapp_app,
+                host="0.0.0.0",
+                port=config.webapp_port,
+                log_level="info",
+            )
+            server = uvicorn.Server(uvicorn_config)
+            asyncio.create_task(server.serve())
+            logger.info(f"WebApp API server started on port {config.webapp_port}")
 
             break
         except Exception as e:

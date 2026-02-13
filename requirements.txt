@@ -4,3 +4,5 @@ apscheduler
 pyyaml
 tgcrypto
 aiosqlite
+fastapi
+uvicorn[standard]
