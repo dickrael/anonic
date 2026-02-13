@@ -102,13 +102,13 @@ async def init_bot() -> None:
             # Start FastAPI webapp server (disable signal handlers to not interfere with pyrogram)
             uvicorn_config = uvicorn.Config(
                 webapp_app,
-                host="0.0.0.0",
+                host="127.0.0.1",
                 port=config.webapp_port,
                 log_level="info",
             )
-            server = uvicorn.Server(uvicorn_config)
-            server.install_signal_handlers = lambda: None
-            asyncio.create_task(server.serve())
+            webapp_server = uvicorn.Server(uvicorn_config)
+            webapp_server.install_signal_handlers = lambda: None
+            webapp_task = asyncio.create_task(webapp_server.serve())
             logger.info(f"WebApp API server started on port {config.webapp_port}")
 
             break
@@ -122,6 +122,14 @@ async def init_bot() -> None:
     except KeyboardInterrupt:
         logger.info("Stop signal received. Shutting down...")
     finally:
+        # Stop uvicorn server
+        webapp_server.should_exit = True
+        try:
+            await asyncio.wait_for(webapp_task, timeout=3)
+        except (asyncio.TimeoutError, Exception):
+            webapp_task.cancel()
+        logger.info("WebApp server stopped")
+
         if app.is_connected:
             await app.stop()
         stop_scheduler()
