@@ -1,0 +1,82 @@
+Mini App Architecture — Incognitus/ClearSayBot
+================================================
+
+OVERVIEW
+--------
+Two static HTML pages served from /var/www/html/miniapp/ on lazez.uz:
+- dashboard.html: Authenticated stats dashboard (Telegram Mini App, requires initData)
+- index.html: Public share page (anyone can send anonymous messages via token URL)
+
+Backend: FastAPI running alongside the Pyrogram bot in the same asyncio loop.
+
+BACKEND (bot/webapp.py)
+-----------------------
+FastAPI app with 3 endpoints:
+- GET  /api/link/{token}  — Public. Returns recipient nickname for share page.
+- POST /api/send          — Public. Sends anonymous message from share page.
+- GET  /api/dashboard     — Authenticated (initData HMAC-SHA256). Returns user stats.
+
+Authentication: Telegram WebApp initData validated via HMAC-SHA256 using bot token.
+Header: X-Init-Data contains the raw initData query string.
+
+UVICORN + PYROGRAM COEXISTENCE
+------------------------------
+Problem: Both uvicorn and pyrogram need to run in the same asyncio event loop.
+Solution in bot/__main__.py:
+1. Create uvicorn.Server with config (host=0.0.0.0, port from config)
+2. CRITICAL: server.install_signal_handlers = lambda: None
+   — Without this, uvicorn overrides signal handlers and pyrogram's idle() breaks.
+3. Start uvicorn as asyncio.create_task(server.serve())
+4. Pyrogram's idle() handles Ctrl+C.
+5. In finally block: server.should_exit = True, await task with timeout, then cancel.
+
+NGINX PROXY CHAIN
+-----------------
+Nginx Proxy Manager → cool.py (existing FastAPI on VPS) → bot's FastAPI on port 49152.
+cool.py has an httpx reverse proxy route: /api/{path} → http://127.0.0.1:49152/api/{path}
+Static files served by cool.py via StaticFiles mount at /var/www/html/.
+
+SQLITE THREADING
+----------------
+Problem: FastAPI sync def endpoints run in threadpool, but SQLite connections are thread-bound.
+Solution: All webapp endpoints are async def (run on main thread where SQLite connections live).
+Store uses dual connections: aiosqlite for writes, sqlite3 for sync reads (WAL mode).
+
+DATE FORMAT
+-----------
+Problem: Python datetime.isoformat() produces "+00:00" suffix, Telegram WebView JS can't parse it.
+Solution: Store dates as "Z" format via strftime("%Y-%m-%dT%H:%M:%SZ"). Normalize existing
+"+00:00" dates to "Z" in API responses. JS-side also does replace(/\+00:00$/, "Z").
+
+DASHBOARD FEATURES
+------------------
+- Stats: messages sent/received, blocked count, revoke count, days since registration
+- Glassmorphism UI with backdrop-filter blur on gradient background
+- Random emoji avatar + gradient colors derived from nickname hash (deterministic)
+- Animated count-up counters with ease-out easing
+- Staggered card pop-in animations + shine effect
+- Copy link button with clipboard API + execCommand fallback
+- i18n: en, ru, fa, ar with RTL support (dir="rtl" for ar/fa)
+- Theme detection from Telegram themeParams.bg_color brightness
+- Text selection disabled (CSS user-select + JS event prevention)
+- Bot username cached in module-level var, fetched once from client.me
+
+SHARE PAGE (index.html)
+-----------------------
+- Token from URL ?token=XXX
+- Fetches /api/link/{token} for recipient nickname
+- Textarea with character counter, send button
+- Success: SVG checkmark draw animation
+- Works in browser and Telegram WebView (graceful fallback)
+
+KEY FILES
+---------
+bot/webapp.py          — FastAPI endpoints
+bot/__main__.py        — Uvicorn + Pyrogram startup
+bot/store/sqlite_store.py — get_dashboard_stats, store_webapp_message
+bot/config.py          — webapp_url, webapp_port (default 49152)
+miniapp/dashboard.html — Stats dashboard (Mini App)
+miniapp/index.html     — Share/send page
+miniapp/js/telegram.js — WebApp SDK wrapper
+miniapp/js/api.js      — API client (fetchLink, sendMessage, fetchDashboard)
+miniapp/css/style.css  — Shared base styles + animations
