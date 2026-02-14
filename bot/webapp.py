@@ -178,27 +178,27 @@ async def story_card(token: str):
 
     nickname = target_data.get("nickname", "???")
 
-    # Compute member-since relative text
+    # Compute registration relative text
     from datetime import datetime, timezone
     reg_str = target_data.get("registered_at", "")
-    member_since = ""
+    reg_text = ""
     if reg_str:
         try:
             reg_dt = datetime.fromisoformat(reg_str.replace("Z", "+00:00"))
             diff = datetime.now(timezone.utc) - reg_dt
             total_min = int(diff.total_seconds() / 60)
             if total_min < 1:
-                member_since = "Just joined"
+                reg_text = "Registered just now"
             elif total_min < 60:
-                member_since = f"Member for {total_min}m"
+                reg_text = f"Registered {total_min}m ago"
             elif total_min < 1440:
-                member_since = f"Member for {total_min // 60}h"
+                reg_text = f"Registered {total_min // 60}h ago"
             else:
-                member_since = f"Member for {diff.days}d"
+                reg_text = f"Registered {diff.days} days ago"
         except Exception:
             pass
 
-    img = _render_story_card(nickname, member_since)
+    img = _render_story_card(nickname, reg_text)
     buf = io.BytesIO()
     img.save(buf, "PNG", optimize=True)
     buf.seek(0)
@@ -209,22 +209,33 @@ async def story_card(token: str):
     )
 
 
-# Pre-load story background and fonts at startup
+# Story card assets
 _ASSETS_DIR = os.path.join(_PROJECT_ROOT, "assets")
-_FONT_DIR = os.path.join(_ASSETS_DIR, "fonts")
 _STORY_BG_PATH = os.path.join(_ASSETS_DIR, "story-bg.png")
+_SATISFY_PATH = os.path.join(_ASSETS_DIR, "Satisfy-Regular.ttf")
 
 
-def _load_font(name: str, size: int) -> ImageFont.FreeTypeFont:
-    """Try to load a font from assets/fonts, fallback to default."""
+def _load_font(path: str, size: int) -> ImageFont.FreeTypeFont:
+    """Load a TrueType font or fall back to Pillow default."""
     try:
-        return ImageFont.truetype(os.path.join(_FONT_DIR, name), size)
+        return ImageFont.truetype(path, size)
     except (OSError, IOError):
         return ImageFont.load_default()
 
 
-def _render_story_card(nickname: str, member_since: str) -> Image.Image:
-    """Render a 1080x1920 story card: bg image + nickname + member since."""
+def _fit_text_font(path: str, text: str, max_w: int, start_size: int = 200, min_size: int = 48):
+    """Find the largest font size so that `text` fits within `max_w` pixels."""
+    for size in range(start_size, min_size - 1, -4):
+        font = _load_font(path, size)
+        bbox = font.getbbox(text)
+        if bbox[2] - bbox[0] <= max_w:
+            return font, bbox
+    font = _load_font(path, min_size)
+    return font, font.getbbox(text)
+
+
+def _render_story_card(nickname: str, reg_text: str) -> Image.Image:
+    """Render a 1080x1920 story card: bg + auto-sized nickname + registration."""
     W, H = 1080, 1920
 
     # Load background image or fallback to gradient
@@ -236,46 +247,42 @@ def _render_story_card(nickname: str, member_since: str) -> Image.Image:
         draw = ImageDraw.Draw(img)
         for y in range(H):
             t = y / H
-            r = int(15 + (48 - 15) * t)
-            g = int(12 + (43 - 12) * t)
-            b = int(41 + (99 - 41) * t)
+            r, g, b = int(15 + 33 * t), int(12 + 31 * t), int(41 + 58 * t)
             draw.line([(0, y), (W, y)], fill=(r, g, b, 255))
 
-    # Fonts — decorative for nickname, clean for subtitle
-    font_nick = _load_font("Decorative.ttf", 96)
-    font_since = _load_font("Inter-SemiBold.ttf", 44)
-    font_brand = _load_font("Inter-Medium.ttf", 36)
-
     cx = W // 2
+    pad = 120  # horizontal padding
 
-    # Semi-transparent dark overlay in center area for text readability
+    # Semi-transparent dark overlay for readability
     overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     od = ImageDraw.Draw(overlay)
     od.rounded_rectangle(
-        [80, H // 2 - 200, W - 80, H // 2 + 200],
+        [60, H // 2 - 220, W - 60, H // 2 + 220],
         radius=40,
-        fill=(0, 0, 0, 90),
+        fill=(0, 0, 0, 80),
     )
     img = Image.alpha_composite(img, overlay)
     draw = ImageDraw.Draw(img)
 
-    # --- Nickname (big, centered) ---
-    bbox = draw.textbbox((0, 0), nickname, font=font_nick)
-    nw, nh = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    nick_y = H // 2 - nh // 2 - 30
-    draw.text((cx - nw // 2, nick_y), nickname, fill=(255, 255, 255, 255), font=font_nick)
+    # --- Nickname (auto-sized to fill width, decorative font) ---
+    nick_font, nick_bbox = _fit_text_font(_SATISFY_PATH, nickname, W - pad * 2, 200, 60)
+    nw = nick_bbox[2] - nick_bbox[0]
+    nh = nick_bbox[3] - nick_bbox[1]
+    nick_y = H // 2 - nh // 2 - 40
+    draw.text((cx - nw // 2, nick_y), nickname, fill=(255, 255, 255, 255), font=nick_font)
 
-    # --- Member since (below nickname) ---
-    if member_since:
-        bbox = draw.textbbox((0, 0), member_since, font=font_since)
-        sw = bbox[2] - bbox[0]
-        since_y = nick_y + nh + 30
-        draw.text((cx - sw // 2, since_y), member_since, fill=(255, 255, 255, 180), font=font_since)
+    # --- Registration time (below nickname) ---
+    if reg_text:
+        reg_font = _load_font(_SATISFY_PATH, 44)
+        bbox = reg_font.getbbox(reg_text)
+        rw = bbox[2] - bbox[0]
+        reg_y = nick_y + nh + 35
+        draw.text((cx - rw // 2, reg_y), reg_text, fill=(255, 255, 255, 170), font=reg_font)
 
     # --- Bottom branding ---
-    brand = "Incognitus"
-    bbox = draw.textbbox((0, 0), brand, font=font_brand)
+    brand_font = _load_font(_SATISFY_PATH, 36)
+    bbox = brand_font.getbbox("Incognitus")
     bw = bbox[2] - bbox[0]
-    draw.text((cx - bw // 2, H - 160), brand, fill=(255, 255, 255, 100), font=font_brand)
+    draw.text((cx - bw // 2, H - 160), "Incognitus", fill=(255, 255, 255, 90), font=brand_font)
 
     return img.convert("RGB")
