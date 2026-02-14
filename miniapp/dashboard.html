@@ -123,53 +123,40 @@
       pointer-events: none;
       z-index: 1;
     }
+    .profile-avatar {
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
     .profile-avatar img {
       width: 100%;
       height: 100%;
       object-fit: cover;
       border-radius: 50%;
     }
-    .avatar-upload-btn {
+    .avatar-overlay {
       position: absolute;
-      bottom: 0;
-      right: 0;
-      width: 28px;
-      height: 28px;
+      inset: 0;
       border-radius: 50%;
-      background: var(--tg-theme-button-color, #40a7e3);
-      border: 2px solid rgba(255,255,255,0.9);
+      background: rgba(0, 0, 0, 0.45);
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      z-index: 2;
-      font-size: 14px;
-      line-height: 1;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-      transition: transform 0.15s;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
+      z-index: 1;
     }
-    .avatar-upload-btn:active { transform: scale(0.88); }
-    .avatar-delete-btn {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: #ff3b30;
-      border: 2px solid rgba(255,255,255,0.9);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      z-index: 2;
-      font-size: 11px;
-      line-height: 1;
+    .avatar-overlay span {
       color: #fff;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-      transition: transform 0.15s;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .avatar-delete-btn:active { transform: scale(0.88); }
+    .profile-avatar:active .avatar-overlay {
+      opacity: 1;
+    }
     .profile-nickname {
       font-size: 20px;
       font-weight: 700;
@@ -365,10 +352,9 @@
         <div class="avatar-frame-wrapper">
           <div class="profile-avatar" id="profile-avatar">
             <span id="avatar-letter">?</span>
+            <div class="avatar-overlay"><span data-i18n="change">Change</span></div>
           </div>
           <img class="avatar-frame" src="https://lazez.uz/addons/frame.webp" alt="" />
-          <div class="avatar-upload-btn" id="avatar-upload-btn">📷</div>
-          <div class="avatar-delete-btn" id="avatar-delete-btn">✕</div>
           <input type="file" id="avatar-input" accept="image/*" style="display:none">
         </div>
         <div class="profile-nickname" id="profile-nickname"></div>
@@ -495,6 +481,7 @@
         member_since: "Member since", days_active: "Days active", your_link: "Your link",
         copy: "Copy", copied: "Copied!", member_since_prefix: "Member since ",
         day: "day", days: "days",
+        change: "Change", delete_avatar: "Delete profile photo?",
         open_in_tg: "Open in Telegram", open_in_tg_hint: "This page must be opened from the Telegram app."
       },
       ru: {
@@ -502,6 +489,7 @@
         member_since: "Участник с", days_active: "Дней активности", your_link: "Ваша ссылка",
         copy: "Копировать", copied: "Скопировано!", member_since_prefix: "Участник с ",
         day: "день", days: "дн.",
+        change: "Изменить", delete_avatar: "Удалить фото профиля?",
         open_in_tg: "Откройте в Telegram", open_in_tg_hint: "Эту страницу нужно открыть из приложения Telegram."
       },
       fa: {
@@ -509,6 +497,7 @@
         member_since: "عضو از", days_active: "روز فعالیت", your_link: "لینک شما",
         copy: "کپی", copied: "کپی شد!", member_since_prefix: "عضو از ",
         day: "روز", days: "روز",
+        change: "تغییر", delete_avatar: "حذف عکس پروفایل؟",
         open_in_tg: "در تلگرام باز کنید", open_in_tg_hint: "این صفحه باید از اپ تلگرام باز شود."
       },
       ar: {
@@ -516,6 +505,7 @@
         member_since: "عضو منذ", days_active: "أيام النشاط", your_link: "رابطك",
         copy: "نسخ", copied: "تم النسخ!", member_since_prefix: "عضو منذ ",
         day: "يوم", days: "أيام",
+        change: "تغيير", delete_avatar: "حذف صورة الملف الشخصي؟",
         open_in_tg: "افتح في تيليجرام", open_in_tg_hint: "يجب فتح هذه الصفحة من تطبيق تيليجرام."
       }
     };
@@ -613,29 +603,30 @@
         // ---- Avatar photo ----
         var profileAvatarEl = document.getElementById("profile-avatar");
         var avatarLetterEl = document.getElementById("avatar-letter");
-        var avatarUploadBtn = document.getElementById("avatar-upload-btn");
-        var avatarDeleteBtn = document.getElementById("avatar-delete-btn");
+        var avatarOverlay = profileAvatarEl.querySelector(".avatar-overlay");
         var avatarInput = document.getElementById("avatar-input");
+        var hasAvatar = false;
 
         function showAvatarImage(url) {
-          var existing = profileAvatarEl.querySelector("img");
+          var existing = profileAvatarEl.querySelector("img.avatar-photo");
           if (existing) {
             existing.src = url;
           } else {
             var img = document.createElement("img");
             img.src = url;
             img.alt = "Avatar";
-            profileAvatarEl.appendChild(img);
+            img.className = "avatar-photo";
+            profileAvatarEl.insertBefore(img, avatarOverlay);
           }
           avatarLetterEl.style.display = "none";
-          avatarDeleteBtn.style.display = "flex";
+          hasAvatar = true;
         }
 
         function revertToEmoji() {
-          var img = profileAvatarEl.querySelector("img");
+          var img = profileAvatarEl.querySelector("img.avatar-photo");
           if (img) profileAvatarEl.removeChild(img);
           avatarLetterEl.style.display = "";
-          avatarDeleteBtn.style.display = "none";
+          hasAvatar = false;
         }
 
         // Load existing avatar
@@ -643,7 +634,39 @@
           showAvatarImage(API_BASE + "/" + data.avatar + "?t=" + Date.now());
         }
 
-        avatarUploadBtn.addEventListener("click", function() {
+        // Tap: upload photo | Long-press (when has avatar): delete
+        var longPressTimer = null;
+        var longPressed = false;
+
+        profileAvatarEl.addEventListener("touchstart", function(e) {
+          longPressed = false;
+          if (hasAvatar) {
+            longPressTimer = setTimeout(function() {
+              longPressed = true;
+              hapticFeedback("warning");
+              if (confirm(t("delete_avatar"))) {
+                deleteAvatar(initData).then(function(res) {
+                  if (res.ok) { revertToEmoji(); hapticFeedback("success"); }
+                }).catch(function() { hapticFeedback("error"); });
+              }
+            }, 500);
+          }
+        }, { passive: true });
+
+        profileAvatarEl.addEventListener("touchend", function(e) {
+          clearTimeout(longPressTimer);
+          if (!longPressed) {
+            avatarInput.click();
+          }
+        });
+
+        profileAvatarEl.addEventListener("touchmove", function() {
+          clearTimeout(longPressTimer);
+        }, { passive: true });
+
+        // Desktop click fallback
+        profileAvatarEl.addEventListener("click", function(e) {
+          if (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
           avatarInput.click();
         });
 
@@ -655,6 +678,9 @@
             avatarInput.value = "";
             return;
           }
+          // Show brief loading pulse
+          avatarOverlay.style.opacity = "1";
+          avatarOverlay.querySelector("span").textContent = "...";
           uploadAvatar(initData, file).then(function(res) {
             if (res.ok && res.avatar_url) {
               showAvatarImage(API_BASE + res.avatar_url);
@@ -662,20 +688,11 @@
             }
           }).catch(function() {
             hapticFeedback("error");
+          }).finally(function() {
+            avatarOverlay.style.opacity = "";
+            avatarOverlay.querySelector("span").textContent = t("change");
           });
           avatarInput.value = "";
-        });
-
-        avatarDeleteBtn.addEventListener("click", function() {
-          if (!confirm("Delete avatar?")) return;
-          deleteAvatar(initData).then(function(res) {
-            if (res.ok) {
-              revertToEmoji();
-              hapticFeedback("success");
-            }
-          }).catch(function() {
-            hapticFeedback("error");
-          });
         });
 
         // Animate stat counters with staggered blur reveal

@@ -11,7 +11,7 @@ from urllib.parse import parse_qs, unquote
 
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from PIL import Image
 from pyrogram.enums import ParseMode
@@ -34,10 +34,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Ensure avatars directory exists and mount static files
-AVATARS_DIR = os.path.join(os.getcwd(), "avatars")
+# Avatars directory next to the project root
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+AVATARS_DIR = os.path.join(_PROJECT_ROOT, "avatars")
 os.makedirs(AVATARS_DIR, exist_ok=True)
-app.mount("/avatars", StaticFiles(directory=AVATARS_DIR), name="avatars")
 
 
 def validate_init_data(init_data: str) -> dict | None:
@@ -171,6 +171,18 @@ async def get_dashboard(request: Request):
         _bot_username = client.me.username if client.me else "ClearSayBot"
     stats["bot_username"] = _bot_username
     return stats
+
+
+@app.get("/avatars/{filename}")
+async def get_avatar(filename: str):
+    """Serve avatar image files."""
+    # Sanitize: only allow {digits}.jpg
+    if not filename.endswith(".jpg") or not filename[:-4].isdigit():
+        raise HTTPException(status_code=404, detail="Not found")
+    filepath = os.path.join(AVATARS_DIR, filename)
+    if not os.path.isfile(filepath):
+        raise HTTPException(status_code=404, detail="Not found")
+    return FileResponse(filepath, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=3600"})
 
 
 MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5 MB
