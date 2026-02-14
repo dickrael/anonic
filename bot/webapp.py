@@ -209,25 +209,48 @@ async def story_card(token: str):
     )
 
 
-# Story card assets — check web root first, then project assets/
-_ASSETS_DIRS = ["/var/www/html/assets", os.path.join(_PROJECT_ROOT, "assets")]
+# Story card assets
+_WEB_ROOT = "/var/www/html"
+_ASSETS_DIRS = [os.path.join(_WEB_ROOT, "assets"), os.path.join(_PROJECT_ROOT, "assets")]
+_FRAME_PATH = os.path.join(_WEB_ROOT, "addons", "frame.webp")
+
+# Same gradient palette as the frontend dashboard (tied to nickname hash)
+_GRADIENTS = [
+    ("#FF6B6B", "#EE5A24"), ("#A29BFE", "#6C5CE7"), ("#55E6C1", "#1ABC9C"),
+    ("#FECA57", "#FF9F43"), ("#FF9FF3", "#F368E0"), ("#48DBFB", "#0ABDE3"),
+    ("#FF6348", "#FF4757"), ("#7BED9F", "#2ED573"), ("#70A1FF", "#1E90FF"),
+    ("#FFA502", "#E17055"), ("#DCDDE1", "#A4B0BD"), ("#FD79A8", "#E84393"),
+    ("#BADC58", "#6AB04C"), ("#F8C291", "#E55039"), ("#82CCDD", "#3C6382"),
+    ("#B8E994", "#78E08F"), ("#FDA7DF", "#D980FA"), ("#F7D794", "#F5CD79"),
+]
 
 
 def _find_asset(filename: str) -> str:
-    """Resolve asset path across known directories."""
     for d in _ASSETS_DIRS:
         p = os.path.join(d, filename)
         if os.path.isfile(p):
             return p
-    return os.path.join(_ASSETS_DIRS[-1], filename)  # fallback
+    return os.path.join(_ASSETS_DIRS[-1], filename)
 
 
 _STORY_BG_PATH = _find_asset("story-bg.png")
 _SATISFY_PATH = _find_asset("satisfy.ttf")
 
 
+def _nick_hash(nickname: str) -> int:
+    """Same hash as frontend: h = h * 31 + charCode, abs."""
+    h = 0
+    for c in nickname:
+        h = h * 31 + ord(c)
+    return abs(h)
+
+
+def _hex_to_rgb(hex_color: str) -> tuple:
+    hex_color = hex_color.lstrip("#")
+    return tuple(int(hex_color[i:i + 2], 16) for i in (0, 2, 4))
+
+
 def _load_font(path: str, size: int) -> ImageFont.FreeTypeFont:
-    """Load a TrueType font or fall back to Pillow default."""
     try:
         return ImageFont.truetype(path, size)
     except (OSError, IOError):
@@ -235,7 +258,7 @@ def _load_font(path: str, size: int) -> ImageFont.FreeTypeFont:
 
 
 def _fit_text_font(path: str, text: str, max_w: int, start_size: int = 200, min_size: int = 48):
-    """Find the largest font size so that `text` fits within `max_w` pixels."""
+    """Find the largest font size so that `text` fits within `max_w`."""
     for size in range(start_size, min_size - 1, -4):
         font = _load_font(path, size)
         bbox = font.getbbox(text)
@@ -245,50 +268,98 @@ def _fit_text_font(path: str, text: str, max_w: int, start_size: int = 200, min_
     return font, font.getbbox(text)
 
 
+def _draw_gradient_circle(size: int, color1: tuple, color2: tuple) -> Image.Image:
+    """Draw a circular avatar with a 135-degree linear gradient (fast)."""
+    # Build gradient as horizontal lines on a diagonal blend
+    grad = Image.new("RGB", (size, size))
+    draw_g = ImageDraw.Draw(grad)
+    for y in range(size):
+        t = y / size
+        r = int(color1[0] + (color2[0] - color1[0]) * t)
+        g = int(color1[1] + (color2[1] - color1[1]) * t)
+        b = int(color1[2] + (color2[2] - color1[2]) * t)
+        draw_g.line([(0, y), (size, y)], fill=(r, g, b))
+    # Rotate 45 degrees for 135deg effect, crop back to size
+    grad = grad.rotate(45, resample=Image.BICUBIC, expand=True)
+    # Center-crop back to original size
+    gw, gh = grad.size
+    left = (gw - size) // 2
+    top = (gh - size) // 2
+    grad = grad.crop((left, top, left + size, top + size))
+    grad = grad.convert("RGBA")
+    # Circular mask
+    mask = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(mask).ellipse([0, 0, size, size], fill=255)
+    grad.putalpha(mask)
+    return grad
+
+
 def _render_story_card(nickname: str, reg_text: str) -> Image.Image:
-    """Render a 1080x1920 story card: bg + auto-sized nickname + registration."""
+    """Render a 1080x1920 story card with avatar, frame, nickname, reg time."""
     W, H = 1080, 1920
 
-    # Load background image or fallback to gradient
+    # Load background
     try:
         img = Image.open(_STORY_BG_PATH).convert("RGBA")
         img = img.resize((W, H), Image.LANCZOS)
     except (OSError, IOError):
         img = Image.new("RGBA", (W, H))
-        draw = ImageDraw.Draw(img)
+        d = ImageDraw.Draw(img)
         for y in range(H):
             t = y / H
-            r, g, b = int(15 + 33 * t), int(12 + 31 * t), int(41 + 58 * t)
-            draw.line([(0, y), (W, y)], fill=(r, g, b, 255))
+            d.line([(0, y), (W, y)], fill=(int(15 + 33 * t), int(12 + 31 * t), int(41 + 58 * t), 255))
 
     cx = W // 2
-    pad = 120  # horizontal padding
+    h = _nick_hash(nickname)
+    grad = _GRADIENTS[h % len(_GRADIENTS)]
+    c1, c2 = _hex_to_rgb(grad[0]), _hex_to_rgb(grad[1])
 
-    # Semi-transparent dark overlay for readability
-    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    od = ImageDraw.Draw(overlay)
-    od.rounded_rectangle(
-        [60, H // 2 - 220, W - 60, H // 2 + 220],
-        radius=40,
-        fill=(0, 0, 0, 80),
-    )
-    img = Image.alpha_composite(img, overlay)
+    # --- Avatar with gradient ---
+    avatar_size = 260
+    avatar_img = _draw_gradient_circle(avatar_size, c1, c2)
+
+    # Draw first letter centered in avatar
+    letter_font = _load_font(_SATISFY_PATH, 120)
+    letter = nickname[0].upper() if nickname else "?"
+    letter_layer = Image.new("RGBA", (avatar_size, avatar_size), (0, 0, 0, 0))
+    ld = ImageDraw.Draw(letter_layer)
+    bbox = ld.textbbox((0, 0), letter, font=letter_font)
+    lw, lh = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    ld.text((avatar_size // 2 - lw // 2 - bbox[0], avatar_size // 2 - lh // 2 - bbox[1]),
+            letter, fill=(255, 255, 255, 255), font=letter_font)
+    avatar_img = Image.alpha_composite(avatar_img, letter_layer)
+
+    # Paste avatar onto card
+    avatar_y = 520
+    img.paste(avatar_img, (cx - avatar_size // 2, avatar_y), avatar_img)
+
+    # --- Frame overlay ---
+    frame_size = int(avatar_size * 1.25)
+    try:
+        frame = Image.open(_FRAME_PATH).convert("RGBA")
+        frame = frame.resize((frame_size, frame_size), Image.LANCZOS)
+        frame_x = cx - frame_size // 2
+        frame_y = avatar_y + avatar_size // 2 - frame_size // 2
+        img.paste(frame, (frame_x, frame_y), frame)
+    except (OSError, IOError):
+        pass  # no frame file, skip
+
     draw = ImageDraw.Draw(img)
 
-    # --- Nickname (auto-sized to fill width, decorative font) ---
-    nick_font, nick_bbox = _fit_text_font(_SATISFY_PATH, nickname, W - pad * 2, 200, 60)
+    # --- Nickname (auto-sized, below avatar) ---
+    pad = 120
+    text_top = avatar_y + avatar_size + 80
+    nick_font, nick_bbox = _fit_text_font(_SATISFY_PATH, nickname, W - pad * 2, 160, 56)
     nw = nick_bbox[2] - nick_bbox[0]
     nh = nick_bbox[3] - nick_bbox[1]
-    nick_y = H // 2 - nh // 2 - 40
-    draw.text((cx - nw // 2, nick_y), nickname, fill=(255, 255, 255, 255), font=nick_font)
+    draw.text((cx - nw // 2, text_top), nickname, fill=(255, 255, 255, 255), font=nick_font)
 
-    # --- Registration time (below nickname) ---
+    # --- Registration text (below nickname) ---
     if reg_text:
         reg_font = _load_font(_SATISFY_PATH, 44)
         bbox = reg_font.getbbox(reg_text)
         rw = bbox[2] - bbox[0]
-        reg_y = nick_y + nh + 35
-        draw.text((cx - rw // 2, reg_y), reg_text, fill=(255, 255, 255, 170), font=reg_font)
+        draw.text((cx - rw // 2, text_top + nh + 30), reg_text, fill=(255, 255, 255, 170), font=reg_font)
 
     # --- Bottom branding ---
     brand_font = _load_font(_SATISFY_PATH, 36)
