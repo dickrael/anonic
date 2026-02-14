@@ -163,6 +163,14 @@ class SQLiteStore:
             "DELETE FROM temp_links WHERE user_id = ?", (telegram_id,)
         )
         await self._write_conn.commit()
+
+        # Delete old avatar so it regenerates with the new nickname
+        try:
+            from ..webapp import delete_avatar_file
+            delete_avatar_file(telegram_id)
+        except Exception:
+            pass
+
         return True, ""
 
     def get_user(self, telegram_id: int) -> Optional[Dict[str, Any]]:

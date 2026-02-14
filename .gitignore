@@ -12,6 +12,7 @@
 
 # Data files
 data.json
+avatars/
 
 # Python
 __pycache__/

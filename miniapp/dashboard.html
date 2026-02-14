@@ -346,6 +346,7 @@
       <div class="profile-header">
         <div class="avatar-frame-wrapper">
           <div class="profile-avatar" id="profile-avatar">
+            <img id="avatar-img" style="display:none;width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="" />
             <span id="avatar-letter">?</span>
           </div>
           <img class="avatar-frame" src="https://lazez.uz/addons/frame.webp" alt="" />
@@ -593,9 +594,7 @@
         var hash = 0;
         for (var ci = 0; ci < nick.length; ci++) hash = (hash * 31 + nick.charCodeAt(ci)) | 0;
         hash = Math.abs(hash);
-        document.getElementById("avatar-letter").textContent = avatarEmojis[hash % avatarEmojis.length];
-
-        // Random gradient for avatar
+        // Avatar: use pre-rendered image if available, otherwise emoji fallback
         var gradients = [
           ["#FF6B6B","#EE5A24"],["#A29BFE","#6C5CE7"],["#55E6C1","#1ABC9C"],
           ["#FECA57","#FF9F43"],["#FF9FF3","#F368E0"],["#48DBFB","#0ABDE3"],
@@ -606,8 +605,25 @@
         ];
         var grad = gradients[hash % gradients.length];
         var avatarEl = document.querySelector(".profile-avatar");
-        avatarEl.style.background = "linear-gradient(135deg, " + grad[0] + ", " + grad[1] + ")";
-        avatarEl.style.boxShadow = "0 6px 24px " + grad[0] + "40";
+
+        if (data.avatar_url) {
+          var avatarImg = document.getElementById("avatar-img");
+          avatarImg.src = API_BASE + data.avatar_url;
+          avatarImg.style.display = "block";
+          avatarImg.style.borderRadius = "0";
+          document.getElementById("avatar-letter").style.display = "none";
+          avatarEl.style.background = "transparent";
+          avatarEl.style.boxShadow = "none";
+          avatarEl.style.width = "130px";
+          avatarEl.style.height = "130px";
+          avatarEl.style.borderRadius = "0";
+          // Hide CSS frame — the pre-rendered avatar already includes the frame
+          document.querySelector(".avatar-frame").style.display = "none";
+        } else {
+          document.getElementById("avatar-letter").textContent = avatarEmojis[hash % avatarEmojis.length];
+          avatarEl.style.background = "linear-gradient(135deg, " + grad[0] + ", " + grad[1] + ")";
+          avatarEl.style.boxShadow = "0 6px 24px " + grad[0] + "40";
+        }
 
         // Color the background blobs
         document.getElementById("blob1").style.background = grad[0];

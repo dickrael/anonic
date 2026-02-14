@@ -30,6 +30,8 @@ logger = logging.getLogger(__name__)
 
 _bot_username: str = ""
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_WEB_ROOT = "/var/www/html"
+_AVATARS_DIR = os.path.join(_WEB_ROOT, "avatars") if os.path.isdir(_WEB_ROOT) else os.path.join(_PROJECT_ROOT, "avatars")
 
 app = FastAPI(title="Incognitus WebApp API", docs_url=None, redoc_url=None)
 
@@ -171,6 +173,14 @@ async def get_dashboard(request: Request):
         client = get_client()
         _bot_username = client.me.username if client.me else "ClearSayBot"
     stats["bot_username"] = _bot_username
+
+    # Auto-generate avatar if missing
+    nickname = stats.get("nickname", "")
+    avatar_path = os.path.join(_AVATARS_DIR, f"{user_id}.png")
+    if nickname and not os.path.isfile(avatar_path):
+        _generate_avatar(user_id, nickname)
+    if os.path.isfile(avatar_path):
+        stats["avatar_url"] = f"/avatars/{user_id}.png?t={int(os.path.getmtime(avatar_path))}"
     return stats
 
 
@@ -204,7 +214,7 @@ async def story_card(token: str):
         except Exception:
             pass
 
-    img = _render_story_card(nickname, reg_text)
+    img = _render_story_card(nickname, reg_text, user_id=target_id)
     buf = io.BytesIO()
     img.save(buf, "PNG", optimize=True)
     buf.seek(0)
@@ -216,7 +226,6 @@ async def story_card(token: str):
 
 
 # Story card assets
-_WEB_ROOT = "/var/www/html"
 _ASSETS_DIRS = [os.path.join(_WEB_ROOT, "assets"), os.path.join(_PROJECT_ROOT, "assets")]
 _FRAME_PATH = os.path.join(_WEB_ROOT, "addons", "frame.webp")
 
@@ -303,7 +312,91 @@ def _draw_gradient_circle(size: int, color1: tuple, color2: tuple) -> Image.Imag
     return grad
 
 
-def _render_story_card(nickname: str, reg_text: str) -> Image.Image:
+# Same emoji list as frontend dashboard
+_AVATAR_EMOJIS = [
+    "\U0001F98A", "\U0001F43C", "\U0001F98B", "\U0001F42C", "\U0001F984",
+    "\U0001F427", "\U0001F981", "\U0001F438", "\U0001F989", "\U0001F43A",
+    "\U0001F988", "\U0001F419", "\U0001F99C", "\U0001F439", "\U0001F99D",
+    "\U0001F42F", "\U0001F428", "\U0001F9A9", "\U0001F43B", "\U0001F430",
+    "\U0001F980", "\U0001F41D", "\U0001F433", "\U0001F98E", "\U0001F43F\uFE0F",
+    "\U0001F987", "\U0001F42E", "\U0001F414", "\U0001F432", "\U0001F3AD",
+    "\U0001F3AA", "\U0001F3A8", "\U0001F3AF", "\U0001F3B2", "\U0001F308",
+    "\U0001F338", "\U0001F344", "\U0001F335", "\U0001F52E", "\U0001FA90",
+    "\U0001F48E", "\U0001F9CA", "\U0001F380", "\U0001FAB8",
+]
+
+
+def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
+    """Render avatar with gradient circle + emoji + frame overlay.
+
+    Returns an RGBA image of the given size (frame included).
+    """
+    h = _nick_hash(nickname)
+    grad = _GRADIENTS[h % len(_GRADIENTS)]
+    c1, c2 = _hex_to_rgb(grad[0]), _hex_to_rgb(grad[1])
+    emoji = _AVATAR_EMOJIS[h % len(_AVATAR_EMOJIS)]
+
+    # Circle is 80% of total size; frame fills full size
+    circle_size = int(size * 0.80)
+    circle_img = _draw_gradient_circle(circle_size, c1, c2)
+
+    # Render emoji (or letter fallback)
+    emoji_layer = Image.new("RGBA", (circle_size, circle_size), (0, 0, 0, 0))
+    emoji_font_size = int(circle_size * 0.38)
+    if _HAS_PILMOJI:
+        emoji_font = _load_font(_SATISFY_PATH, emoji_font_size)
+        with Pilmoji(emoji_layer) as pmoji:
+            ew, eh = pmoji.getsize(emoji, font=emoji_font)
+            ex = (circle_size - ew) // 2
+            ey = (circle_size - eh) // 2 - int(circle_size * 0.03)
+            pmoji.text((ex, ey), emoji, font=emoji_font)
+    else:
+        logger.warning("pilmoji not installed — falling back to letter avatar")
+        letter_font = _load_font(_SATISFY_PATH, int(circle_size * 0.46))
+        letter = nickname[0].upper() if nickname else "?"
+        ld = ImageDraw.Draw(emoji_layer)
+        bbox = ld.textbbox((0, 0), letter, font=letter_font)
+        lw, lh = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        ld.text(((circle_size - lw) // 2 - bbox[0], (circle_size - lh) // 2 - bbox[1]),
+                letter, fill=(255, 255, 255, 255), font=letter_font)
+    circle_img = Image.alpha_composite(circle_img, emoji_layer)
+
+    # Compose onto full-size canvas
+    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    offset = (size - circle_size) // 2
+    canvas.paste(circle_img, (offset, offset), circle_img)
+
+    # Frame overlay
+    try:
+        frame = Image.open(_FRAME_PATH).convert("RGBA")
+        frame = frame.resize((size, size), Image.LANCZOS)
+        canvas = Image.alpha_composite(canvas, frame)
+    except (OSError, IOError):
+        pass
+
+    return canvas
+
+
+def _generate_avatar(user_id: int, nickname: str) -> str:
+    """Generate avatar and save to avatars/{user_id}.png. Returns the file path."""
+    os.makedirs(_AVATARS_DIR, exist_ok=True)
+    avatar = _render_avatar(nickname, size=400)
+    path = os.path.join(_AVATARS_DIR, f"{user_id}.png")
+    avatar.save(path, "PNG", optimize=True)
+    logger.info("Generated avatar for user %s at %s", user_id, path)
+    return path
+
+
+def delete_avatar_file(user_id: int) -> None:
+    """Delete the avatar file for a user (called on revoke)."""
+    path = os.path.join(_AVATARS_DIR, f"{user_id}.png")
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+
+
+def _render_story_card(nickname: str, reg_text: str, user_id: int = None) -> Image.Image:
     """Render a 1080x1920 story card with avatar, frame, nickname, reg time."""
     W, H = 1080, 1920
 
@@ -319,69 +412,29 @@ def _render_story_card(nickname: str, reg_text: str) -> Image.Image:
             d.line([(0, y), (W, y)], fill=(int(15 + 33 * t), int(12 + 31 * t), int(41 + 58 * t), 255))
 
     cx = W // 2
-    h = _nick_hash(nickname)
-    grad = _GRADIENTS[h % len(_GRADIENTS)]
-    c1, c2 = _hex_to_rgb(grad[0]), _hex_to_rgb(grad[1])
 
-    # --- Avatar with gradient + emoji ---
-    avatar_size = 260
-    avatar_img = _draw_gradient_circle(avatar_size, c1, c2)
+    # --- Avatar (load pre-rendered PNG from disk, or render fresh) ---
+    avatar_display_size = 320
+    avatar_img = None
+    if user_id:
+        avatar_path = os.path.join(_AVATARS_DIR, f"{user_id}.png")
+        if os.path.isfile(avatar_path):
+            try:
+                saved = Image.open(avatar_path).convert("RGBA")
+                avatar_img = saved.resize((avatar_display_size, avatar_display_size), Image.LANCZOS)
+            except (OSError, IOError):
+                pass
+    if avatar_img is None:
+        avatar_img = _render_avatar(nickname, size=avatar_display_size)
 
-    # Same emoji list as frontend dashboard
-    avatar_emojis = [
-        "\U0001F98A", "\U0001F43C", "\U0001F98B", "\U0001F42C", "\U0001F984",
-        "\U0001F427", "\U0001F981", "\U0001F438", "\U0001F989", "\U0001F43A",
-        "\U0001F988", "\U0001F419", "\U0001F99C", "\U0001F439", "\U0001F99D",
-        "\U0001F42F", "\U0001F428", "\U0001F9A9", "\U0001F43B", "\U0001F430",
-        "\U0001F980", "\U0001F41D", "\U0001F433", "\U0001F98E", "\U0001F43F\uFE0F",
-        "\U0001F987", "\U0001F42E", "\U0001F414", "\U0001F432", "\U0001F3AD",
-        "\U0001F3AA", "\U0001F3A8", "\U0001F3AF", "\U0001F3B2", "\U0001F308",
-        "\U0001F338", "\U0001F344", "\U0001F335", "\U0001F52E", "\U0001FA90",
-        "\U0001F48E", "\U0001F9CA", "\U0001F380", "\U0001FAB8",
-    ]
-    emoji = avatar_emojis[h % len(avatar_emojis)]
-
-    # Render emoji (or letter fallback) centered in avatar
-    emoji_layer = Image.new("RGBA", (avatar_size, avatar_size), (0, 0, 0, 0))
-    if _HAS_PILMOJI:
-        emoji_font = _load_font(_SATISFY_PATH, 100)
-        with Pilmoji(emoji_layer) as pmoji:
-            ew, eh = pmoji.getsize(emoji, font=emoji_font)
-            # Center: offset up slightly to visually center in circle
-            ex = (avatar_size - ew) // 2
-            ey = (avatar_size - eh) // 2 - 8
-            pmoji.text((ex, ey), emoji, font=emoji_font)
-    else:
-        logger.warning("pilmoji not installed — falling back to letter avatar")
-        letter_font = _load_font(_SATISFY_PATH, 120)
-        letter = nickname[0].upper() if nickname else "?"
-        ld = ImageDraw.Draw(emoji_layer)
-        bbox = ld.textbbox((0, 0), letter, font=letter_font)
-        lw, lh = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        ld.text(((avatar_size - lw) // 2 - bbox[0], (avatar_size - lh) // 2 - bbox[1]),
-                letter, fill=(255, 255, 255, 255), font=letter_font)
-    avatar_img = Image.alpha_composite(avatar_img, emoji_layer)
-
-    # Paste avatar onto card
     avatar_y = 520
-    img.paste(avatar_img, (cx - avatar_size // 2, avatar_y), avatar_img)
-
-    # --- Frame overlay ---
-    frame_size = int(avatar_size * 1.25)
-    try:
-        frame = Image.open(_FRAME_PATH).convert("RGBA")
-        frame = frame.resize((frame_size, frame_size), Image.LANCZOS)
-        frame_x = cx - frame_size // 2
-        frame_y = avatar_y + avatar_size // 2 - frame_size // 2
-        img.paste(frame, (frame_x, frame_y), frame)
-    except (OSError, IOError):
-        pass  # no frame file, skip
+    img.paste(avatar_img, (cx - avatar_display_size // 2, avatar_y), avatar_img)
 
     draw = ImageDraw.Draw(img)
 
     # --- Nickname (auto-sized, below avatar) ---
     pad = 120
-    text_top = avatar_y + avatar_size + 80
+    text_top = avatar_y + avatar_display_size + 80
     nick_font, nick_bbox = _fit_text_font(_SATISFY_PATH, nickname, W - pad * 2, 160, 56)
     nw = nick_bbox[2] - nick_bbox[0]
     nh = nick_bbox[3] - nick_bbox[1]
