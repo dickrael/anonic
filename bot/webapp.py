@@ -313,7 +313,7 @@ def _draw_gradient_circle(size: int, color1: tuple, color2: tuple) -> Image.Imag
     return grad
 
 
-# Animals and face expressions only
+# Animals and nature/objects
 _AVATAR_EMOJIS = [
     # Animals
     "\U0001F98A", "\U0001F43C", "\U0001F98B", "\U0001F42C", "\U0001F984",
@@ -322,10 +322,10 @@ _AVATAR_EMOJIS = [
     "\U0001F42F", "\U0001F428", "\U0001F9A9", "\U0001F43B", "\U0001F430",
     "\U0001F980", "\U0001F41D", "\U0001F433", "\U0001F98E", "\U0001F43F\uFE0F",
     "\U0001F987", "\U0001F42E", "\U0001F414", "\U0001F432",
-    # Face expressions
-    "\U0001F60E", "\U0001F913", "\U0001F978", "\U0001F929", "\U0001F47B",
-    "\U0001F608", "\U0001F92F", "\U0001F974", "\U0001F60D", "\U0001F643",
-    "\U0001F972", "\U0001F970", "\U0001F60B", "\U0001F917", "\U0001F92D",
+    # Nature & objects
+    "\U0001F344", "\U0001F335", "\U0001F338", "\U0001F33B", "\U0001F33F",
+    "\U0001F340", "\U0001F334", "\U0001FAB8", "\U0001F48E", "\U0001F52E",
+    "\U0001FA90", "\U0001F308", "\U0001F319", "\U0001F30B", "\U0001F30A",
 ]
 
 
