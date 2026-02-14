@@ -244,10 +244,15 @@ _SATISFY_PATH = _find_asset("satisfy.ttf")
 
 
 def _nick_hash(nickname: str) -> int:
-    """Same hash as frontend: h = h * 31 + charCode, abs."""
+    """Same hash as frontend: h = (h * 31 + charCode) | 0, then abs.
+
+    The | 0 forces 32-bit signed integer truncation (matching JS behavior).
+    """
     h = 0
     for c in nickname:
-        h = h * 31 + ord(c)
+        h = (h * 31 + ord(c)) & 0xFFFFFFFF
+        if h >= 0x80000000:
+            h -= 0x100000000
     return abs(h)
 
 
@@ -341,12 +346,11 @@ def _render_story_card(nickname: str, reg_text: str) -> Image.Image:
     if _HAS_PILMOJI:
         emoji_font = _load_font(_SATISFY_PATH, 100)
         with Pilmoji(emoji_layer) as pmoji:
-            bbox = pmoji.getsize(emoji, font=emoji_font)
-            ew, eh = bbox[0], bbox[1]
-            pmoji.text(
-                (avatar_size // 2 - ew // 2, avatar_size // 2 - eh // 2),
-                emoji, font=emoji_font,
-            )
+            ew, eh = pmoji.getsize(emoji, font=emoji_font)
+            # Center: offset up slightly to visually center in circle
+            ex = (avatar_size - ew) // 2
+            ey = (avatar_size - eh) // 2 - 8
+            pmoji.text((ex, ey), emoji, font=emoji_font)
     else:
         logger.warning("pilmoji not installed — falling back to letter avatar")
         letter_font = _load_font(_SATISFY_PATH, 120)
@@ -354,7 +358,7 @@ def _render_story_card(nickname: str, reg_text: str) -> Image.Image:
         ld = ImageDraw.Draw(emoji_layer)
         bbox = ld.textbbox((0, 0), letter, font=letter_font)
         lw, lh = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        ld.text((avatar_size // 2 - lw // 2 - bbox[0], avatar_size // 2 - lh // 2 - bbox[1]),
+        ld.text(((avatar_size - lw) // 2 - bbox[0], (avatar_size - lh) // 2 - bbox[1]),
                 letter, fill=(255, 255, 255, 255), font=letter_font)
     avatar_img = Image.alpha_composite(avatar_img, emoji_layer)
 

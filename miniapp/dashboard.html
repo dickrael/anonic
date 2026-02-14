@@ -591,7 +591,7 @@
         var nick = data.nickname || "?";
         var avatarEmojis = ["🦊","🐼","🦋","🐬","🦄","🐧","🦁","🐸","🦉","🐺","🦈","🐙","🦜","🐹","🦝","🐯","🐨","🦩","🐻","🐰","🦀","🐝","🐳","🦎","🐿️","🦇","🐮","🐔","🐲","🎭","🎪","🎨","🎯","🎲","🌈","🌸","🍄","🌵","🔮","🪐","💎","🧊","🎀","🪸"];
         var hash = 0;
-        for (var ci = 0; ci < nick.length; ci++) hash = hash * 31 + nick.charCodeAt(ci);
+        for (var ci = 0; ci < nick.length; ci++) hash = (hash * 31 + nick.charCodeAt(ci)) | 0;
         hash = Math.abs(hash);
         document.getElementById("avatar-letter").textContent = avatarEmojis[hash % avatarEmojis.length];
 
