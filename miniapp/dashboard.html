@@ -89,28 +89,28 @@
     }
     .avatar-frame-wrapper {
       position: relative;
-      width: 110px;
-      height: 110px;
-      margin: 0 auto 12px;
+      width: 130px;
+      height: 130px;
+      margin: 0 auto 14px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .profile-avatar {
-      width: 88px;
-      height: 88px;
+      width: 105px;
+      height: 105px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--tg-theme-button-color), var(--tg-theme-link-color));
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0;
-      box-shadow: 0 6px 24px rgba(64, 167, 227, 0.3);
+      box-shadow: 0 8px 28px rgba(64, 167, 227, 0.3);
       opacity: 0;
       animation: popBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s forwards;
     }
     .profile-avatar span {
-      font-size: 44px;
+      font-size: 52px;
       line-height: 1;
     }
     .avatar-frame {
@@ -118,8 +118,8 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 110px;
-      height: 110px;
+      width: 130px;
+      height: 130px;
       pointer-events: none;
       z-index: 1;
     }
@@ -311,7 +311,7 @@
       align-items: center;
       margin-bottom: 28px;
     }
-    .skeleton-avatar-sm { width: 110px; height: 110px; border-radius: 50%; margin-bottom: 12px; }
+    .skeleton-avatar-sm { width: 130px; height: 130px; border-radius: 50%; margin-bottom: 14px; }
     .skeleton-name { width: 120px; height: 22px; margin-bottom: 6px; }
     .skeleton-sub { width: 160px; height: 14px; }
     .skeleton-info { height: 52px; border-radius: 14px; margin-bottom: 8px; }
@@ -479,7 +479,7 @@
       en: {
         received: "Received", sent: "Sent", blocked: "Blocked", revokes: "Revokes",
         member_since: "Member since", days_active: "Days active", your_link: "Your link",
-        copy: "Copy", copied: "Copied!",
+        copy: "Copy", copied: "Copied!", last_seen: "Last seen",
         just_now: "Just now", minutes_ago: "{n}m ago", hours_ago: "{n}h ago", days_ago: "{n}d ago",
         share_story: "Share to Story",
         open_in_tg: "Open in Telegram", open_in_tg_hint: "This page must be opened from the Telegram app."
@@ -487,7 +487,7 @@
       ru: {
         received: "Получено", sent: "Отправлено", blocked: "Заблокировано", revokes: "Сбросы",
         member_since: "Участник с", days_active: "Дней активности", your_link: "Ваша ссылка",
-        copy: "Копировать", copied: "Скопировано!",
+        copy: "Копировать", copied: "Скопировано!", last_seen: "Был(а)",
         just_now: "Только что", minutes_ago: "{n} мин назад", hours_ago: "{n} ч назад", days_ago: "{n} дн назад",
         share_story: "Поделиться в истории",
         open_in_tg: "Откройте в Telegram", open_in_tg_hint: "Эту страницу нужно открыть из приложения Telegram."
@@ -495,7 +495,7 @@
       fa: {
         received: "دریافت‌شده", sent: "ارسال‌شده", blocked: "مسدودشده", revokes: "بازنشانی",
         member_since: "عضو از", days_active: "روز فعالیت", your_link: "لینک شما",
-        copy: "کپی", copied: "کپی شد!",
+        copy: "کپی", copied: "کپی شد!", last_seen: "آخرین بازدید",
         just_now: "همین الان", minutes_ago: "{n} دقیقه پیش", hours_ago: "{n} ساعت پیش", days_ago: "{n} روز پیش",
         share_story: "اشتراک در استوری",
         open_in_tg: "در تلگرام باز کنید", open_in_tg_hint: "این صفحه باید از اپ تلگرام باز شود."
@@ -503,7 +503,7 @@
       ar: {
         received: "مستلمة", sent: "مرسلة", blocked: "محظورة", revokes: "إعادة تعيين",
         member_since: "عضو منذ", days_active: "أيام النشاط", your_link: "رابطك",
-        copy: "نسخ", copied: "تم النسخ!",
+        copy: "نسخ", copied: "تم النسخ!", last_seen: "آخر ظهور",
         just_now: "الآن", minutes_ago: "منذ {n} دقيقة", hours_ago: "منذ {n} ساعة", days_ago: "منذ {n} يوم",
         share_story: "مشاركة في القصة",
         open_in_tg: "افتح في تيليجرام", open_in_tg_hint: "يجب فتح هذه الصفحة من تطبيق تيليجرام."
@@ -538,6 +538,22 @@
         lines.push("initData len: " + (tg.initData || "").length);
       }
       d.textContent = lines.join("\n");
+    }
+
+    // Smart relative time helper
+    function relativeTime(isoStr) {
+      if (!isoStr) return "—";
+      try {
+        var d = new Date(isoStr);
+        var diff = Date.now() - d.getTime();
+        var min = Math.floor(diff / 60000);
+        var hrs = Math.floor(diff / 3600000);
+        var days = Math.floor(diff / 86400000);
+        if (min < 1) return t("just_now");
+        if (min < 60) return t("minutes_ago").replace("{n}", min);
+        if (hrs < 24) return t("hours_ago").replace("{n}", hrs);
+        return t("days_ago").replace("{n}", days);
+      } catch(e) { return "—"; }
     }
 
     // Animated count-up with easing + blur reveal
@@ -599,28 +615,9 @@
         document.getElementById("blob3").style.background = grad[0];
         document.getElementById("profile-nickname").textContent = nick;
 
-        // Smart relative time for "member since"
-        var sinceText = "—";
-        if (data.registered_at) {
-          try {
-            var regDate = new Date(data.registered_at);
-            var nowMs = Date.now();
-            var diffMs = nowMs - regDate.getTime();
-            var diffMin = Math.floor(diffMs / 60000);
-            var diffHrs = Math.floor(diffMs / 3600000);
-            var diffDays = Math.floor(diffMs / 86400000);
-            if (diffMin < 1) {
-              sinceText = t("just_now");
-            } else if (diffMin < 60) {
-              sinceText = t("minutes_ago").replace("{n}", diffMin);
-            } else if (diffHrs < 24) {
-              sinceText = t("hours_ago").replace("{n}", diffHrs);
-            } else {
-              sinceText = t("days_ago").replace("{n}", diffDays);
-            }
-          } catch(e) { sinceText = "—"; }
-        }
-        document.getElementById("profile-since").textContent = sinceText;
+        // Last seen under profile pic
+        var lastSeenText = t("last_seen") + " " + relativeTime(data.last_activity);
+        document.getElementById("profile-since").textContent = lastSeenText;
 
         // Animate stat counters with staggered blur reveal
         animateValue(document.getElementById("stat-received"), data.messages_received || 0, 1000, 300);
@@ -628,16 +625,19 @@
         animateValue(document.getElementById("stat-blocked"), data.blocked_count || 0, 800, 600);
         animateValue(document.getElementById("stat-revokes"), data.revoke_count || 0, 700, 750);
 
-        // Info cards
+        // Info cards — member since with date + relative time in parens
         var regDisplay = "—";
         if (data.registered_at) {
           try {
             var rd = new Date(data.registered_at);
-            regDisplay = rd.toLocaleDateString(currentLang === "fa" ? "fa-IR" : currentLang === "ar" ? "ar-SA" : currentLang === "ru" ? "ru-RU" : "en-US", { year: "numeric", month: "short", day: "numeric" });
+            var locale = currentLang === "fa" ? "fa-IR" : currentLang === "ar" ? "ar-SA" : currentLang === "ru" ? "ru-RU" : "en-US";
+            var dateStr = rd.toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" });
+            regDisplay = dateStr + " (" + relativeTime(data.registered_at) + ")";
           } catch(e) {}
         }
         document.getElementById("info-registered").textContent = regDisplay;
 
+        // Days active — computed from registration
         var daysActive = 0;
         if (data.registered_at) {
           try { daysActive = Math.floor((Date.now() - new Date(data.registered_at).getTime()) / 86400000); } catch(e) {}
@@ -691,7 +691,7 @@
             hapticFeedback("impact");
             var cardUrl = API_BASE + "/api/story-card/" + encodeURIComponent(data.link_token);
             tg.shareToStory(cardUrl, {
-              text: "Send me an anonymous message! \u2709\uFE0F",
+              text: "Send me an anonymous message! \u2709\uFE0F\n" + fullLink,
               widget_link: {
                 url: fullLink,
                 name: "Send message"
@@ -699,7 +699,6 @@
             });
           });
         } else {
-          // Fallback: hide button if shareToStory not supported
           storyBtn.style.display = "none";
         }
 

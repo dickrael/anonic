@@ -920,18 +920,19 @@ class SQLiteStore:
 
         blocked_count = self.get_blocked_count(str(user_id))
 
-        # Send raw ISO timestamp for frontend to compute relative time
-        reg_str = user.get("registered_at", "")
-        reg_iso = reg_str
-        if reg_iso and not reg_iso.endswith("Z") and "+" not in reg_iso:
-            reg_iso += "+00:00"
+        # Send raw ISO timestamps for frontend relative time computation
+        def _normalize_iso(s: str) -> str:
+            if s and not s.endswith("Z") and "+" not in s:
+                return s + "+00:00"
+            return s
 
         return {
             "nickname": user.get("nickname", ""),
             "lang": user.get("lang", "en"),
             "messages_sent": user.get("messages_sent", 0),
             "messages_received": user.get("messages_received", 0),
-            "registered_at": reg_iso,
+            "registered_at": _normalize_iso(user.get("registered_at", "")),
+            "last_activity": _normalize_iso(user.get("last_activity", "")),
             "blocked_count": blocked_count,
             "revoke_count": user.get("revoke_count", 0),
             "link_token": user.get("token", ""),

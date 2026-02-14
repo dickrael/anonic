@@ -178,14 +178,27 @@ async def story_card(token: str):
 
     nickname = target_data.get("nickname", "???")
 
-    global _bot_username
-    if not _bot_username:
-        client = get_client()
-        _bot_username = client.me.username if client.me else "ClearSayBot"
+    # Compute member-since relative text
+    from datetime import datetime, timezone
+    reg_str = target_data.get("registered_at", "")
+    member_since = ""
+    if reg_str:
+        try:
+            reg_dt = datetime.fromisoformat(reg_str.replace("Z", "+00:00"))
+            diff = datetime.now(timezone.utc) - reg_dt
+            total_min = int(diff.total_seconds() / 60)
+            if total_min < 1:
+                member_since = "Just joined"
+            elif total_min < 60:
+                member_since = f"Member for {total_min}m"
+            elif total_min < 1440:
+                member_since = f"Member for {total_min // 60}h"
+            else:
+                member_since = f"Member for {diff.days}d"
+        except Exception:
+            pass
 
-    link = f"t.me/{_bot_username}?start={token}"
-
-    img = _render_story_card(nickname, link)
+    img = _render_story_card(nickname, member_since)
     buf = io.BytesIO()
     img.save(buf, "PNG", optimize=True)
     buf.seek(0)
@@ -196,117 +209,73 @@ async def story_card(token: str):
     )
 
 
-def _render_story_card(nickname: str, link: str) -> Image.Image:
-    """Render a 1080x1920 story card with gradient background and text."""
+# Pre-load story background and fonts at startup
+_ASSETS_DIR = os.path.join(_PROJECT_ROOT, "assets")
+_FONT_DIR = os.path.join(_ASSETS_DIR, "fonts")
+_STORY_BG_PATH = os.path.join(_ASSETS_DIR, "story-bg.png")
+
+
+def _load_font(name: str, size: int) -> ImageFont.FreeTypeFont:
+    """Try to load a font from assets/fonts, fallback to default."""
+    try:
+        return ImageFont.truetype(os.path.join(_FONT_DIR, name), size)
+    except (OSError, IOError):
+        return ImageFont.load_default()
+
+
+def _render_story_card(nickname: str, member_since: str) -> Image.Image:
+    """Render a 1080x1920 story card: bg image + nickname + member since."""
     W, H = 1080, 1920
 
-    # Work in RGBA for proper alpha compositing
-    img = Image.new("RGBA", (W, H), (0, 0, 0, 255))
-    draw = ImageDraw.Draw(img)
-
-    # Gradient background: deep purple → dark blue
-    for y in range(H):
-        t = y / H
-        r = int(15 + (48 - 15) * t)
-        g = int(12 + (43 - 12) * t)
-        b = int(41 + (99 - 41) * t)
-        draw.line([(0, y), (W, y)], fill=(r, g, b, 255))
-
-    # Soft decorative glow blobs
-    glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    gd = ImageDraw.Draw(glow)
-    gd.ellipse([(-100, -100), (500, 500)], fill=(138, 43, 226, 25))
-    gd.ellipse([(600, 1300), (1200, 1900)], fill=(64, 167, 227, 25))
-    gd.ellipse([(300, 700), (800, 1200)], fill=(168, 85, 247, 18))
-    img = Image.alpha_composite(img, glow)
-    draw = ImageDraw.Draw(img)
-
-    # Load fonts — bundled Inter or fallback to default
-    font_dir = os.path.join(_PROJECT_ROOT, "assets", "fonts")
+    # Load background image or fallback to gradient
     try:
-        font_big = ImageFont.truetype(os.path.join(font_dir, "Inter-Bold.ttf"), 72)
-        font_mid = ImageFont.truetype(os.path.join(font_dir, "Inter-SemiBold.ttf"), 48)
-        font_small = ImageFont.truetype(os.path.join(font_dir, "Inter-Medium.ttf"), 38)
-        font_link = ImageFont.truetype(os.path.join(font_dir, "Inter-Bold.ttf"), 42)
+        img = Image.open(_STORY_BG_PATH).convert("RGBA")
+        img = img.resize((W, H), Image.LANCZOS)
     except (OSError, IOError):
-        font_big = ImageFont.load_default()
-        font_mid = font_big
-        font_small = font_big
-        font_link = font_big
+        img = Image.new("RGBA", (W, H))
+        draw = ImageDraw.Draw(img)
+        for y in range(H):
+            t = y / H
+            r = int(15 + (48 - 15) * t)
+            g = int(12 + (43 - 12) * t)
+            b = int(41 + (99 - 41) * t)
+            draw.line([(0, y), (W, y)], fill=(r, g, b, 255))
+
+    # Fonts — decorative for nickname, clean for subtitle
+    font_nick = _load_font("Decorative.ttf", 96)
+    font_since = _load_font("Inter-SemiBold.ttf", 44)
+    font_brand = _load_font("Inter-Medium.ttf", 36)
 
     cx = W // 2
 
-    # --- Avatar circle with glow ---
-    circle_r = 120
-    circle_y = 580
-    # Outer glow ring
-    glow_ring = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    grd = ImageDraw.Draw(glow_ring)
-    for i in range(20, 0, -1):
-        a = int(25 * (1 - i / 20))
-        rr = circle_r + i
-        grd.ellipse([cx - rr, circle_y - rr, cx + rr, circle_y + rr], fill=(138, 43, 226, a))
-    img = Image.alpha_composite(img, glow_ring)
+    # Semi-transparent dark overlay in center area for text readability
+    overlay = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    od = ImageDraw.Draw(overlay)
+    od.rounded_rectangle(
+        [80, H // 2 - 200, W - 80, H // 2 + 200],
+        radius=40,
+        fill=(0, 0, 0, 90),
+    )
+    img = Image.alpha_composite(img, overlay)
     draw = ImageDraw.Draw(img)
-    # Solid circle
-    draw.ellipse(
-        [cx - circle_r, circle_y - circle_r, cx + circle_r, circle_y + circle_r],
-        fill=(88, 55, 180, 255),
-    )
 
-    # First letter of nickname in circle (reliable cross-platform)
-    letter = nickname[0].upper() if nickname else "?"
-    bbox = draw.textbbox((0, 0), letter, font=font_big)
-    lw, lh = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    draw.text((cx - lw // 2, circle_y - lh // 2), letter, fill=(255, 255, 255, 255), font=font_big)
+    # --- Nickname (big, centered) ---
+    bbox = draw.textbbox((0, 0), nickname, font=font_nick)
+    nw, nh = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    nick_y = H // 2 - nh // 2 - 30
+    draw.text((cx - nw // 2, nick_y), nickname, fill=(255, 255, 255, 255), font=font_nick)
 
-    # --- Nickname ---
-    nick_y = circle_y + circle_r + 50
-    bbox = draw.textbbox((0, 0), nickname, font=font_big)
-    nw = bbox[2] - bbox[0]
-    draw.text((cx - nw // 2, nick_y), nickname, fill=(255, 255, 255, 255), font=font_big)
-
-    # --- Tagline ---
-    tagline = "Send me an anonymous message!"
-    tag_y = nick_y + 100
-    bbox = draw.textbbox((0, 0), tagline, font=font_mid)
-    tw = bbox[2] - bbox[0]
-    draw.text((cx - tw // 2, tag_y), tagline, fill=(200, 200, 230, 255), font=font_mid)
-
-    # --- Pill-shaped link box ---
-    pill_y = tag_y + 120
-    pill_h = 80
-    pill_pad = 60
-    bbox = draw.textbbox((0, 0), link, font=font_link)
-    link_w = bbox[2] - bbox[0]
-    link_h = bbox[3] - bbox[1]
-    pill_w = link_w + pill_pad * 2
-    pill_x = cx - pill_w // 2
-    pill_r = pill_h // 2
-    # Draw on a separate layer for translucent fill
-    pill_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    pd = ImageDraw.Draw(pill_layer)
-    pd.rounded_rectangle(
-        [pill_x, pill_y, pill_x + pill_w, pill_y + pill_h],
-        radius=pill_r,
-        fill=(255, 255, 255, 30),
-        outline=(255, 255, 255, 80),
-        width=2,
-    )
-    img = Image.alpha_composite(img, pill_layer)
-    draw = ImageDraw.Draw(img)
-    draw.text(
-        (cx - link_w // 2, pill_y + (pill_h - link_h) // 2),
-        link,
-        fill=(255, 255, 255, 255),
-        font=font_link,
-    )
+    # --- Member since (below nickname) ---
+    if member_since:
+        bbox = draw.textbbox((0, 0), member_since, font=font_since)
+        sw = bbox[2] - bbox[0]
+        since_y = nick_y + nh + 30
+        draw.text((cx - sw // 2, since_y), member_since, fill=(255, 255, 255, 180), font=font_since)
 
     # --- Bottom branding ---
     brand = "Incognitus"
-    brand_y = H - 180
-    bbox = draw.textbbox((0, 0), brand, font=font_small)
+    bbox = draw.textbbox((0, 0), brand, font=font_brand)
     bw = bbox[2] - bbox[0]
-    draw.text((cx - bw // 2, brand_y), brand, fill=(255, 255, 255, 120), font=font_small)
+    draw.text((cx - bw // 2, H - 160), brand, fill=(255, 255, 255, 100), font=font_brand)
 
     return img.convert("RGB")
