@@ -13,7 +13,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
 from PIL import Image, ImageDraw, ImageFont
-from pilmoji import Pilmoji
+
+try:
+    from pilmoji import Pilmoji
+    _HAS_PILMOJI = True
+except ImportError:
+    _HAS_PILMOJI = False
 from pyrogram.enums import ParseMode
 
 from .config import config
@@ -331,16 +336,26 @@ def _render_story_card(nickname: str, reg_text: str) -> Image.Image:
     ]
     emoji = avatar_emojis[h % len(avatar_emojis)]
 
-    # Render emoji centered in avatar using pilmoji
-    emoji_font = _load_font(_SATISFY_PATH, 100)
+    # Render emoji (or letter fallback) centered in avatar
     emoji_layer = Image.new("RGBA", (avatar_size, avatar_size), (0, 0, 0, 0))
-    with Pilmoji(emoji_layer) as pmoji:
-        bbox = pmoji.getsize(emoji, font=emoji_font)
-        ew, eh = bbox[0], bbox[1]
-        pmoji.text(
-            (avatar_size // 2 - ew // 2, avatar_size // 2 - eh // 2),
-            emoji, font=emoji_font,
-        )
+    if _HAS_PILMOJI:
+        emoji_font = _load_font(_SATISFY_PATH, 100)
+        with Pilmoji(emoji_layer) as pmoji:
+            bbox = pmoji.getsize(emoji, font=emoji_font)
+            ew, eh = bbox[0], bbox[1]
+            pmoji.text(
+                (avatar_size // 2 - ew // 2, avatar_size // 2 - eh // 2),
+                emoji, font=emoji_font,
+            )
+    else:
+        logger.warning("pilmoji not installed — falling back to letter avatar")
+        letter_font = _load_font(_SATISFY_PATH, 120)
+        letter = nickname[0].upper() if nickname else "?"
+        ld = ImageDraw.Draw(emoji_layer)
+        bbox = ld.textbbox((0, 0), letter, font=letter_font)
+        lw, lh = bbox[2] - bbox[0], bbox[3] - bbox[1]
+        ld.text((avatar_size // 2 - lw // 2 - bbox[0], avatar_size // 2 - lh // 2 - bbox[1]),
+                letter, fill=(255, 255, 255, 255), font=letter_font)
     avatar_img = Image.alpha_composite(avatar_img, emoji_layer)
 
     # Paste avatar onto card
