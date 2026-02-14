@@ -209,10 +209,21 @@ async def story_card(token: str):
     )
 
 
-# Story card assets
-_ASSETS_DIR = os.path.join(_PROJECT_ROOT, "assets")
-_STORY_BG_PATH = os.path.join(_ASSETS_DIR, "story-bg.png")
-_SATISFY_PATH = os.path.join(_ASSETS_DIR, "satisfy.ttf")
+# Story card assets — check web root first, then project assets/
+_ASSETS_DIRS = ["/var/www/html/assets", os.path.join(_PROJECT_ROOT, "assets")]
+
+
+def _find_asset(filename: str) -> str:
+    """Resolve asset path across known directories."""
+    for d in _ASSETS_DIRS:
+        p = os.path.join(d, filename)
+        if os.path.isfile(p):
+            return p
+    return os.path.join(_ASSETS_DIRS[-1], filename)  # fallback
+
+
+_STORY_BG_PATH = _find_asset("story-bg.png")
+_SATISFY_PATH = _find_asset("satisfy.ttf")
 
 
 def _load_font(path: str, size: int) -> ImageFont.FreeTypeFont:
