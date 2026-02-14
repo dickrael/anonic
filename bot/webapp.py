@@ -354,14 +354,14 @@ def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
         bbox = tmp.getbbox()
         if bbox is None:
             bbox = (0, 0, circle_size, circle_size)
-        bw = bbox[2] - bbox[0]
-        bh = bbox[3] - bbox[1]
-        # Compute true centered position from actual pixels
-        ex = (circle_size - bw) // 2 - bbox[0]
-        ey = (circle_size - bh) // 2 - bbox[1]
-        # Draw final emoji perfectly centered
+        # Measure how far the visual center drifted from canvas center
+        bx = (bbox[0] + bbox[2]) / 2
+        by = (bbox[1] + bbox[3]) / 2
+        dx = circle_size / 2 - bx
+        dy = circle_size / 2 - by
+        # Draw final emoji shifted back to true center
         with Pilmoji(emoji_layer) as pmoji:
-            pmoji.text((ex, ey), emoji, font=emoji_font)
+            pmoji.text((int(dx), int(dy)), emoji, font=emoji_font)
     else:
         logger.warning("pilmoji not installed — falling back to letter avatar")
         letter_font = _load_font(_SATISFY_PATH, int(circle_size * 0.46))
