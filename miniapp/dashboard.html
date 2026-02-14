@@ -123,6 +123,53 @@
       pointer-events: none;
       z-index: 1;
     }
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+    .avatar-upload-btn {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--tg-theme-button-color, #40a7e3);
+      border: 2px solid rgba(255,255,255,0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2;
+      font-size: 14px;
+      line-height: 1;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      transition: transform 0.15s;
+    }
+    .avatar-upload-btn:active { transform: scale(0.88); }
+    .avatar-delete-btn {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ff3b30;
+      border: 2px solid rgba(255,255,255,0.9);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2;
+      font-size: 11px;
+      line-height: 1;
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+      transition: transform 0.15s;
+    }
+    .avatar-delete-btn:active { transform: scale(0.88); }
     .profile-nickname {
       font-size: 20px;
       font-weight: 700;
@@ -316,10 +363,13 @@
     <div id="dashboard" class="dashboard" style="display:none">
       <div class="profile-header">
         <div class="avatar-frame-wrapper">
-          <div class="profile-avatar">
+          <div class="profile-avatar" id="profile-avatar">
             <span id="avatar-letter">?</span>
           </div>
           <img class="avatar-frame" src="https://lazez.uz/addons/frame.webp" alt="" />
+          <div class="avatar-upload-btn" id="avatar-upload-btn">📷</div>
+          <div class="avatar-delete-btn" id="avatar-delete-btn">✕</div>
+          <input type="file" id="avatar-input" accept="image/*" style="display:none">
         </div>
         <div class="profile-nickname" id="profile-nickname"></div>
         <div class="profile-member-since" id="profile-since"></div>
@@ -559,6 +609,74 @@
         document.getElementById("blob3").style.background = grad[0];
         document.getElementById("profile-nickname").textContent = nick;
         document.getElementById("profile-since").textContent = t("member_since_prefix") + (data.registered_at || "—");
+
+        // ---- Avatar photo ----
+        var profileAvatarEl = document.getElementById("profile-avatar");
+        var avatarLetterEl = document.getElementById("avatar-letter");
+        var avatarUploadBtn = document.getElementById("avatar-upload-btn");
+        var avatarDeleteBtn = document.getElementById("avatar-delete-btn");
+        var avatarInput = document.getElementById("avatar-input");
+
+        function showAvatarImage(url) {
+          var existing = profileAvatarEl.querySelector("img");
+          if (existing) {
+            existing.src = url;
+          } else {
+            var img = document.createElement("img");
+            img.src = url;
+            img.alt = "Avatar";
+            profileAvatarEl.appendChild(img);
+          }
+          avatarLetterEl.style.display = "none";
+          avatarDeleteBtn.style.display = "flex";
+        }
+
+        function revertToEmoji() {
+          var img = profileAvatarEl.querySelector("img");
+          if (img) profileAvatarEl.removeChild(img);
+          avatarLetterEl.style.display = "";
+          avatarDeleteBtn.style.display = "none";
+        }
+
+        // Load existing avatar
+        if (data.avatar) {
+          showAvatarImage(API_BASE + "/" + data.avatar + "?t=" + Date.now());
+        }
+
+        avatarUploadBtn.addEventListener("click", function() {
+          avatarInput.click();
+        });
+
+        avatarInput.addEventListener("change", function() {
+          var file = avatarInput.files[0];
+          if (!file) return;
+          if (file.size > 5 * 1024 * 1024) {
+            hapticFeedback("error");
+            avatarInput.value = "";
+            return;
+          }
+          uploadAvatar(initData, file).then(function(res) {
+            if (res.ok && res.avatar_url) {
+              showAvatarImage(API_BASE + res.avatar_url);
+              hapticFeedback("success");
+            }
+          }).catch(function() {
+            hapticFeedback("error");
+          });
+          avatarInput.value = "";
+        });
+
+        avatarDeleteBtn.addEventListener("click", function() {
+          if (!confirm("Delete avatar?")) return;
+          deleteAvatar(initData).then(function(res) {
+            if (res.ok) {
+              revertToEmoji();
+              hapticFeedback("success");
+            }
+          }).catch(function() {
+            hapticFeedback("error");
+          });
+        });
 
         // Animate stat counters with staggered blur reveal
         animateValue(document.getElementById("stat-received"), data.messages_received || 0, 1000, 300);

@@ -62,6 +62,13 @@ class SQLiteStore:
             await self._write_conn.execute(idx_sql)
         await self._write_conn.commit()
 
+        # Migrations
+        try:
+            await self._write_conn.execute("ALTER TABLE users ADD COLUMN avatar TEXT")
+            await self._write_conn.commit()
+        except Exception:
+            pass  # column already exists
+
         # Open sync connection for reads (read-only via WAL)
         self._read_conn = sqlite3.connect(self.path)
         self._read_conn.row_factory = sqlite3.Row
@@ -250,6 +257,22 @@ class SQLiteStore:
         await self._write_conn.execute(
             "UPDATE users SET special_code = ? WHERE telegram_id = ?",
             (code, telegram_id),
+        )
+        await self._write_conn.commit()
+
+    # ---- Avatar ----
+
+    async def set_avatar(self, user_id: int, path: str) -> None:
+        await self._write_conn.execute(
+            "UPDATE users SET avatar = ? WHERE telegram_id = ?",
+            (path, user_id),
+        )
+        await self._write_conn.commit()
+
+    async def delete_avatar(self, user_id: int) -> None:
+        await self._write_conn.execute(
+            "UPDATE users SET avatar = NULL WHERE telegram_id = ?",
+            (user_id,),
         )
         await self._write_conn.commit()
 
@@ -919,6 +942,7 @@ class SQLiteStore:
             "blocked_count": blocked_count,
             "revoke_count": user.get("revoke_count", 0),
             "link_token": user.get("token", ""),
+            "avatar": user.get("avatar"),
         }
 
     async def cleanup_expired_temp_links(self) -> int:

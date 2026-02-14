@@ -2,13 +2,18 @@
 
 import hashlib
 import hmac
+import io
 import json
 import logging
+import os
+import time
 from urllib.parse import parse_qs, unquote
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from PIL import Image
 from pyrogram.enums import ParseMode
 
 from .config import config
@@ -25,9 +30,14 @@ app = FastAPI(title="Incognitus WebApp API", docs_url=None, redoc_url=None)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Ensure avatars directory exists and mount static files
+AVATARS_DIR = os.path.join(os.getcwd(), "avatars")
+os.makedirs(AVATARS_DIR, exist_ok=True)
+app.mount("/avatars", StaticFiles(directory=AVATARS_DIR), name="avatars")
 
 
 def validate_init_data(init_data: str) -> dict | None:
@@ -161,3 +171,67 @@ async def get_dashboard(request: Request):
         _bot_username = client.me.username if client.me else "ClearSayBot"
     stats["bot_username"] = _bot_username
     return stats
+
+
+MAX_AVATAR_SIZE = 5 * 1024 * 1024  # 5 MB
+
+
+@app.post("/api/avatar")
+async def upload_avatar(request: Request, file: UploadFile = File(...)):
+    """Upload or replace user profile photo."""
+    user = get_user_from_init_data(request)
+    user_id = user["id"]
+
+    # Read and validate size
+    data = await file.read()
+    if len(data) > MAX_AVATAR_SIZE:
+        raise HTTPException(status_code=400, detail="File too large (max 5 MB)")
+
+    # Validate image and process with Pillow
+    try:
+        img = Image.open(io.BytesIO(data))
+        img = img.convert("RGB")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image file")
+
+    # Center-crop to square
+    w, h = img.size
+    side = min(w, h)
+    left = (w - side) // 2
+    top = (h - side) // 2
+    img = img.crop((left, top, left + side, top + side))
+
+    # Resize to 200x200
+    img = img.resize((200, 200), Image.LANCZOS)
+
+    # Save as JPEG
+    avatar_path = os.path.join(AVATARS_DIR, f"{user_id}.jpg")
+    img.save(avatar_path, "JPEG", quality=85)
+
+    # Update DB
+    store = get_store()
+    relative_path = f"avatars/{user_id}.jpg"
+    await store.set_avatar(user_id, relative_path)
+
+    return {
+        "ok": True,
+        "avatar_url": f"/avatars/{user_id}.jpg?t={int(time.time())}",
+    }
+
+
+@app.delete("/api/avatar")
+async def delete_avatar(request: Request):
+    """Delete user profile photo."""
+    user = get_user_from_init_data(request)
+    user_id = user["id"]
+
+    # Delete file from disk
+    avatar_path = os.path.join(AVATARS_DIR, f"{user_id}.jpg")
+    if os.path.exists(avatar_path):
+        os.remove(avatar_path)
+
+    # Clear DB
+    store = get_store()
+    await store.delete_avatar(user_id)
+
+    return {"ok": True}
