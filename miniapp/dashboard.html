@@ -346,7 +346,7 @@
       <div class="profile-header">
         <div class="avatar-frame-wrapper">
           <div class="profile-avatar" id="profile-avatar">
-            <img id="avatar-img" style="display:none;width:100%;height:100%;border-radius:50%;object-fit:cover;" alt="" />
+            <img id="avatar-img" style="display:none;width:100%;height:100%;border-radius:50%;object-fit:cover;pointer-events:none;-webkit-user-drag:none;-webkit-touch-callout:none;" alt="" draggable="false" />
             <span id="avatar-letter">?</span>
           </div>
           <img class="avatar-frame" src="https://lazez.uz/addons/frame.webp" alt="" />
@@ -590,7 +590,7 @@
 
         // Profile header
         var nick = data.nickname || "?";
-        var avatarEmojis = ["🦊","🐼","🦋","🐬","🦄","🐧","🦁","🐸","🦉","🐺","🦈","🐙","🦜","🐹","🦝","🐯","🐨","🦩","🐻","🐰","🦀","🐝","🐳","🦎","🐿️","🦇","🐮","🐔","🐲","🎭","🎪","🎨","🎯","🎲","🌈","🌸","🍄","🌵","🔮","🪐","💎","🧊","🎀","🪸"];
+        var avatarEmojis = ["🦊","🐼","🦋","🐬","🦄","🐧","🦁","🐸","🦉","🐺","🦈","🐙","🦜","🐹","🦝","🐯","🐨","🦩","🐻","🐰","🦀","🐝","🐳","🦎","🐿️","🦇","🐮","🐔","🐲","😎","🤓","🥸","🤩","👻","😈","🤯","🥴","😍","🙃","🥲","🥰","😋","🤗","🤭"];
         var hash = 0;
         for (var ci = 0; ci < nick.length; ci++) hash = (hash * 31 + nick.charCodeAt(ci)) | 0;
         hash = Math.abs(hash);

@@ -312,17 +312,19 @@ def _draw_gradient_circle(size: int, color1: tuple, color2: tuple) -> Image.Imag
     return grad
 
 
-# Same emoji list as frontend dashboard
+# Animals and face expressions only
 _AVATAR_EMOJIS = [
+    # Animals
     "\U0001F98A", "\U0001F43C", "\U0001F98B", "\U0001F42C", "\U0001F984",
     "\U0001F427", "\U0001F981", "\U0001F438", "\U0001F989", "\U0001F43A",
     "\U0001F988", "\U0001F419", "\U0001F99C", "\U0001F439", "\U0001F99D",
     "\U0001F42F", "\U0001F428", "\U0001F9A9", "\U0001F43B", "\U0001F430",
     "\U0001F980", "\U0001F41D", "\U0001F433", "\U0001F98E", "\U0001F43F\uFE0F",
-    "\U0001F987", "\U0001F42E", "\U0001F414", "\U0001F432", "\U0001F3AD",
-    "\U0001F3AA", "\U0001F3A8", "\U0001F3AF", "\U0001F3B2", "\U0001F308",
-    "\U0001F338", "\U0001F344", "\U0001F335", "\U0001F52E", "\U0001FA90",
-    "\U0001F48E", "\U0001F9CA", "\U0001F380", "\U0001FAB8",
+    "\U0001F987", "\U0001F42E", "\U0001F414", "\U0001F432",
+    # Face expressions
+    "\U0001F60E", "\U0001F913", "\U0001F978", "\U0001F929", "\U0001F47B",
+    "\U0001F608", "\U0001F92F", "\U0001F974", "\U0001F60D", "\U0001F643",
+    "\U0001F972", "\U0001F970", "\U0001F60B", "\U0001F917", "\U0001F92D",
 ]
 
 
@@ -348,7 +350,7 @@ def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
         with Pilmoji(emoji_layer) as pmoji:
             ew, eh = pmoji.getsize(emoji, font=emoji_font)
             ex = (circle_size - ew) // 2
-            ey = (circle_size - eh) // 2 - int(circle_size * 0.03)
+            ey = (circle_size - eh) // 2 - int(circle_size * 0.06)
             pmoji.text((ex, ey), emoji, font=emoji_font)
     else:
         logger.warning("pilmoji not installed — falling back to letter avatar")
