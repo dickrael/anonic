@@ -16,6 +16,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 try:
     from pilmoji import Pilmoji
+    from pilmoji.source import SamsungEmojiSource
     _HAS_PILMOJI = True
 except ImportError:
     _HAS_PILMOJI = False
@@ -344,12 +345,12 @@ def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
 
     # Render emoji (or letter fallback)
     emoji_layer = Image.new("RGBA", (circle_size, circle_size), (0, 0, 0, 0))
-    emoji_font_size = int(circle_size * 0.38)
+    emoji_font_size = int(circle_size * 0.50)
     if _HAS_PILMOJI:
         emoji_font = _load_font(_SATISFY_PATH, emoji_font_size)
         # Render at (0,0) on temp mask to measure actual pixel bounds
         tmp = Image.new("L", (circle_size, circle_size), 0)
-        with Pilmoji(tmp) as pmoji:
+        with Pilmoji(tmp, source=SamsungEmojiSource) as pmoji:
             pmoji.text((0, 0), emoji, font=emoji_font)
         bbox = tmp.getbbox()
         if bbox is None:
@@ -359,7 +360,7 @@ def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
         by = (bbox[1] + bbox[3]) / 2
         ex = int(circle_size / 2 - bx)
         ey = int(circle_size / 2 - by)
-        with Pilmoji(emoji_layer) as pmoji:
+        with Pilmoji(emoji_layer, source=SamsungEmojiSource) as pmoji:
             pmoji.text((ex, ey), emoji, font=emoji_font)
     else:
         logger.warning("pilmoji not installed — falling back to letter avatar")
