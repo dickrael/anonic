@@ -918,27 +918,20 @@ class SQLiteStore:
 
         now = datetime.now(timezone.utc)
 
-        # Parse registration date for "member since" / days count
-        reg_str = user.get("registered_at", "")
-        days_since = 0
-        registered_at = reg_str
-        try:
-            if reg_str:
-                reg_dt = datetime.fromisoformat(reg_str.replace("Z", "+00:00"))
-                days_since = (now - reg_dt).days
-                registered_at = reg_dt.strftime("%b %d, %Y")
-        except Exception:
-            pass
-
         blocked_count = self.get_blocked_count(str(user_id))
+
+        # Send raw ISO timestamp for frontend to compute relative time
+        reg_str = user.get("registered_at", "")
+        reg_iso = reg_str
+        if reg_iso and not reg_iso.endswith("Z") and "+" not in reg_iso:
+            reg_iso += "+00:00"
 
         return {
             "nickname": user.get("nickname", ""),
             "lang": user.get("lang", "en"),
             "messages_sent": user.get("messages_sent", 0),
             "messages_received": user.get("messages_received", 0),
-            "days_since_registration": days_since,
-            "registered_at": registered_at,
+            "registered_at": reg_iso,
             "blocked_count": blocked_count,
             "revoke_count": user.get("revoke_count", 0),
             "link_token": user.get("token", ""),

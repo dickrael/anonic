@@ -89,16 +89,16 @@
     }
     .avatar-frame-wrapper {
       position: relative;
-      width: 90px;
-      height: 90px;
+      width: 110px;
+      height: 110px;
       margin: 0 auto 12px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
     .profile-avatar {
-      width: 72px;
-      height: 72px;
+      width: 88px;
+      height: 88px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--tg-theme-button-color), var(--tg-theme-link-color));
       display: flex;
@@ -110,7 +110,7 @@
       animation: popBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s forwards;
     }
     .profile-avatar span {
-      font-size: 36px;
+      font-size: 44px;
       line-height: 1;
     }
     .avatar-frame {
@@ -118,44 +118,10 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 90px;
-      height: 90px;
+      width: 110px;
+      height: 110px;
       pointer-events: none;
       z-index: 1;
-    }
-    .profile-avatar {
-      position: relative;
-      cursor: pointer;
-      overflow: hidden;
-    }
-    .profile-avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 50%;
-    }
-    .avatar-overlay {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      background: rgba(0, 0, 0, 0.45);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity 0.25s ease;
-      pointer-events: none;
-      z-index: 1;
-    }
-    .avatar-overlay span {
-      color: #fff;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .profile-avatar:active .avatar-overlay {
-      opacity: 1;
     }
     .profile-nickname {
       font-size: 20px;
@@ -302,6 +268,35 @@
       animation: popBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
     }
 
+    /* ===== Share Story Button ===== */
+    .story-btn-wrapper {
+      margin-top: 18px;
+      opacity: 0;
+      animation: fadeSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.8s forwards;
+    }
+    .story-btn {
+      width: 100%;
+      padding: 15px 20px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: transform 0.15s, opacity 0.2s;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
+    }
+    .story-btn:active { transform: scale(0.96); }
+    body.theme-light .story-btn {
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);
+    }
+
     /* ===== Skeleton ===== */
     .skeleton-stats {
       display: grid;
@@ -316,7 +311,7 @@
       align-items: center;
       margin-bottom: 28px;
     }
-    .skeleton-avatar-sm { width: 90px; height: 90px; border-radius: 50%; margin-bottom: 12px; }
+    .skeleton-avatar-sm { width: 110px; height: 110px; border-radius: 50%; margin-bottom: 12px; }
     .skeleton-name { width: 120px; height: 22px; margin-bottom: 6px; }
     .skeleton-sub { width: 160px; height: 14px; }
     .skeleton-info { height: 52px; border-radius: 14px; margin-bottom: 8px; }
@@ -352,10 +347,8 @@
         <div class="avatar-frame-wrapper">
           <div class="profile-avatar" id="profile-avatar">
             <span id="avatar-letter">?</span>
-            <div class="avatar-overlay"><span data-i18n="change">Change</span></div>
           </div>
           <img class="avatar-frame" src="https://lazez.uz/addons/frame.webp" alt="" />
-          <input type="file" id="avatar-input" accept="image/*" style="display:none">
         </div>
         <div class="profile-nickname" id="profile-nickname"></div>
         <div class="profile-member-since" id="profile-since"></div>
@@ -409,6 +402,13 @@
             <button class="copy-btn" id="copy-link-btn" data-i18n="copy">Copy</button>
           </div>
         </div>
+      </div>
+
+      <div class="story-btn-wrapper">
+        <button class="story-btn" id="share-story-btn">
+          <span>📖</span>
+          <span data-i18n="share_story">Share to Story</span>
+        </button>
       </div>
     </div>
 
@@ -479,33 +479,33 @@
       en: {
         received: "Received", sent: "Sent", blocked: "Blocked", revokes: "Revokes",
         member_since: "Member since", days_active: "Days active", your_link: "Your link",
-        copy: "Copy", copied: "Copied!", member_since_prefix: "Member since ",
-        day: "day", days: "days",
-        change: "Change", delete_avatar: "Delete profile photo?",
+        copy: "Copy", copied: "Copied!",
+        just_now: "Just now", minutes_ago: "{n}m ago", hours_ago: "{n}h ago", days_ago: "{n}d ago",
+        share_story: "Share to Story",
         open_in_tg: "Open in Telegram", open_in_tg_hint: "This page must be opened from the Telegram app."
       },
       ru: {
         received: "Получено", sent: "Отправлено", blocked: "Заблокировано", revokes: "Сбросы",
         member_since: "Участник с", days_active: "Дней активности", your_link: "Ваша ссылка",
-        copy: "Копировать", copied: "Скопировано!", member_since_prefix: "Участник с ",
-        day: "день", days: "дн.",
-        change: "Изменить", delete_avatar: "Удалить фото профиля?",
+        copy: "Копировать", copied: "Скопировано!",
+        just_now: "Только что", minutes_ago: "{n} мин назад", hours_ago: "{n} ч назад", days_ago: "{n} дн назад",
+        share_story: "Поделиться в истории",
         open_in_tg: "Откройте в Telegram", open_in_tg_hint: "Эту страницу нужно открыть из приложения Telegram."
       },
       fa: {
         received: "دریافت‌شده", sent: "ارسال‌شده", blocked: "مسدودشده", revokes: "بازنشانی",
         member_since: "عضو از", days_active: "روز فعالیت", your_link: "لینک شما",
-        copy: "کپی", copied: "کپی شد!", member_since_prefix: "عضو از ",
-        day: "روز", days: "روز",
-        change: "تغییر", delete_avatar: "حذف عکس پروفایل؟",
+        copy: "کپی", copied: "کپی شد!",
+        just_now: "همین الان", minutes_ago: "{n} دقیقه پیش", hours_ago: "{n} ساعت پیش", days_ago: "{n} روز پیش",
+        share_story: "اشتراک در استوری",
         open_in_tg: "در تلگرام باز کنید", open_in_tg_hint: "این صفحه باید از اپ تلگرام باز شود."
       },
       ar: {
         received: "مستلمة", sent: "مرسلة", blocked: "محظورة", revokes: "إعادة تعيين",
         member_since: "عضو منذ", days_active: "أيام النشاط", your_link: "رابطك",
-        copy: "نسخ", copied: "تم النسخ!", member_since_prefix: "عضو منذ ",
-        day: "يوم", days: "أيام",
-        change: "تغيير", delete_avatar: "حذف صورة الملف الشخصي؟",
+        copy: "نسخ", copied: "تم النسخ!",
+        just_now: "الآن", minutes_ago: "منذ {n} دقيقة", hours_ago: "منذ {n} ساعة", days_ago: "منذ {n} يوم",
+        share_story: "مشاركة في القصة",
         open_in_tg: "افتح في تيليجرام", open_in_tg_hint: "يجب فتح هذه الصفحة من تطبيق تيليجرام."
       }
     };
@@ -598,102 +598,29 @@
         document.getElementById("blob2").style.background = grad[1];
         document.getElementById("blob3").style.background = grad[0];
         document.getElementById("profile-nickname").textContent = nick;
-        document.getElementById("profile-since").textContent = t("member_since_prefix") + (data.registered_at || "—");
 
-        // ---- Avatar photo ----
-        var profileAvatarEl = document.getElementById("profile-avatar");
-        var avatarLetterEl = document.getElementById("avatar-letter");
-        var avatarOverlay = profileAvatarEl.querySelector(".avatar-overlay");
-        var avatarInput = document.getElementById("avatar-input");
-        var hasAvatar = false;
-
-        function showAvatarImage(url) {
-          var existing = profileAvatarEl.querySelector("img.avatar-photo");
-          if (existing) {
-            existing.src = url;
-          } else {
-            var img = document.createElement("img");
-            img.src = url;
-            img.alt = "Avatar";
-            img.className = "avatar-photo";
-            profileAvatarEl.insertBefore(img, avatarOverlay);
-          }
-          avatarLetterEl.style.display = "none";
-          hasAvatar = true;
-        }
-
-        function revertToEmoji() {
-          var img = profileAvatarEl.querySelector("img.avatar-photo");
-          if (img) profileAvatarEl.removeChild(img);
-          avatarLetterEl.style.display = "";
-          hasAvatar = false;
-        }
-
-        // Load existing avatar
-        if (data.avatar) {
-          showAvatarImage(API_BASE + "/" + data.avatar + "?t=" + Date.now());
-        }
-
-        // Tap: upload photo | Long-press (when has avatar): delete
-        var longPressTimer = null;
-        var longPressed = false;
-
-        profileAvatarEl.addEventListener("touchstart", function(e) {
-          longPressed = false;
-          if (hasAvatar) {
-            longPressTimer = setTimeout(function() {
-              longPressed = true;
-              hapticFeedback("warning");
-              if (confirm(t("delete_avatar"))) {
-                deleteAvatar(initData).then(function(res) {
-                  if (res.ok) { revertToEmoji(); hapticFeedback("success"); }
-                }).catch(function() { hapticFeedback("error"); });
-              }
-            }, 500);
-          }
-        }, { passive: true });
-
-        profileAvatarEl.addEventListener("touchend", function(e) {
-          clearTimeout(longPressTimer);
-          if (!longPressed) {
-            avatarInput.click();
-          }
-        });
-
-        profileAvatarEl.addEventListener("touchmove", function() {
-          clearTimeout(longPressTimer);
-        }, { passive: true });
-
-        // Desktop click fallback
-        profileAvatarEl.addEventListener("click", function(e) {
-          if (e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
-          avatarInput.click();
-        });
-
-        avatarInput.addEventListener("change", function() {
-          var file = avatarInput.files[0];
-          if (!file) return;
-          if (file.size > 5 * 1024 * 1024) {
-            hapticFeedback("error");
-            avatarInput.value = "";
-            return;
-          }
-          // Show brief loading pulse
-          avatarOverlay.style.opacity = "1";
-          avatarOverlay.querySelector("span").textContent = "...";
-          uploadAvatar(initData, file).then(function(res) {
-            if (res.ok && res.avatar_url) {
-              showAvatarImage(API_BASE + res.avatar_url);
-              hapticFeedback("success");
+        // Smart relative time for "member since"
+        var sinceText = "—";
+        if (data.registered_at) {
+          try {
+            var regDate = new Date(data.registered_at);
+            var nowMs = Date.now();
+            var diffMs = nowMs - regDate.getTime();
+            var diffMin = Math.floor(diffMs / 60000);
+            var diffHrs = Math.floor(diffMs / 3600000);
+            var diffDays = Math.floor(diffMs / 86400000);
+            if (diffMin < 1) {
+              sinceText = t("just_now");
+            } else if (diffMin < 60) {
+              sinceText = t("minutes_ago").replace("{n}", diffMin);
+            } else if (diffHrs < 24) {
+              sinceText = t("hours_ago").replace("{n}", diffHrs);
+            } else {
+              sinceText = t("days_ago").replace("{n}", diffDays);
             }
-          }).catch(function() {
-            hapticFeedback("error");
-          }).finally(function() {
-            avatarOverlay.style.opacity = "";
-            avatarOverlay.querySelector("span").textContent = t("change");
-          });
-          avatarInput.value = "";
-        });
+          } catch(e) { sinceText = "—"; }
+        }
+        document.getElementById("profile-since").textContent = sinceText;
 
         // Animate stat counters with staggered blur reveal
         animateValue(document.getElementById("stat-received"), data.messages_received || 0, 1000, 300);
@@ -702,11 +629,20 @@
         animateValue(document.getElementById("stat-revokes"), data.revoke_count || 0, 700, 750);
 
         // Info cards
-        document.getElementById("info-registered").textContent = data.registered_at || "—";
+        var regDisplay = "—";
+        if (data.registered_at) {
+          try {
+            var rd = new Date(data.registered_at);
+            regDisplay = rd.toLocaleDateString(currentLang === "fa" ? "fa-IR" : currentLang === "ar" ? "ar-SA" : currentLang === "ru" ? "ru-RU" : "en-US", { year: "numeric", month: "short", day: "numeric" });
+          } catch(e) {}
+        }
+        document.getElementById("info-registered").textContent = regDisplay;
 
-        var days = data.days_since_registration || 0;
-        var dayWord = days === 1 ? t("day") : t("days");
-        document.getElementById("info-days").textContent = days + " " + dayWord;
+        var daysActive = 0;
+        if (data.registered_at) {
+          try { daysActive = Math.floor((Date.now() - new Date(data.registered_at).getTime()) / 86400000); } catch(e) {}
+        }
+        document.getElementById("info-days").textContent = daysActive;
 
         var botUser = data.bot_username || "ClearSayBot";
         var fullLink = "https://t.me/" + botUser + "?start=" + (data.link_token || "");
@@ -745,6 +681,26 @@
             copyBtn.textContent = t("copy");
             copyBtn.classList.remove("copied");
           }, 2000);
+        }
+
+        // ---- Share to Story ----
+        var storyBtn = document.getElementById("share-story-btn");
+        var tg = window.Telegram && window.Telegram.WebApp;
+        if (tg && typeof tg.shareToStory === "function") {
+          storyBtn.addEventListener("click", function() {
+            hapticFeedback("impact");
+            var cardUrl = API_BASE + "/api/story-card/" + encodeURIComponent(data.link_token);
+            tg.shareToStory(cardUrl, {
+              text: "Send me an anonymous message! \u2709\uFE0F",
+              widget_link: {
+                url: fullLink,
+                name: "Send message"
+              }
+            });
+          });
+        } else {
+          // Fallback: hide button if shareToStory not supported
+          storyBtn.style.display = "none";
         }
 
       }).catch(function(err) {

@@ -37,29 +37,3 @@ async function fetchDashboard(initData) {
   return res.json();
 }
 
-async function uploadAvatar(initData, file) {
-  const form = new FormData();
-  form.append("file", file);
-  const res = await fetch(`${API_BASE}/api/avatar`, {
-    method: "POST",
-    headers: { "X-Init-Data": initData },
-    body: form,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Upload failed");
-  }
-  return res.json();
-}
-
-async function deleteAvatar(initData) {
-  const res = await fetch(`${API_BASE}/api/avatar`, {
-    method: "DELETE",
-    headers: { "X-Init-Data": initData },
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.detail || "Delete failed");
-  }
-  return res.json();
-}

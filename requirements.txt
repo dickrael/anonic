@@ -7,4 +7,3 @@ aiosqlite
 fastapi
 uvicorn[standard]
 Pillow
-python-multipart
