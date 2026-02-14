@@ -13,6 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
 from PIL import Image, ImageDraw, ImageFont
+from pilmoji import Pilmoji
 from pyrogram.enums import ParseMode
 
 from .config import config
@@ -269,27 +270,25 @@ def _fit_text_font(path: str, text: str, max_w: int, start_size: int = 200, min_
 
 
 def _draw_gradient_circle(size: int, color1: tuple, color2: tuple) -> Image.Image:
-    """Draw a circular avatar with a 135-degree linear gradient (fast)."""
-    # Build gradient as horizontal lines on a diagonal blend
-    grad = Image.new("RGB", (size, size))
+    """Draw a circular avatar with a 135-degree linear gradient."""
+    # Build oversized gradient then rotate+crop for clean diagonal
+    big = int(size * 1.5)
+    grad = Image.new("RGB", (big, big), color1)
     draw_g = ImageDraw.Draw(grad)
-    for y in range(size):
-        t = y / size
+    for y in range(big):
+        t = y / big
         r = int(color1[0] + (color2[0] - color1[0]) * t)
         g = int(color1[1] + (color2[1] - color1[1]) * t)
         b = int(color1[2] + (color2[2] - color1[2]) * t)
-        draw_g.line([(0, y), (size, y)], fill=(r, g, b))
-    # Rotate 45 degrees for 135deg effect, crop back to size
-    grad = grad.rotate(45, resample=Image.BICUBIC, expand=True)
-    # Center-crop back to original size
-    gw, gh = grad.size
-    left = (gw - size) // 2
-    top = (gh - size) // 2
-    grad = grad.crop((left, top, left + size, top + size))
-    grad = grad.convert("RGBA")
-    # Circular mask
+        draw_g.line([(0, y), (big, y)], fill=(r, g, b))
+    grad = grad.rotate(45, resample=Image.BICUBIC, expand=False, fillcolor=color2)
+    # Center-crop to target size
+    left = (big - size) // 2
+    top = (big - size) // 2
+    grad = grad.crop((left, top, left + size, top + size)).convert("RGBA")
+    # Apply circular mask
     mask = Image.new("L", (size, size), 0)
-    ImageDraw.Draw(mask).ellipse([0, 0, size, size], fill=255)
+    ImageDraw.Draw(mask).ellipse([0, 0, size - 1, size - 1], fill=255)
     grad.putalpha(mask)
     return grad
 
@@ -314,20 +313,35 @@ def _render_story_card(nickname: str, reg_text: str) -> Image.Image:
     grad = _GRADIENTS[h % len(_GRADIENTS)]
     c1, c2 = _hex_to_rgb(grad[0]), _hex_to_rgb(grad[1])
 
-    # --- Avatar with gradient ---
+    # --- Avatar with gradient + emoji ---
     avatar_size = 260
     avatar_img = _draw_gradient_circle(avatar_size, c1, c2)
 
-    # Draw first letter centered in avatar
-    letter_font = _load_font(_SATISFY_PATH, 120)
-    letter = nickname[0].upper() if nickname else "?"
-    letter_layer = Image.new("RGBA", (avatar_size, avatar_size), (0, 0, 0, 0))
-    ld = ImageDraw.Draw(letter_layer)
-    bbox = ld.textbbox((0, 0), letter, font=letter_font)
-    lw, lh = bbox[2] - bbox[0], bbox[3] - bbox[1]
-    ld.text((avatar_size // 2 - lw // 2 - bbox[0], avatar_size // 2 - lh // 2 - bbox[1]),
-            letter, fill=(255, 255, 255, 255), font=letter_font)
-    avatar_img = Image.alpha_composite(avatar_img, letter_layer)
+    # Same emoji list as frontend dashboard
+    avatar_emojis = [
+        "\U0001F98A", "\U0001F43C", "\U0001F98B", "\U0001F42C", "\U0001F984",
+        "\U0001F427", "\U0001F981", "\U0001F438", "\U0001F989", "\U0001F43A",
+        "\U0001F988", "\U0001F419", "\U0001F99C", "\U0001F439", "\U0001F99D",
+        "\U0001F42F", "\U0001F428", "\U0001F9A9", "\U0001F43B", "\U0001F430",
+        "\U0001F980", "\U0001F41D", "\U0001F433", "\U0001F98E", "\U0001F43F\uFE0F",
+        "\U0001F987", "\U0001F42E", "\U0001F414", "\U0001F432", "\U0001F3AD",
+        "\U0001F3AA", "\U0001F3A8", "\U0001F3AF", "\U0001F3B2", "\U0001F308",
+        "\U0001F338", "\U0001F344", "\U0001F335", "\U0001F52E", "\U0001FA90",
+        "\U0001F48E", "\U0001F9CA", "\U0001F380", "\U0001FAB8",
+    ]
+    emoji = avatar_emojis[h % len(avatar_emojis)]
+
+    # Render emoji centered in avatar using pilmoji
+    emoji_font = _load_font(_SATISFY_PATH, 100)
+    emoji_layer = Image.new("RGBA", (avatar_size, avatar_size), (0, 0, 0, 0))
+    with Pilmoji(emoji_layer) as pmoji:
+        bbox = pmoji.getsize(emoji, font=emoji_font)
+        ew, eh = bbox[0], bbox[1]
+        pmoji.text(
+            (avatar_size // 2 - ew // 2, avatar_size // 2 - eh // 2),
+            emoji, font=emoji_font,
+        )
+    avatar_img = Image.alpha_composite(avatar_img, emoji_layer)
 
     # Paste avatar onto card
     avatar_y = 520
