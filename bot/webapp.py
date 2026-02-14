@@ -347,21 +347,20 @@ def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
     emoji_font_size = int(circle_size * 0.38)
     if _HAS_PILMOJI:
         emoji_font = _load_font(_SATISFY_PATH, emoji_font_size)
-        # Render to temporary mask to detect actual drawn pixel bounds
+        # Render at (0,0) on temp mask to measure actual pixel bounds
         tmp = Image.new("L", (circle_size, circle_size), 0)
         with Pilmoji(tmp) as pmoji:
-            pmoji.text((circle_size // 2, circle_size // 2), emoji, font=emoji_font, anchor="mm")
+            pmoji.text((0, 0), emoji, font=emoji_font)
         bbox = tmp.getbbox()
         if bbox is None:
             bbox = (0, 0, circle_size, circle_size)
-        # Measure how far the visual center drifted from canvas center
+        # Shift so visual center of drawn pixels aligns with canvas center
         bx = (bbox[0] + bbox[2]) / 2
         by = (bbox[1] + bbox[3]) / 2
-        dx = circle_size / 2 - bx
-        dy = circle_size / 2 - by
-        # Draw final emoji shifted back to true center
+        ex = int(circle_size / 2 - bx)
+        ey = int(circle_size / 2 - by)
         with Pilmoji(emoji_layer) as pmoji:
-            pmoji.text((int(dx), int(dy)), emoji, font=emoji_font)
+            pmoji.text((ex, ey), emoji, font=emoji_font)
     else:
         logger.warning("pilmoji not installed — falling back to letter avatar")
         letter_font = _load_font(_SATISFY_PATH, int(circle_size * 0.46))
