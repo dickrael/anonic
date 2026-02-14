@@ -691,10 +691,7 @@
             hapticFeedback("impact");
             var cardUrl = API_BASE + "/api/story-card/" + encodeURIComponent(data.link_token);
             tg.shareToStory(cardUrl, {
-              text: "Send me an anonymous message! \u2709\uFE0F\n" + fullLink,
-              widget_link: {
-                url: fullLink
-              }
+              text: "Send me an anonymous message! \u2709\uFE0F\n" + fullLink
             });
           });
         } else {

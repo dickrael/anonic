@@ -212,7 +212,7 @@ async def story_card(token: str):
 # Story card assets
 _ASSETS_DIR = os.path.join(_PROJECT_ROOT, "assets")
 _STORY_BG_PATH = os.path.join(_ASSETS_DIR, "story-bg.png")
-_SATISFY_PATH = os.path.join(_ASSETS_DIR, "Satisfy-Regular.ttf")
+_SATISFY_PATH = os.path.join(_ASSETS_DIR, "satisfy.ttf")
 
 
 def _load_font(path: str, size: int) -> ImageFont.FreeTypeFont:
