@@ -18,10 +18,15 @@ start_self_connect: |
 start_blocked: "<emoji id=\"5305381957524272531\">🚫</emoji> Can't connect — this person has blocked you. Ouch."
 start_invalid_token: "<emoji id=\"5375129357373165375\">🔗</emoji> This link is invalid or has expired. Ask for a new one!"
 start_connection_established: |
-  <emoji id="5337080053119336309">👍</emoji> You're now chatting with <b>{nickname}</b>!
+  You are connected with <b>{nickname}</b>
 
-  Just type your message and it'll be sent anonymously.
-  Done chatting? Use /disconnect
+  No one will know it came from you.
+  Just your thoughts, just your feelings.
+
+  Say what you've been holding inside.
+
+  <emoji id="5192825506239616944">📝</emoji> Type your message
+  /disconnect — leave silently
 start_connection_switched: "<emoji id=\"5382311255656648590\">🔄</emoji> Switched away from <b>{old_nickname}</b>."
 disconnect_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> You haven't started yet! Tap /start to get your link."
 disconnect_no_connection: "<emoji id=\"5461005184052246279\">ℹ️</emoji> You're not chatting with anyone right now. Enjoy the silence!"
