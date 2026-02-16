@@ -29,10 +29,7 @@ async def cleanup_expired_pending_targets(store: "SQLiteStore") -> None:
                 target_nick = target_data.get("nickname", "???") if target_data else "???"
                 # Only notify the sender (who clicked the deep link)
                 msg = (await gstr("inactivity_disconnect", user_id=sender_id)).format(nickname=target_nick)
-                reply_hint = await gstr("anonymous_reply_instruction", user_id=sender_id)
-                await _client.send_message(
-                    sender_id, f"{msg}\n\n{reply_hint}", parse_mode=ParseMode.HTML
-                )
+                await _client.send_message(sender_id, msg, parse_mode=ParseMode.HTML)
             except Exception as e:
                 logger.warning(f"Failed to notify user about inactivity disconnect: {e}")
     except Exception as e:
