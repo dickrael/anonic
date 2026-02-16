@@ -5,7 +5,7 @@ start_no_token: |
   <code>https://t.me/{bot_username}?start={token}</code>
 
   <emoji id="5210726994353863536">👤</emoji> You'll appear as: <b>{nickname}</b>
-  <emoji id="5190806721286657692">📊</emoji> Level: <b>{level_title}</b>
+  <emoji id="5353025608832004653">📊</emoji> Level: <b>{level_title}</b>
 
   <i><emoji id="5472146462362048818">💡</emoji> Share this link anywhere — whoever opens it can send you a message without knowing who you are.</i>
 start_self_connect: |
@@ -240,7 +240,7 @@ stats_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first 
 stats_message: |
   <emoji id="5190806721286657692">📊</emoji> <b>Your Statistics</b>
 
-  <emoji id="5451732530913498254">⭐</emoji> Level: <b>{level_title}</b>
+  <emoji id="5353025608832004653">⭐</emoji> Level: <b>{level_title}</b>
 
   <emoji id="5433614747381538714">📤</emoji> Sent: <b>{messages_sent}</b>
   <emoji id="5433811242135331842">📥</emoji> Received: <b>{messages_received}</b>
