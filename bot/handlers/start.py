@@ -11,6 +11,7 @@ from pyrogram.errors import UserIsBlocked, InputUserDeactivated
 from ..store import get_store
 from ..strings import gstr, strings
 from ..utils import generate_token, generate_nickname
+from ..levels import get_level
 from .common import can_connect
 
 logger = logging.getLogger(__name__)
@@ -152,11 +153,14 @@ def register_start_handlers(app: Client) -> None:
             return
 
         logger.info(f"User {uid} returning existing link")
+        xp = user_data.get('messages_sent', 0) + user_data.get('messages_received', 0)
+        _, level_title = get_level(xp)
         await message.reply(
             (await gstr("start_no_token", message)).format(
                 bot_username=client.me.username,
                 token=user_data['token'],
-                nickname=user_data['nickname']
+                nickname=user_data['nickname'],
+                level_title=level_title
             ),
             parse_mode=ParseMode.HTML,
         )

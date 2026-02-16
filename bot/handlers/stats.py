@@ -10,6 +10,7 @@ from pyrogram.enums import ParseMode
 from ..store import get_store
 from ..strings import gstr
 from ..config import config
+from ..levels import get_level
 
 logger = logging.getLogger(__name__)
 
@@ -68,9 +69,12 @@ def register_stats_handlers(app: Client) -> None:
 
         stats = store.get_user_stats(uid)
         temp_links = store.get_active_temp_links(uid)
+        xp = stats.get('messages_sent', 0) + stats.get('messages_received', 0)
+        _, level_title = get_level(xp)
 
         await message.reply(
             (await gstr("stats_message", message)).format(
+                level_title=level_title,
                 messages_sent=stats.get('messages_sent', 0),
                 messages_received=stats.get('messages_received', 0),
                 total_messages=stats.get('messages_sent', 0) + stats.get('messages_received', 0),

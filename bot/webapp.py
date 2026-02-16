@@ -19,6 +19,7 @@ from .config import config
 from .store import get_store
 from .client import get_client
 from .strings import gstr
+from .levels import get_level, get_level_progress
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +142,9 @@ async def get_link_info(token: str):
     if not target_data:
         raise HTTPException(status_code=404, detail="Link not found")
     nickname = target_data["nickname"]
-    result = {"nickname": nickname}
+    xp = target_data.get("messages_sent", 0) + target_data.get("messages_received", 0)
+    _, level_title = get_level(xp)
+    result = {"nickname": nickname, "level_title": level_title}
     emoji_file = _get_emoji_file(nickname)
     if emoji_file:
         result["emoji_url"] = f"https://lazez.uz/emojis/{emoji_file[0]}/{emoji_file[1]}"
@@ -217,6 +220,12 @@ async def get_dashboard(request: Request):
     emoji_file = _get_emoji_file(nickname) if nickname else None
     if emoji_file:
         stats["emoji_url"] = f"https://lazez.uz/emojis/{emoji_file[0]}/{emoji_file[1]}"
+
+    # Level info
+    xp = (stats.get("messages_sent", 0) or 0) + (stats.get("messages_received", 0) or 0)
+    level_info = get_level_progress(xp)
+    stats.update(level_info)
+
     return stats
 
 
@@ -250,7 +259,10 @@ async def story_card(token: str):
         except Exception:
             pass
 
-    img = _render_story_card(nickname, reg_text, user_id=target_id)
+    xp = target_data.get("messages_sent", 0) + target_data.get("messages_received", 0)
+    _, level_title = get_level(xp)
+
+    img = _render_story_card(nickname, reg_text, user_id=target_id, level_title=level_title)
     buf = io.BytesIO()
     img.save(buf, "PNG", optimize=True)
     buf.seek(0)
@@ -424,8 +436,8 @@ def delete_avatar_file(user_id: int) -> None:
         pass
 
 
-def _render_story_card(nickname: str, reg_text: str, user_id: int = None) -> Image.Image:
-    """Render a 1080x1920 story card with avatar, frame, nickname, reg time."""
+def _render_story_card(nickname: str, reg_text: str, user_id: int = None, level_title: str = "") -> Image.Image:
+    """Render a 1080x1920 story card with avatar, frame, nickname, level, reg time."""
     W, H = 1080, 1920
 
     # Load background
@@ -468,12 +480,22 @@ def _render_story_card(nickname: str, reg_text: str, user_id: int = None) -> Ima
     nh = nick_bbox[3] - nick_bbox[1]
     draw.text((cx - nw // 2, text_top), nickname, fill=(255, 255, 255, 255), font=nick_font)
 
-    # --- Registration text (below nickname) ---
+    # --- Level title (below nickname) ---
+    level_offset = 0
+    if level_title:
+        level_font = _load_font(_SATISFY_PATH, 52)
+        lbbox = level_font.getbbox(level_title)
+        lw = lbbox[2] - lbbox[0]
+        lh = lbbox[3] - lbbox[1]
+        draw.text((cx - lw // 2, text_top + nh + 25), level_title, fill=(255, 255, 255, 200), font=level_font)
+        level_offset = lh + 30
+
+    # --- Registration text (below level) ---
     if reg_text:
         reg_font = _load_font(_SATISFY_PATH, 44)
         bbox = reg_font.getbbox(reg_text)
         rw = bbox[2] - bbox[0]
-        draw.text((cx - rw // 2, text_top + nh + 30), reg_text, fill=(255, 255, 255, 170), font=reg_font)
+        draw.text((cx - rw // 2, text_top + nh + 25 + level_offset), reg_text, fill=(255, 255, 255, 170), font=reg_font)
 
     # --- Bottom branding ---
     brand_font = _load_font(_SATISFY_PATH, 36)
