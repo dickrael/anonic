@@ -144,47 +144,54 @@
     .profile-level:active { opacity: 0.7; }
     body.theme-light .profile-level { color: rgba(0, 0, 0, 0.5); }
 
-    /* Shared glassmorphism tooltip */
-    .tap-hint {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%) translateY(6px) scale(0.96);
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      color: rgba(255, 255, 255, 0.9);
-      font-size: 12px;
-      font-weight: 500;
-      padding: 10px 16px;
-      border-radius: 12px;
-      pointer-events: none;
+    /* ===== Hint overlay (root-level popover) ===== */
+    .hint-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       opacity: 0;
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      z-index: 10;
-      max-width: 260px;
-      white-space: normal;
-      text-align: center;
-      line-height: 1.45;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      transition: opacity 0.15s ease;
+      pointer-events: none;
     }
-    body.theme-light .tap-hint {
-      background: rgba(255, 255, 255, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.5);
-      color: rgba(0, 0, 0, 0.7);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    body.theme-light .hint-overlay {
+      background: rgba(255, 255, 255, 0.35);
     }
-    .tap-hint.visible {
+    .hint-overlay.visible {
       opacity: 1;
-      transform: translateX(-50%) translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .hint-bubble {
+      position: fixed;
+      z-index: 9001;
+      background: #1e1e2e;
+      color: #f0f0f5;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 12px 18px;
+      border-radius: 14px;
+      max-width: 260px;
+      text-align: center;
+      line-height: 1.5;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 0.12s ease, transform 0.12s ease;
+      pointer-events: none;
+    }
+    body.theme-light .hint-bubble {
+      background: #ffffff;
+      color: #1a1a2e;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+    .hint-bubble.visible {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
     }
 
-    .profile-member-since {
-      position: relative;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .profile-member-since:active { opacity: 0.7; }
     .level-progress-wrapper {
       width: 120px;
       height: 4px;
@@ -227,12 +234,15 @@
       0%, 100% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
     }
-    .profile-member-since .since-text {
+    .profile-member-since {
       font-size: 13px;
       color: var(--tg-theme-hint-color);
       opacity: 0;
       animation: textReveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
+    .profile-member-since:active { opacity: 0.7; }
     @keyframes textReveal {
       from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
       to { opacity: 1; transform: translateY(0); filter: blur(0); }
@@ -449,17 +459,11 @@
           <img class="avatar-frame" src="https://lazez.uz/addons/frame.webp" alt="" />
         </div>
         <div class="profile-nickname" id="profile-nickname"></div>
-        <div class="profile-level" id="profile-level" style="position:relative">
-          <span id="level-title-text"></span>
-          <div class="tap-hint" id="level-hint"></div>
-        </div>
+        <div class="profile-level" id="profile-level"></div>
         <div class="level-progress-wrapper">
           <div class="level-progress-bar" id="level-progress-bar"></div>
         </div>
-        <div class="profile-member-since" id="profile-since">
-          <span class="since-text" id="since-text"></span>
-          <div class="tap-hint" id="since-hint"></div>
-        </div>
+        <div class="profile-member-since" id="profile-since"></div>
       </div>
 
       <div class="stats-grid">
@@ -529,6 +533,10 @@
         <pre id="debug-info" style="font-size:11px;color:var(--tg-theme-hint-color);margin-top:16px;text-align:left;word-break:break-all;white-space:pre-wrap"></pre>
       </div>
     </div>
+
+    <!-- Root-level hint overlay -->
+    <div class="hint-overlay" id="hint-overlay"></div>
+    <div class="hint-bubble" id="hint-bubble"></div>
   </div>
 
   <script src="js/telegram.js?v=16"></script>
@@ -758,20 +766,58 @@
         document.getElementById("blob3").style.background = grad[0];
         document.getElementById("profile-nickname").textContent = nick;
 
+        // ---- Hint popover system (root overlay) ----
+        var hintOverlay = document.getElementById("hint-overlay");
+        var hintBubble = document.getElementById("hint-bubble");
+
+        function dismissHint() {
+          hintBubble.classList.remove("visible");
+          hintOverlay.classList.remove("visible");
+        }
+
+        function showHint(anchorEl, text) {
+          // Reset previous
+          hintBubble.classList.remove("visible");
+          hintOverlay.classList.remove("visible");
+
+          hintBubble.textContent = text;
+          // Make measurable but invisible (no transition class yet)
+          hintBubble.style.cssText = "position:fixed;z-index:9001;opacity:0;transform:scale(0.92);left:0;top:0;";
+          // Force reflow for measurement
+          void hintBubble.offsetWidth;
+
+          // Position relative to anchor
+          var rect = anchorEl.getBoundingClientRect();
+          var bw = hintBubble.offsetWidth;
+          var bh = hintBubble.offsetHeight;
+          var vw = window.innerWidth;
+          var cx = rect.left + rect.width / 2;
+          var left = Math.max(12, Math.min(cx - bw / 2, vw - bw - 12));
+          // Prefer above; if no room, go below
+          var gap = 10;
+          var top = rect.top - bh - gap;
+          if (top < 12) top = rect.bottom + gap;
+
+          hintBubble.style.cssText = "";
+          hintBubble.style.left = left + "px";
+          hintBubble.style.top = top + "px";
+          // Next frame: animate in
+          requestAnimationFrame(function() {
+            hintOverlay.classList.add("visible");
+            hintBubble.classList.add("visible");
+          });
+
+          hapticFeedback("impact");
+        }
+
+        hintOverlay.addEventListener("click", dismissHint);
+
         // Level badge + progress bar
         if (data.level_title) {
-          document.getElementById("level-title-text").textContent = data.level_title;
-          var hintEl = document.getElementById("level-hint");
-          hintEl.textContent = t("level_hint");
-          var hintTimer = null;
-          document.getElementById("profile-level").addEventListener("click", function() {
-            hapticFeedback("impact");
-            if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
-            hintEl.classList.add("visible");
-            hintTimer = setTimeout(function() {
-              hintEl.classList.remove("visible");
-              hintTimer = null;
-            }, 2500);
+          document.getElementById("profile-level").textContent = data.level_title;
+          document.getElementById("profile-level").addEventListener("click", function(e) {
+            e.stopPropagation();
+            showHint(this, t("level_hint"));
           });
         }
         var progressPct = typeof data.level_progress === "number" ? data.level_progress : 0;
@@ -785,26 +831,20 @@
 
         // Last seen under profile pic (tappable for full date)
         var lastSeenText = t("last_seen") + " " + relativeTime(data.last_activity);
-        document.getElementById("since-text").textContent = lastSeenText;
+        document.getElementById("profile-since").textContent = lastSeenText;
         if (data.last_activity) {
-          var sinceHintEl = document.getElementById("since-hint");
+          var sinceHintText = "";
           try {
             var ld = new Date(data.last_activity);
             var loc = currentLang === "fa" ? "fa-IR" : currentLang === "ar" ? "ar-SA" : currentLang === "ru" ? "ru-RU" : "en-US";
             var fullDate = ld.toLocaleString(loc, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-            sinceHintEl.textContent = t("last_seen_hint").replace("{date}", fullDate);
+            sinceHintText = t("last_seen_hint").replace("{date}", fullDate);
           } catch(e) {
-            sinceHintEl.textContent = data.last_activity;
+            sinceHintText = data.last_activity;
           }
-          var sinceTimer = null;
-          document.getElementById("profile-since").addEventListener("click", function() {
-            hapticFeedback("impact");
-            if (sinceTimer) { clearTimeout(sinceTimer); sinceTimer = null; }
-            sinceHintEl.classList.add("visible");
-            sinceTimer = setTimeout(function() {
-              sinceHintEl.classList.remove("visible");
-              sinceTimer = null;
-            }, 2500);
+          document.getElementById("profile-since").addEventListener("click", function(e) {
+            e.stopPropagation();
+            showHint(this, sinceHintText);
           });
         }
 
