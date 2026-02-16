@@ -12,6 +12,7 @@ from ..store import get_store
 from ..strings import gstr, strings
 from ..utils import generate_token, generate_nickname
 from ..levels import get_level
+from ..webapp import get_random_frame
 from .common import can_connect
 
 logger = logging.getLogger(__name__)
@@ -54,6 +55,7 @@ def register_start_handlers(app: Client) -> None:
                 base_lang = user_lang.split('-')[0] if '-' in user_lang else user_lang
                 user_lang = base_lang if base_lang in available_langs else "en"
 
+            frame = get_random_frame()
             await store.add_user(
                 telegram_id=uid,
                 token=token,
@@ -62,9 +64,10 @@ def register_start_handlers(app: Client) -> None:
                 username=user.username,
                 first_name=user.first_name,
                 last_name=user.last_name,
-                is_premium=bool(user.is_premium)
+                is_premium=bool(user.is_premium),
+                frame=frame,
             )
-            logger.info(f"New user registered - ID: {uid}, Nickname: {nickname}, Lang: {user_lang}")
+            logger.info(f"New user registered - ID: {uid}, Nickname: {nickname}, Lang: {user_lang}, Frame: {frame}")
             user_data = store.get_user(uid)
 
         args = message.text.split()
@@ -231,8 +234,9 @@ def register_start_handlers(app: Client) -> None:
 
             new_token = generate_token()
             new_nickname = generate_nickname()
+            new_frame = get_random_frame()
 
-            success, error = await store.revoke_user(uid, new_token, new_nickname)
+            success, error = await store.revoke_user(uid, new_token, new_nickname, new_frame=new_frame)
 
             if success:
                 await callback.message.edit_text(

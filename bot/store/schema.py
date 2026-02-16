@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS users (
     messages_received INTEGER DEFAULT 0,
     revoke_count INTEGER DEFAULT 0,
     allowed_types TEXT,
-    avatar TEXT
+    avatar TEXT,
+    frame TEXT
 );
 
 CREATE TABLE IF NOT EXISTS blocks (

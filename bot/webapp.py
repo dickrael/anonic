@@ -6,6 +6,7 @@ import io
 import json
 import logging
 import os
+import random
 from urllib.parse import parse_qs, unquote
 
 from fastapi import FastAPI, HTTPException, Request
@@ -60,6 +61,37 @@ def _load_emoji_files():
 
 _load_emoji_files()
 logger.info("Loaded %d emoji PNG files for avatars", len(_AVATAR_EMOJI_FILES))
+
+# Load frame overlays from frames directory
+_FRAMES_DIR = os.path.join(_WEB_ROOT, "addons", "frames") if os.path.isdir(os.path.join(_WEB_ROOT, "addons", "frames")) else os.path.join(_PROJECT_ROOT, "addons", "frames")
+_FRAME_FILES: list[str] = []
+
+def _load_frame_files():
+    """Scan frames directory for .png/.webp files."""
+    if not os.path.isdir(_FRAMES_DIR):
+        return
+    for fname in sorted(os.listdir(_FRAMES_DIR)):
+        if fname.lower().endswith((".png", ".webp")):
+            _FRAME_FILES.append(fname)
+
+_load_frame_files()
+logger.info("Loaded %d frame files from %s", len(_FRAME_FILES), _FRAMES_DIR)
+
+
+def get_random_frame() -> str | None:
+    """Pick a random frame filename. Returns None if no frames available."""
+    if not _FRAME_FILES:
+        return None
+    return random.choice(_FRAME_FILES)
+
+
+def get_frame_path(frame_name: str | None) -> str:
+    """Get full path for a frame name, falling back to legacy _FRAME_PATH."""
+    if frame_name and _FRAME_FILES:
+        p = os.path.join(_FRAMES_DIR, frame_name)
+        if os.path.isfile(p):
+            return p
+    return _FRAME_PATH
 
 app = FastAPI(title="Incognitus WebApp API", docs_url=None, redoc_url=None)
 
@@ -148,6 +180,11 @@ async def get_link_info(token: str):
     emoji_file = _get_emoji_file(nickname)
     if emoji_file:
         result["emoji_url"] = f"https://lazez.uz/emojis/{emoji_file[0]}/{emoji_file[1]}"
+    user_frame = target_data.get("frame")
+    if not user_frame and _FRAME_FILES:
+        user_frame = _FRAME_FILES[_nick_hash(nickname) % len(_FRAME_FILES)]
+    if user_frame:
+        result["frame_url"] = f"https://lazez.uz/addons/frames/{user_frame}"
     return result
 
 
@@ -211,15 +248,22 @@ async def get_dashboard(request: Request):
 
     # Auto-generate avatar if missing
     nickname = stats.get("nickname", "")
+    user_frame = stats.get("frame")
+    # Deterministic fallback for users with no frame assigned
+    if not user_frame and _FRAME_FILES and nickname:
+        user_frame = _FRAME_FILES[_nick_hash(nickname) % len(_FRAME_FILES)]
     avatar_path = os.path.join(_AVATARS_DIR, f"{user_id}.png")
     if nickname and not os.path.isfile(avatar_path):
-        _generate_avatar(user_id, nickname)
+        _generate_avatar(user_id, nickname, frame_file=user_frame)
     if os.path.isfile(avatar_path):
         stats["avatar_url"] = f"/avatars/{user_id}.png?t={int(os.path.getmtime(avatar_path))}"
     # Include emoji URL for frontend fallback
     emoji_file = _get_emoji_file(nickname) if nickname else None
     if emoji_file:
         stats["emoji_url"] = f"https://lazez.uz/emojis/{emoji_file[0]}/{emoji_file[1]}"
+    # Frame URL for frontend
+    if user_frame:
+        stats["frame_url"] = f"https://lazez.uz/addons/frames/{user_frame}"
 
     # Level info
     xp = (stats.get("messages_sent", 0) or 0) + (stats.get("messages_received", 0) or 0)
@@ -262,7 +306,12 @@ async def story_card(token: str):
     xp = target_data.get("messages_sent", 0) + target_data.get("messages_received", 0)
     _, level_title = get_level(xp)
 
-    img = _render_story_card(nickname, reg_text, user_id=target_id, level_title=level_title)
+    # Resolve user's frame
+    user_frame = target_data.get("frame")
+    if not user_frame and _FRAME_FILES:
+        user_frame = _FRAME_FILES[_nick_hash(nickname) % len(_FRAME_FILES)]
+
+    img = _render_story_card(nickname, reg_text, user_id=target_id, level_title=level_title, frame_file=user_frame)
     buf = io.BytesIO()
     img.save(buf, "PNG", optimize=True)
     buf.seek(0)
@@ -368,7 +417,7 @@ def _get_emoji_file(nickname: str) -> tuple[str, str] | None:
     return _AVATAR_EMOJI_FILES[h % len(_AVATAR_EMOJI_FILES)]
 
 
-def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
+def _render_avatar(nickname: str, size: int = 400, frame_file: str = None) -> Image.Image:
     """Render avatar with gradient circle + emoji PNG + frame overlay.
 
     Returns an RGBA image of the given size (frame included).
@@ -406,9 +455,10 @@ def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
     offset = (size - circle_size) // 2
     canvas.paste(circle_img, (offset, offset), circle_img)
 
-    # Frame overlay
+    # Frame overlay — use user's specific frame or legacy fallback
+    frame_path = get_frame_path(frame_file)
     try:
-        frame = Image.open(_FRAME_PATH).convert("RGBA")
+        frame = Image.open(frame_path).convert("RGBA")
         frame = frame.resize((size, size), Image.LANCZOS)
         canvas = Image.alpha_composite(canvas, frame)
     except (OSError, IOError):
@@ -417,10 +467,10 @@ def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
     return canvas
 
 
-def _generate_avatar(user_id: int, nickname: str) -> str:
+def _generate_avatar(user_id: int, nickname: str, frame_file: str = None) -> str:
     """Generate avatar and save to avatars/{user_id}.png. Returns the file path."""
     os.makedirs(_AVATARS_DIR, exist_ok=True)
-    avatar = _render_avatar(nickname, size=400)
+    avatar = _render_avatar(nickname, size=400, frame_file=frame_file)
     path = os.path.join(_AVATARS_DIR, f"{user_id}.png")
     avatar.save(path, "PNG", optimize=True)
     logger.info("Generated avatar for user %s at %s", user_id, path)
@@ -436,7 +486,7 @@ def delete_avatar_file(user_id: int) -> None:
         pass
 
 
-def _render_story_card(nickname: str, reg_text: str, user_id: int = None, level_title: str = "") -> Image.Image:
+def _render_story_card(nickname: str, reg_text: str, user_id: int = None, level_title: str = "", frame_file: str = None) -> Image.Image:
     """Render a 1080x1920 story card with avatar, frame, nickname, level, reg time."""
     W, H = 1080, 1920
 
@@ -465,7 +515,7 @@ def _render_story_card(nickname: str, reg_text: str, user_id: int = None, level_
             except (OSError, IOError):
                 pass
     if avatar_img is None:
-        avatar_img = _render_avatar(nickname, size=avatar_display_size)
+        avatar_img = _render_avatar(nickname, size=avatar_display_size, frame_file=frame_file)
 
     avatar_y = 520
     img.paste(avatar_img, (cx - avatar_display_size // 2, avatar_y), avatar_img)

@@ -63,11 +63,12 @@ class SQLiteStore:
         await self._write_conn.commit()
 
         # Migrations
-        try:
-            await self._write_conn.execute("ALTER TABLE users ADD COLUMN avatar TEXT")
-            await self._write_conn.commit()
-        except Exception:
-            pass  # column already exists
+        for col in ("avatar TEXT", "frame TEXT"):
+            try:
+                await self._write_conn.execute(f"ALTER TABLE users ADD COLUMN {col}")
+                await self._write_conn.commit()
+            except Exception:
+                pass  # column already exists
 
         # Open sync connection for reads (read-only via WAL)
         self._read_conn = sqlite3.connect(self.path)
@@ -112,6 +113,7 @@ class SQLiteStore:
         first_name: str = None,
         last_name: str = None,
         is_premium: bool = False,
+        frame: str = None,
     ) -> None:
         now = datetime.now(timezone.utc).isoformat()
         special_code = generate_special_code(telegram_id)
@@ -120,16 +122,17 @@ class SQLiteStore:
             """INSERT OR IGNORE INTO users
                (telegram_id, token, nickname, special_code, registered_at,
                 last_activity, lang, username, first_name, last_name,
-                is_premium, allowed_types)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                is_premium, allowed_types, frame)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (telegram_id, token, nickname, special_code, now, now,
              language_code or "en", username, first_name, last_name,
-             int(is_premium), allowed),
+             int(is_premium), allowed, frame),
         )
         await self._write_conn.commit()
 
     async def revoke_user(
-        self, telegram_id: int, new_token: str, new_nickname: str
+        self, telegram_id: int, new_token: str, new_nickname: str,
+        new_frame: str = None,
     ) -> Tuple[bool, str]:
         row = self._fetchone_user(telegram_id)
         if not row:
@@ -156,8 +159,9 @@ class SQLiteStore:
         )
         await self._write_conn.execute(
             """UPDATE users SET token = ?, nickname = ?, last_revoke = ?,
-               revoke_count = revoke_count + 1 WHERE telegram_id = ?""",
-            (new_token, new_nickname, now, telegram_id),
+               revoke_count = revoke_count + 1, frame = ?
+               WHERE telegram_id = ?""",
+            (new_token, new_nickname, now, new_frame, telegram_id),
         )
         await self._write_conn.execute(
             "DELETE FROM temp_links WHERE user_id = ?", (telegram_id,)
@@ -949,6 +953,7 @@ class SQLiteStore:
             "revoke_count": user.get("revoke_count", 0),
             "link_token": user.get("token", ""),
             "avatar": user.get("avatar"),
+            "frame": user.get("frame"),
         }
 
     async def cleanup_expired_temp_links(self) -> int:
