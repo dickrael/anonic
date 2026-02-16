@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+import os
 import signal
 import sys
 
@@ -135,6 +136,7 @@ async def init_bot() -> None:
         await app.stop()
     stop_scheduler()
     logger.info("Bot stopped cleanly.")
+    os._exit(0)
 
 
 def main() -> None:
