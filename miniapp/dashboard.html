@@ -590,11 +590,10 @@
 
         // Profile header
         var nick = data.nickname || "?";
-        var avatarEmojis = ["🦊","🐼","🦋","🐬","🦄","🐧","🦁","🐸","🦉","🐺","🦈","🐙","🦜","🐹","🦝","🐯","🐨","🦩","🐻","🐰","🦀","🐝","🐳","🦎","🐿️","🦇","🐮","🐔","🐲","🍄","🌵","🌸","🌻","🌿","🍀","🌴","🪸","💎","🔮","🪐","🌈","🌙","🌋","🌊"];
         var hash = 0;
         for (var ci = 0; ci < nick.length; ci++) hash = (hash * 31 + nick.charCodeAt(ci)) | 0;
         hash = Math.abs(hash);
-        // Avatar: use pre-rendered image if available, otherwise emoji fallback
+        // Avatar: use pre-rendered image if available, otherwise emoji image fallback
         var gradients = [
           ["#FF6B6B","#EE5A24"],["#A29BFE","#6C5CE7"],["#55E6C1","#1ABC9C"],
           ["#FECA57","#FF9F43"],["#FF9FF3","#F368E0"],["#48DBFB","#0ABDE3"],
@@ -619,8 +618,19 @@
           avatarEl.style.borderRadius = "0";
           // Hide CSS frame — the pre-rendered avatar already includes the frame
           document.querySelector(".avatar-frame").style.display = "none";
+        } else if (data.emoji_url) {
+          // Show emoji PNG on gradient circle
+          var emojiImg = document.createElement("img");
+          emojiImg.src = data.emoji_url;
+          emojiImg.alt = "";
+          emojiImg.draggable = false;
+          emojiImg.style.cssText = "width:52px;height:52px;pointer-events:none;-webkit-user-drag:none;-webkit-touch-callout:none;";
+          document.getElementById("avatar-letter").style.display = "none";
+          avatarEl.appendChild(emojiImg);
+          avatarEl.style.background = "linear-gradient(135deg, " + grad[0] + ", " + grad[1] + ")";
+          avatarEl.style.boxShadow = "0 6px 24px " + grad[0] + "40";
         } else {
-          document.getElementById("avatar-letter").textContent = avatarEmojis[hash % avatarEmojis.length];
+          document.getElementById("avatar-letter").textContent = nick.charAt(0).toUpperCase();
           avatarEl.style.background = "linear-gradient(135deg, " + grad[0] + ", " + grad[1] + ")";
           avatarEl.style.boxShadow = "0 6px 24px " + grad[0] + "40";
         }

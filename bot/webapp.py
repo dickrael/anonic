@@ -13,13 +13,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
 from pydantic import BaseModel
 from PIL import Image, ImageDraw, ImageFont
-
-try:
-    from pilmoji import Pilmoji
-    from pilmoji.source import TwitterEmojiSource
-    _HAS_PILMOJI = True
-except ImportError:
-    _HAS_PILMOJI = False
 from pyrogram.enums import ParseMode
 
 from .config import config
@@ -33,6 +26,39 @@ _bot_username: str = ""
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _WEB_ROOT = "/var/www/html"
 _AVATARS_DIR = os.path.join(_WEB_ROOT, "avatars") if os.path.isdir(_WEB_ROOT) else os.path.join(_PROJECT_ROOT, "avatars")
+_EMOJIS_DIR = os.path.join(_WEB_ROOT, "emojis") if os.path.isdir(_WEB_ROOT) else os.path.join(_PROJECT_ROOT, "emojis")
+
+# Load emoji PNGs from pre-downloaded Apple emoji collection
+_ALLOWED_CATEGORIES = {
+    "Smileys & Emotion", "Animals & Nature", "Food & Drink",
+    "Travel & Places", "Activities", "Objects", "Symbols",
+}
+_AVATAR_EMOJI_FILES: list[tuple[str, str]] = []  # (folder, filename)
+
+def _load_emoji_files():
+    """Load emoji file list from manifest.json + per-category emojis.json."""
+    manifest_path = os.path.join(_EMOJIS_DIR, "manifest.json")
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning("Failed to load emoji manifest: %s", e)
+        return
+    for cat_name, cat_info in manifest.get("categories", {}).items():
+        if cat_name not in _ALLOWED_CATEGORIES:
+            continue
+        json_path = os.path.join(_EMOJIS_DIR, cat_info["json_file"])
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                cat_data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        folder = cat_info["folder"]
+        for emoji in cat_data.get("emojis", []):
+            _AVATAR_EMOJI_FILES.append((folder, emoji["filename"]))
+
+_load_emoji_files()
+logger.info("Loaded %d emoji PNG files for avatars", len(_AVATAR_EMOJI_FILES))
 
 app = FastAPI(title="Incognitus WebApp API", docs_url=None, redoc_url=None)
 
@@ -114,7 +140,12 @@ async def get_link_info(token: str):
         target_id, target_data = store.get_user_by_temp_link(token)
     if not target_data:
         raise HTTPException(status_code=404, detail="Link not found")
-    return {"nickname": target_data["nickname"]}
+    nickname = target_data["nickname"]
+    result = {"nickname": nickname}
+    emoji_file = _get_emoji_file(nickname)
+    if emoji_file:
+        result["emoji_url"] = f"https://lazez.uz/emojis/{emoji_file[0]}/{emoji_file[1]}"
+    return result
 
 
 @app.post("/api/send")
@@ -182,6 +213,10 @@ async def get_dashboard(request: Request):
         _generate_avatar(user_id, nickname)
     if os.path.isfile(avatar_path):
         stats["avatar_url"] = f"/avatars/{user_id}.png?t={int(os.path.getmtime(avatar_path))}"
+    # Include emoji URL for frontend fallback
+    emoji_file = _get_emoji_file(nickname) if nickname else None
+    if emoji_file:
+        stats["emoji_url"] = f"https://lazez.uz/emojis/{emoji_file[0]}/{emoji_file[1]}"
     return stats
 
 
@@ -313,65 +348,44 @@ def _draw_gradient_circle(size: int, color1: tuple, color2: tuple) -> Image.Imag
     return grad
 
 
-# Animals and nature/objects
-_AVATAR_EMOJIS = [
-    # Animals
-    "\U0001F98A", "\U0001F43C", "\U0001F98B", "\U0001F42C", "\U0001F984",
-    "\U0001F427", "\U0001F981", "\U0001F438", "\U0001F989", "\U0001F43A",
-    "\U0001F988", "\U0001F419", "\U0001F99C", "\U0001F439", "\U0001F99D",
-    "\U0001F42F", "\U0001F428", "\U0001F9A9", "\U0001F43B", "\U0001F430",
-    "\U0001F980", "\U0001F41D", "\U0001F433", "\U0001F98E", "\U0001F43F\uFE0F",
-    "\U0001F987", "\U0001F42E", "\U0001F414", "\U0001F432",
-    # Nature & objects
-    "\U0001F344", "\U0001F335", "\U0001F338", "\U0001F33B", "\U0001F33F",
-    "\U0001F340", "\U0001F334", "\U0001FAB8", "\U0001F48E", "\U0001F52E",
-    "\U0001FA90", "\U0001F308", "\U0001F319", "\U0001F30B", "\U0001F30A",
-]
+def _get_emoji_file(nickname: str) -> tuple[str, str] | None:
+    """Get the (folder, filename) for a nickname's emoji. Returns None if no emojis loaded."""
+    if not _AVATAR_EMOJI_FILES:
+        return None
+    h = _nick_hash(nickname)
+    return _AVATAR_EMOJI_FILES[h % len(_AVATAR_EMOJI_FILES)]
 
 
 def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
-    """Render avatar with gradient circle + emoji + frame overlay.
+    """Render avatar with gradient circle + emoji PNG + frame overlay.
 
     Returns an RGBA image of the given size (frame included).
     """
     h = _nick_hash(nickname)
     grad = _GRADIENTS[h % len(_GRADIENTS)]
     c1, c2 = _hex_to_rgb(grad[0]), _hex_to_rgb(grad[1])
-    emoji = _AVATAR_EMOJIS[h % len(_AVATAR_EMOJIS)]
 
     # Circle is 80% of total size; frame fills full size
     circle_size = int(size * 0.80)
     circle_img = _draw_gradient_circle(circle_size, c1, c2)
 
-    # Render emoji (or letter fallback)
-    emoji_layer = Image.new("RGBA", (circle_size, circle_size), (0, 0, 0, 0))
-    emoji_font_size = int(circle_size * 0.50)
-    if _HAS_PILMOJI:
-        emoji_font = _load_font(_SATISFY_PATH, emoji_font_size)
-        # Render at (0,0) on temp mask to measure actual pixel bounds
-        tmp = Image.new("L", (circle_size, circle_size), 0)
-        with Pilmoji(tmp, source=TwitterEmojiSource) as pmoji:
-            pmoji.text((0, 0), emoji, font=emoji_font)
-        bbox = tmp.getbbox()
-        if bbox is None:
-            bbox = (0, 0, circle_size, circle_size)
-        # Shift so visual center of drawn pixels aligns with canvas center
-        bx = (bbox[0] + bbox[2]) / 2
-        by = (bbox[1] + bbox[3]) / 2
-        ex = int(circle_size / 2 - bx)
-        ey = int(circle_size / 2 - by)
-        with Pilmoji(emoji_layer, source=TwitterEmojiSource) as pmoji:
-            pmoji.text((ex, ey), emoji, font=emoji_font)
-    else:
-        logger.warning("pilmoji not installed — falling back to letter avatar")
-        letter_font = _load_font(_SATISFY_PATH, int(circle_size * 0.46))
-        letter = nickname[0].upper() if nickname else "?"
-        ld = ImageDraw.Draw(emoji_layer)
-        bbox = ld.textbbox((0, 0), letter, font=letter_font)
-        lw, lh = bbox[2] - bbox[0], bbox[3] - bbox[1]
-        ld.text(((circle_size - lw) // 2 - bbox[0], (circle_size - lh) // 2 - bbox[1]),
-                letter, fill=(255, 255, 255, 255), font=letter_font)
-    circle_img = Image.alpha_composite(circle_img, emoji_layer)
+    # Paste emoji PNG centered on circle
+    emoji_file = _get_emoji_file(nickname)
+    if emoji_file:
+        emoji_path = os.path.join(_EMOJIS_DIR, emoji_file[0], emoji_file[1])
+        try:
+            emoji_img = Image.open(emoji_path).convert("RGBA")
+            emoji_size = int(circle_size * 0.50)
+            emoji_img = emoji_img.resize((emoji_size, emoji_size), Image.LANCZOS)
+            paste_x = (circle_size - emoji_size) // 2
+            paste_y = (circle_size - emoji_size) // 2
+            circle_img = Image.alpha_composite(
+                circle_img,
+                Image.new("RGBA", (circle_size, circle_size), (0, 0, 0, 0)),
+            )
+            circle_img.paste(emoji_img, (paste_x, paste_y), emoji_img)
+        except (OSError, IOError) as e:
+            logger.warning("Failed to load emoji PNG %s: %s", emoji_path, e)
 
     # Compose onto full-size canvas
     canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))

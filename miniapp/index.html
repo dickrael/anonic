@@ -20,7 +20,7 @@
 
     <!-- Main form (hidden until loaded) -->
     <div id="form-state" class="page-content" style="display:none;">
-      <div class="avatar-circle">
+      <div class="avatar-circle" id="avatar-circle">
         <span id="avatar-letter">?</span>
       </div>
       <div class="page-title" id="nickname-display"></div>
@@ -92,7 +92,17 @@
       // Fetch link info
       fetchLink(token).then(function(data) {
         nicknameEl.textContent = data.nickname;
-        avatarLetter.textContent = data.nickname.charAt(0).toUpperCase();
+        if (data.emoji_url) {
+          var emojiImg = document.createElement("img");
+          emojiImg.src = data.emoji_url;
+          emojiImg.alt = "";
+          emojiImg.draggable = false;
+          emojiImg.style.cssText = "width:48px;height:48px;pointer-events:none;";
+          avatarLetter.style.display = "none";
+          document.getElementById("avatar-circle").appendChild(emojiImg);
+        } else {
+          avatarLetter.textContent = data.nickname.charAt(0).toUpperCase();
+        }
         loadingEl.style.display = "none";
         formEl.style.display = "block";
         input.focus();
