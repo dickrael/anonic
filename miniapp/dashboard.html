@@ -143,33 +143,48 @@
     }
     .profile-level:active { opacity: 0.7; }
     body.theme-light .profile-level { color: rgba(0, 0, 0, 0.5); }
-    .level-hint {
+
+    /* Shared glassmorphism tooltip */
+    .tap-hint {
       position: absolute;
       left: 50%;
-      transform: translateX(-50%) translateY(4px);
-      background: rgba(0, 0, 0, 0.85);
-      color: #fff;
+      transform: translateX(-50%) translateY(6px) scale(0.96);
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: rgba(255, 255, 255, 0.9);
       font-size: 12px;
       font-weight: 500;
-      padding: 8px 14px;
-      border-radius: 10px;
-      white-space: nowrap;
+      padding: 10px 16px;
+      border-radius: 12px;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.25s ease, transform 0.25s ease;
+      transition: opacity 0.3s ease, transform 0.3s ease;
       z-index: 10;
-      max-width: 280px;
+      max-width: 260px;
       white-space: normal;
       text-align: center;
-      line-height: 1.4;
+      line-height: 1.45;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     }
-    body.theme-light .level-hint {
-      background: rgba(30, 30, 50, 0.92);
+    body.theme-light .tap-hint {
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      color: rgba(0, 0, 0, 0.7);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     }
-    .level-hint.visible {
+    .tap-hint.visible {
       opacity: 1;
-      transform: translateX(-50%) translateY(0);
+      transform: translateX(-50%) translateY(0) scale(1);
     }
+
+    .profile-member-since {
+      position: relative;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .profile-member-since:active { opacity: 0.7; }
     .level-progress-wrapper {
       width: 120px;
       height: 4px;
@@ -212,7 +227,7 @@
       0%, 100% { background-position: 0% 50%; }
       50% { background-position: 100% 50%; }
     }
-    .profile-member-since {
+    .profile-member-since .since-text {
       font-size: 13px;
       color: var(--tg-theme-hint-color);
       opacity: 0;
@@ -436,12 +451,15 @@
         <div class="profile-nickname" id="profile-nickname"></div>
         <div class="profile-level" id="profile-level" style="position:relative">
           <span id="level-title-text"></span>
-          <div class="level-hint" id="level-hint"></div>
+          <div class="tap-hint" id="level-hint"></div>
         </div>
         <div class="level-progress-wrapper">
           <div class="level-progress-bar" id="level-progress-bar"></div>
         </div>
-        <div class="profile-member-since" id="profile-since"></div>
+        <div class="profile-member-since" id="profile-since">
+          <span class="since-text" id="since-text"></span>
+          <div class="tap-hint" id="since-hint"></div>
+        </div>
       </div>
 
       <div class="stats-grid">
@@ -571,6 +589,7 @@
         member_since: "Member since", days_active: "Days active", your_link: "Your link",
         copy: "Copy", copied: "Copied!", last_seen: "Last seen", level: "Level",
         level_hint: "Your level grows with every message you send and receive!",
+        last_seen_hint: "Last active on {date}",
         just_now: "Just now", minutes_ago: "{n}m ago", hours_ago: "{n}h ago", days_ago: "{n}d ago",
         share_story: "Share to Story",
         open_in_tg: "Open in Telegram", open_in_tg_hint: "This page must be opened from the Telegram app."
@@ -580,6 +599,7 @@
         member_since: "Участник с", days_active: "Дней активности", your_link: "Ваша ссылка",
         copy: "Копировать", copied: "Скопировано!", last_seen: "Был(а)", level: "Уровень",
         level_hint: "Ваш уровень растёт с каждым отправленным и полученным сообщением!",
+        last_seen_hint: "Последняя активность: {date}",
         just_now: "Только что", minutes_ago: "{n} мин назад", hours_ago: "{n} ч назад", days_ago: "{n} дн назад",
         share_story: "Поделиться в истории",
         open_in_tg: "Откройте в Telegram", open_in_tg_hint: "Эту страницу нужно открыть из приложения Telegram."
@@ -589,6 +609,7 @@
         member_since: "عضو از", days_active: "روز فعالیت", your_link: "لینک شما",
         copy: "کپی", copied: "کپی شد!", last_seen: "آخرین بازدید", level: "سطح",
         level_hint: "سطح شما با هر پیامی که می‌فرستید یا دریافت می‌کنید بالاتر می‌ره!",
+        last_seen_hint: "آخرین فعالیت: {date}",
         just_now: "همین الان", minutes_ago: "{n} دقیقه پیش", hours_ago: "{n} ساعت پیش", days_ago: "{n} روز پیش",
         share_story: "اشتراک در استوری",
         open_in_tg: "در تلگرام باز کنید", open_in_tg_hint: "این صفحه باید از اپ تلگرام باز شود."
@@ -598,6 +619,7 @@
         member_since: "عضو منذ", days_active: "أيام النشاط", your_link: "رابطك",
         copy: "نسخ", copied: "تم النسخ!", last_seen: "آخر ظهور", level: "المستوى",
         level_hint: "مستواك يرتفع مع كل رسالة ترسلها أو تستلمها!",
+        last_seen_hint: "آخر نشاط: {date}",
         just_now: "الآن", minutes_ago: "منذ {n} دقيقة", hours_ago: "منذ {n} ساعة", days_ago: "منذ {n} يوم",
         share_story: "مشاركة في القصة",
         open_in_tg: "افتح في تيليجرام", open_in_tg_hint: "يجب فتح هذه الصفحة من تطبيق تيليجرام."
@@ -761,9 +783,30 @@
           progressBar.style.width = (progressPct * 100) + "%";
         }, 600);
 
-        // Last seen under profile pic
+        // Last seen under profile pic (tappable for full date)
         var lastSeenText = t("last_seen") + " " + relativeTime(data.last_activity);
-        document.getElementById("profile-since").textContent = lastSeenText;
+        document.getElementById("since-text").textContent = lastSeenText;
+        if (data.last_activity) {
+          var sinceHintEl = document.getElementById("since-hint");
+          try {
+            var ld = new Date(data.last_activity);
+            var loc = currentLang === "fa" ? "fa-IR" : currentLang === "ar" ? "ar-SA" : currentLang === "ru" ? "ru-RU" : "en-US";
+            var fullDate = ld.toLocaleString(loc, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+            sinceHintEl.textContent = t("last_seen_hint").replace("{date}", fullDate);
+          } catch(e) {
+            sinceHintEl.textContent = data.last_activity;
+          }
+          var sinceTimer = null;
+          document.getElementById("profile-since").addEventListener("click", function() {
+            hapticFeedback("impact");
+            if (sinceTimer) { clearTimeout(sinceTimer); sinceTimer = null; }
+            sinceHintEl.classList.add("visible");
+            sinceTimer = setTimeout(function() {
+              sinceHintEl.classList.remove("visible");
+              sinceTimer = null;
+            }, 2500);
+          });
+        }
 
         // Animate stat counters with staggered blur reveal
         animateValue(document.getElementById("stat-received"), data.messages_received || 0, 1000, 300);
