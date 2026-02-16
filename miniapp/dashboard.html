@@ -138,8 +138,38 @@
       margin-bottom: 6px;
       opacity: 0;
       animation: textReveal 0.55s cubic-bezier(0.4, 0, 0.2, 1) 0.4s forwards;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
+    .profile-level:active { opacity: 0.7; }
     body.theme-light .profile-level { color: rgba(0, 0, 0, 0.5); }
+    .level-hint {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%) translateY(4px);
+      background: rgba(0, 0, 0, 0.85);
+      color: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 10px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      z-index: 10;
+      max-width: 280px;
+      white-space: normal;
+      text-align: center;
+      line-height: 1.4;
+    }
+    body.theme-light .level-hint {
+      background: rgba(30, 30, 50, 0.92);
+    }
+    .level-hint.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
     .level-progress-wrapper {
       width: 120px;
       height: 4px;
@@ -156,7 +186,31 @@
       width: 0%;
       background: linear-gradient(90deg, var(--tg-theme-button-color, #8b5cf6), var(--tg-theme-link-color, #6d28d9));
       border-radius: 2px;
-      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .level-progress-bar::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -50%;
+      width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+      animation: barShimmer 2s ease-in-out infinite;
+    }
+    @keyframes barShimmer {
+      0% { left: -50%; }
+      100% { left: 150%; }
+    }
+    .level-progress-bar.maxed {
+      background: linear-gradient(90deg, #f5af19, #f12711, #f5af19);
+      background-size: 200% 100%;
+      animation: barGlow 2s ease infinite;
+    }
+    .level-progress-bar.maxed::after { display: none; }
+    @keyframes barGlow {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
     .profile-member-since {
       font-size: 13px;
@@ -380,7 +434,10 @@
           <img class="avatar-frame" src="https://lazez.uz/addons/frame.webp" alt="" />
         </div>
         <div class="profile-nickname" id="profile-nickname"></div>
-        <div class="profile-level" id="profile-level"></div>
+        <div class="profile-level" id="profile-level" style="position:relative">
+          <span id="level-title-text"></span>
+          <div class="level-hint" id="level-hint"></div>
+        </div>
         <div class="level-progress-wrapper">
           <div class="level-progress-bar" id="level-progress-bar"></div>
         </div>
@@ -513,6 +570,7 @@
         received: "Received", sent: "Sent", blocked: "Blocked", revokes: "Revokes",
         member_since: "Member since", days_active: "Days active", your_link: "Your link",
         copy: "Copy", copied: "Copied!", last_seen: "Last seen", level: "Level",
+        level_hint: "Your level grows with every message you send and receive!",
         just_now: "Just now", minutes_ago: "{n}m ago", hours_ago: "{n}h ago", days_ago: "{n}d ago",
         share_story: "Share to Story",
         open_in_tg: "Open in Telegram", open_in_tg_hint: "This page must be opened from the Telegram app."
@@ -521,6 +579,7 @@
         received: "Получено", sent: "Отправлено", blocked: "Заблокировано", revokes: "Сбросы",
         member_since: "Участник с", days_active: "Дней активности", your_link: "Ваша ссылка",
         copy: "Копировать", copied: "Скопировано!", last_seen: "Был(а)", level: "Уровень",
+        level_hint: "Ваш уровень растёт с каждым отправленным и полученным сообщением!",
         just_now: "Только что", minutes_ago: "{n} мин назад", hours_ago: "{n} ч назад", days_ago: "{n} дн назад",
         share_story: "Поделиться в истории",
         open_in_tg: "Откройте в Telegram", open_in_tg_hint: "Эту страницу нужно открыть из приложения Telegram."
@@ -529,6 +588,7 @@
         received: "دریافت‌شده", sent: "ارسال‌شده", blocked: "مسدودشده", revokes: "بازنشانی",
         member_since: "عضو از", days_active: "روز فعالیت", your_link: "لینک شما",
         copy: "کپی", copied: "کپی شد!", last_seen: "آخرین بازدید", level: "سطح",
+        level_hint: "سطح شما با هر پیامی که می‌فرستید یا دریافت می‌کنید بالاتر می‌ره!",
         just_now: "همین الان", minutes_ago: "{n} دقیقه پیش", hours_ago: "{n} ساعت پیش", days_ago: "{n} روز پیش",
         share_story: "اشتراک در استوری",
         open_in_tg: "در تلگرام باز کنید", open_in_tg_hint: "این صفحه باید از اپ تلگرام باز شود."
@@ -537,6 +597,7 @@
         received: "مستلمة", sent: "مرسلة", blocked: "محظورة", revokes: "إعادة تعيين",
         member_since: "عضو منذ", days_active: "أيام النشاط", your_link: "رابطك",
         copy: "نسخ", copied: "تم النسخ!", last_seen: "آخر ظهور", level: "المستوى",
+        level_hint: "مستواك يرتفع مع كل رسالة ترسلها أو تستلمها!",
         just_now: "الآن", minutes_ago: "منذ {n} دقيقة", hours_ago: "منذ {n} ساعة", days_ago: "منذ {n} يوم",
         share_story: "مشاركة في القصة",
         open_in_tg: "افتح في تيليجرام", open_in_tg_hint: "يجب فتح هذه الصفحة من تطبيق تيليجرام."
@@ -677,13 +738,28 @@
 
         // Level badge + progress bar
         if (data.level_title) {
-          document.getElementById("profile-level").textContent = t("level") + " " + data.level_title;
+          document.getElementById("level-title-text").textContent = data.level_title;
+          var hintEl = document.getElementById("level-hint");
+          hintEl.textContent = t("level_hint");
+          var hintTimer = null;
+          document.getElementById("profile-level").addEventListener("click", function() {
+            hapticFeedback("impact");
+            if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
+            hintEl.classList.add("visible");
+            hintTimer = setTimeout(function() {
+              hintEl.classList.remove("visible");
+              hintTimer = null;
+            }, 2500);
+          });
         }
-        if (typeof data.level_progress === "number") {
-          setTimeout(function() {
-            document.getElementById("level-progress-bar").style.width = (data.level_progress * 100) + "%";
-          }, 600);
+        var progressPct = typeof data.level_progress === "number" ? data.level_progress : 0;
+        var progressBar = document.getElementById("level-progress-bar");
+        if (progressPct >= 0.95) {
+          progressBar.classList.add("maxed");
         }
+        setTimeout(function() {
+          progressBar.style.width = (progressPct * 100) + "%";
+        }, 600);
 
         // Last seen under profile pic
         var lastSeenText = t("last_seen") + " " + relativeTime(data.last_activity);
