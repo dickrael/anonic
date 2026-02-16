@@ -72,5 +72,5 @@ def start_scheduler(app: "Client", store: "SQLiteStore", strings_dict: dict) -> 
 
 def stop_scheduler() -> None:
     """Stop the scheduler."""
-    scheduler.shutdown()
+    scheduler.shutdown(wait=False)
     logger.info("Schedulers stopped")

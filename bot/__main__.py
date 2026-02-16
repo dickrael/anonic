@@ -2,9 +2,10 @@
 
 import asyncio
 import logging
+import signal
+import sys
 
 import uvicorn
-from pyrogram import idle
 from pyrogram.types import BotCommand
 
 from .config import config
@@ -105,28 +106,43 @@ async def init_bot() -> None:
             attempt += 1
             await asyncio.sleep(2)
 
-    try:
-        await idle()
-    except KeyboardInterrupt:
-        logger.info("Stop signal received. Shutting down...")
-    finally:
-        # Stop uvicorn server
-        webapp_server.should_exit = True
-        try:
-            await asyncio.wait_for(webapp_task, timeout=3)
-        except (asyncio.TimeoutError, Exception):
-            webapp_task.cancel()
-        logger.info("WebApp server stopped")
+    # Wait for stop signal (Ctrl+C / SIGTERM)
+    stop_event = asyncio.Event()
 
-        if app.is_connected:
-            await app.stop()
-        stop_scheduler()
-        logger.info("Bot stopped cleanly.")
+    def _signal_handler(*_):
+        logger.info("Stop signal received. Shutting down...")
+        stop_event.set()
+
+    loop = asyncio.get_event_loop()
+    if sys.platform != "win32":
+        loop.add_signal_handler(signal.SIGINT, _signal_handler)
+        loop.add_signal_handler(signal.SIGTERM, _signal_handler)
+    else:
+        signal.signal(signal.SIGINT, _signal_handler)
+        signal.signal(signal.SIGTERM, _signal_handler)
+
+    await stop_event.wait()
+
+    # Cleanup
+    webapp_server.should_exit = True
+    try:
+        await asyncio.wait_for(webapp_task, timeout=3)
+    except (asyncio.TimeoutError, asyncio.CancelledError, Exception):
+        webapp_task.cancel()
+    logger.info("WebApp server stopped")
+
+    if app.is_connected:
+        await app.stop()
+    stop_scheduler()
+    logger.info("Bot stopped cleanly.")
 
 
 def main() -> None:
     """Main entry point."""
-    asyncio.get_event_loop().run_until_complete(init_bot())
+    try:
+        asyncio.get_event_loop().run_until_complete(init_bot())
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == "__main__":
