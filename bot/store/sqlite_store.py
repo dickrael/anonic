@@ -722,27 +722,31 @@ class SQLiteStore:
 
     # ---- Inactivity Check ----
 
-    def get_expired_pending_targets(self, timeout_minutes: int = 5) -> List[int]:
+    def get_expired_pending_targets(self, timeout_minutes: int = 5) -> List[tuple]:
+        """Return list of (sender_id, target_id) for expired pending targets."""
         cutoff = (
             datetime.now(timezone.utc) - timedelta(minutes=timeout_minutes)
         ).isoformat()
         rows = self._read_conn.execute(
-            "SELECT sender_id FROM pending_targets WHERE created_at < ?",
+            "SELECT sender_id, target_id FROM pending_targets WHERE created_at < ?",
             (cutoff,),
         ).fetchall()
-        return [r["sender_id"] for r in rows]
+        return [(r["sender_id"], r["target_id"]) for r in rows]
 
     async def cleanup_expired_pending_targets(
         self, timeout_minutes: int = 5
-    ) -> int:
-        cutoff = (
-            datetime.now(timezone.utc) - timedelta(minutes=timeout_minutes)
-        ).isoformat()
-        cur = await self._write_conn.execute(
-            "DELETE FROM pending_targets WHERE created_at < ?", (cutoff,)
-        )
-        await self._write_conn.commit()
-        return cur.rowcount
+    ) -> List[tuple]:
+        """Delete expired pending targets and return (sender_id, target_id) pairs."""
+        expired = self.get_expired_pending_targets(timeout_minutes)
+        if expired:
+            sender_ids = [s for s, _ in expired]
+            placeholders = ",".join("?" * len(sender_ids))
+            await self._write_conn.execute(
+                f"DELETE FROM pending_targets WHERE sender_id IN ({placeholders})",
+                sender_ids,
+            )
+            await self._write_conn.commit()
+        return expired
 
     # ---- Temporary Links ----
 
