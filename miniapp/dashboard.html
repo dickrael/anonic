@@ -593,6 +593,8 @@
         var hash = 0;
         for (var ci = 0; ci < nick.length; ci++) hash = (hash * 31 + nick.charCodeAt(ci)) | 0;
         hash = Math.abs(hash);
+        // Secondary hash for gradient (Knuth multiplicative) so gradient varies independently from emoji
+        var gradHash = Math.abs(Math.imul(hash, 2654435761) | 0);
         // Avatar: use pre-rendered image if available, otherwise emoji image fallback
         var gradients = [
           ["#FF6B6B","#EE5A24"],["#A29BFE","#6C5CE7"],["#55E6C1","#1ABC9C"],
@@ -602,7 +604,7 @@
           ["#BADC58","#6AB04C"],["#F8C291","#E55039"],["#82CCDD","#3C6382"],
           ["#B8E994","#78E08F"],["#FDA7DF","#D980FA"],["#F7D794","#F5CD79"]
         ];
-        var grad = gradients[hash % gradients.length];
+        var grad = gradients[gradHash % gradients.length];
         var avatarEl = document.querySelector(".profile-avatar");
 
         if (data.avatar_url) {
@@ -624,7 +626,7 @@
           emojiImg.src = data.emoji_url;
           emojiImg.alt = "";
           emojiImg.draggable = false;
-          emojiImg.style.cssText = "width:52px;height:52px;pointer-events:none;-webkit-user-drag:none;-webkit-touch-callout:none;";
+          emojiImg.style.cssText = "width:60px;height:60px;pointer-events:none;-webkit-user-drag:none;-webkit-touch-callout:none;";
           document.getElementById("avatar-letter").style.display = "none";
           avatarEl.appendChild(emojiImg);
           avatarEl.style.background = "linear-gradient(135deg, " + grad[0] + ", " + grad[1] + ")";

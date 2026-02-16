@@ -362,7 +362,9 @@ def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
     Returns an RGBA image of the given size (frame included).
     """
     h = _nick_hash(nickname)
-    grad = _GRADIENTS[h % len(_GRADIENTS)]
+    # Use a secondary hash for gradient so it varies independently from emoji
+    grad_idx = ((h * 2654435761) & 0xFFFFFFFF) % len(_GRADIENTS)
+    grad = _GRADIENTS[grad_idx]
     c1, c2 = _hex_to_rgb(grad[0]), _hex_to_rgb(grad[1])
 
     # Circle is 80% of total size; frame fills full size
@@ -375,7 +377,7 @@ def _render_avatar(nickname: str, size: int = 400) -> Image.Image:
         emoji_path = os.path.join(_EMOJIS_DIR, emoji_file[0], emoji_file[1])
         try:
             emoji_img = Image.open(emoji_path).convert("RGBA")
-            emoji_size = int(circle_size * 0.50)
+            emoji_size = int(circle_size * 0.60)
             emoji_img = emoji_img.resize((emoji_size, emoji_size), Image.LANCZOS)
             paste_x = (circle_size - emoji_size) // 2
             paste_y = (circle_size - emoji_size) // 2
