@@ -2,9 +2,12 @@
 
 import logging
 import os
+import re
 from typing import Dict, Any, Optional
 
 import yaml
+
+_TAG_RE = re.compile(r"<[^>]+>")
 
 from pyrogram.types import Message
 
@@ -92,3 +95,8 @@ strings = Strings()
 async def gstr(key: str, message: Optional[Message] = None, user_id: Optional[int] = None) -> str:
     """Convenience function to get localized string."""
     return await strings.get(key, message, user_id)
+
+
+def plain(text: str) -> str:
+    """Strip all HTML/emoji tags for use in callback.answer() alerts."""
+    return _TAG_RE.sub("", text).strip()

@@ -41,6 +41,7 @@ var i18n = (function () {
     code = (code || "en").split("-")[0].toLowerCase();
     if (SUPPORTED.indexOf(code) === -1) code = "en";
     lang = code;
+    try { localStorage.setItem("i18n_lang", lang); } catch(e) {}
 
     var jobs = [fetchLang(code)];
     if (code !== "en") jobs.push(fetchLang("en"));
@@ -77,10 +78,15 @@ var i18n = (function () {
    * @returns {Promise<string>} resolved language code
    */
   function detect() {
-    var tg = window.Telegram && window.Telegram.WebApp;
     var code = "en";
-    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
-      code = (tg.initDataUnsafe.user.language_code || "en").split("-")[0];
+    // Prefer stored bot language (set by dashboard via /lang)
+    try { var stored = localStorage.getItem("i18n_lang"); if (stored) code = stored; } catch(e) {}
+    // Fall back to Telegram UI language
+    if (code === "en") {
+      var tg = window.Telegram && window.Telegram.WebApp;
+      if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        code = (tg.initDataUnsafe.user.language_code || "en").split("-")[0];
+      }
     }
     return load(code).then(function () {
       apply();

@@ -8,7 +8,7 @@ from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineK
 from pyrogram.enums import ParseMode, ButtonStyle
 
 from ..store import get_store
-from ..strings import gstr, strings
+from ..strings import gstr, plain, strings
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ def register_language_handlers(app: Client) -> None:
 
         if lang not in available_langs:
             await callback.answer(
-                (await gstr("lang_invalid", callback)).format(languages=', '.join(available_langs)),
+                plain((await gstr("lang_invalid", callback)).format(languages=', '.join(available_langs))),
                 show_alert=True
             )
             return
@@ -111,7 +111,7 @@ def register_language_handlers(app: Client) -> None:
         current_lang = user.get('lang', 'en')
         if lang == current_lang:
             await callback.answer(
-                (await gstr("lang_already", callback)).format(language=_get_lang_display(lang)),
+                plain((await gstr("lang_already", callback)).format(language=_get_lang_display(lang))),
             )
             return
 
@@ -119,7 +119,7 @@ def register_language_handlers(app: Client) -> None:
             logger.info(f"User {uid} changed language to {lang}")
             await callback.message.delete()
             await callback.answer(
-                (await gstr("lang_changed", callback)).format(language=_get_lang_display(lang))
+                plain((await gstr("lang_changed", callback)).format(language=_get_lang_display(lang)))
             )
         else:
             await callback.answer("Failed to change language", show_alert=True)

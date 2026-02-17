@@ -8,7 +8,7 @@ from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineK
 from pyrogram.enums import ParseMode, ButtonStyle
 
 from ..store import get_store
-from ..strings import gstr
+from ..strings import gstr, plain
 
 logger = logging.getLogger(__name__)
 
@@ -108,8 +108,8 @@ def register_security_handlers(app: Client) -> None:
             )
 
             if new_status:
-                await callback.answer(await gstr("security_enabled", callback))
+                await callback.answer(plain(await gstr("security_enabled", callback)))
             else:
-                await callback.answer(await gstr("security_disabled", callback))
+                await callback.answer(plain(await gstr("security_disabled", callback)))
 
             logger.info(f"User {uid} {'enabled' if new_status else 'disabled'} protect_content")
