@@ -544,8 +544,9 @@
     </button>
   </div>
 
-  <script src="js/telegram.js?v=17"></script>
-  <script src="js/i18n.js?v=17"></script>
+  <script src="js/telegram.js?v=18"></script>
+  <script src="js/api.js?v=18"></script>
+  <script src="js/i18n.js?v=18"></script>
   <script>
   (function() {
     "use strict";
@@ -564,12 +565,25 @@
       }
     })();
 
-    // Use global i18n module (js/i18n.js)
-    var t = i18n.t;
     var tg = window.Telegram && window.Telegram.WebApp;
 
-    // Bootstrap: load translations, build all content, then reveal in one frame
-    i18n.detect().then(function() {
+    // Fetch user's authoritative lang from API, fall back to detect()
+    function resolveLanguage() {
+      var initData = getInitData();
+      if (!initData) return i18n.detect();
+      return fetchDashboard(initData).then(function(data) {
+        return i18n.load(data.lang || "en");
+      }).then(function() {
+        i18n.apply();
+      }).catch(function() {
+        return i18n.detect();
+      });
+    }
+
+    // Bootstrap: fetch lang from API, load translations, build content, reveal
+    resolveLanguage().then(function() {
+
+    var t = i18n.t;
 
     // ===== SVG icon templates =====
     var ICONS = {
@@ -727,7 +741,7 @@
       document.body.classList.remove("app-loading");
     });
 
-    }); // end i18n.detect().then()
+    }); // end resolveLanguage().then()
   })();
   </script>
 </body>

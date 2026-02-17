@@ -37,11 +37,13 @@ var i18n = (function () {
    * @param {string} code — language code (en, ru, fa, ar)
    * @returns {Promise<void>}
    */
-  function load(code) {
+  function load(code, _persist) {
     code = (code || "en").split("-")[0].toLowerCase();
     if (SUPPORTED.indexOf(code) === -1) code = "en";
     lang = code;
-    try { localStorage.setItem("i18n_lang", lang); } catch(e) {}
+    if (_persist !== false) {
+      try { localStorage.setItem("i18n_lang", lang); } catch(e) {}
+    }
 
     var jobs = [fetchLang(code)];
     if (code !== "en") jobs.push(fetchLang("en"));
@@ -92,7 +94,7 @@ var i18n = (function () {
         code = (tg.initDataUnsafe.user.language_code || "en").split("-")[0];
       }
     }
-    return load(code).then(function () {
+    return load(code, false).then(function () {
       apply();
       return lang;
     });
