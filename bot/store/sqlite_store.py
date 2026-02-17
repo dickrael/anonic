@@ -630,6 +630,15 @@ class SQLiteStore:
         row = cur.fetchone()
         return row["target_id"] if row else None
 
+    async def refresh_pending_target(self, sender_id: int) -> None:
+        """Reset the inactivity timer for a pending target."""
+        now = datetime.now(timezone.utc).isoformat()
+        await self._write_conn.execute(
+            "UPDATE pending_targets SET created_at = ? WHERE sender_id = ?",
+            (now, sender_id),
+        )
+        await self._write_conn.commit()
+
     async def clear_pending_target(self, sender_id: int) -> None:
         await self._write_conn.execute(
             "DELETE FROM pending_targets WHERE sender_id = ?", (sender_id,)

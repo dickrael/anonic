@@ -549,6 +549,21 @@
     "use strict";
     initWebApp();
 
+    // Route to help page if startapp=help
+    (function checkStartApp() {
+      var tg = window.Telegram && window.Telegram.WebApp;
+      var startParam = "";
+      if (tg && tg.initDataUnsafe) startParam = tg.initDataUnsafe.start_param || "";
+      if (!startParam) {
+        var params = new URLSearchParams(window.location.search);
+        startParam = params.get("tgWebAppStartParam") || "";
+      }
+      if (startParam === "help") {
+        window.location.replace("help.html");
+        return;
+      }
+    })();
+
     // Disable text selection and context menu
     document.addEventListener("selectstart", function(e) { e.preventDefault(); });
     document.addEventListener("contextmenu", function(e) { e.preventDefault(); });

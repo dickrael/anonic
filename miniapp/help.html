@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Help — Incognitus</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=16">
+  <style>
+    *, *::before, *::after {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-user-select: none !important;
+      user-select: none !important;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: linear-gradient(145deg, #0f0c29, #302b63, #24243e) !important;
+      min-height: 100vh;
+      color: #f0f0f5;
+    }
+    body.theme-light {
+      background: linear-gradient(145deg, #e8eaf6, #f3e5f5, #e0f2f1) !important;
+      color: #1a1a2e;
+    }
+
+    .help-page { padding-top: 4px; }
+
+    .help-header {
+      text-align: center;
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeSlideUp 0.5s cubic-bezier(0.4,0,0.2,1) 0.05s forwards;
+    }
+    .help-icon {
+      font-size: 48px;
+      margin-bottom: 8px;
+      display: block;
+      animation: popBounce 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
+    }
+    .help-title {
+      font-size: 22px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .help-subtitle {
+      font-size: 13px;
+      opacity: 0.55;
+    }
+    body.theme-light .help-title { color: #1a1a2e; }
+    body.theme-light .help-subtitle { color: rgba(0,0,0,0.45); }
+
+    /* Sections */
+    .help-section {
+      margin-bottom: 16px;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeSlideUp 0.4s cubic-bezier(0.4,0,0.2,1) forwards;
+    }
+    .help-section:nth-child(1) { animation-delay: 0.15s; }
+    .help-section:nth-child(2) { animation-delay: 0.25s; }
+    .help-section:nth-child(3) { animation-delay: 0.35s; }
+    .help-section:nth-child(4) { animation-delay: 0.45s; }
+    .help-section:nth-child(5) { animation-delay: 0.55s; }
+    .help-section:nth-child(6) { animation-delay: 0.65s; }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      opacity: 0.5;
+      margin-bottom: 8px;
+      padding-left: 4px;
+    }
+
+    .help-card {
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    body.theme-light .help-card {
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(255,255,255,0.7);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    }
+
+    .help-item {
+      padding: 13px 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .help-item:active { background: rgba(255,255,255,0.05); }
+    body.theme-light .help-item:active { background: rgba(0,0,0,0.03); }
+    .help-item + .help-item {
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    body.theme-light .help-item + .help-item {
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .help-item-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      width: 28px;
+      text-align: center;
+      line-height: 1.4;
+    }
+    .help-item-content { flex: 1; min-width: 0; }
+    .help-item-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .help-item-desc {
+      font-size: 13px;
+      opacity: 0.55;
+      line-height: 1.4;
+    }
+    .help-item-cmd {
+      font-size: 13px;
+      font-weight: 600;
+      color: #8b5cf6;
+      margin-bottom: 2px;
+    }
+    body.theme-light .help-item-cmd { color: #6d28d9; }
+
+    .help-item-chevron {
+      flex-shrink: 0;
+      opacity: 0.25;
+      font-size: 14px;
+      align-self: center;
+    }
+
+    /* Expandable answer */
+    .help-item-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s cubic-bezier(0.4,0,0.2,1), padding 0.3s;
+      font-size: 13px;
+      line-height: 1.5;
+      opacity: 0.7;
+      padding: 0 16px 0 56px;
+    }
+    .help-item.expanded .help-item-answer {
+      max-height: 300px;
+      padding: 0 16px 13px 56px;
+    }
+    .help-item.expanded .help-item-chevron {
+      transform: rotate(90deg);
+    }
+    .help-item-chevron { transition: transform 0.2s; }
+
+    /* Footer */
+    .help-footer {
+      text-align: center;
+      margin-top: 24px;
+      padding-bottom: 24px;
+      opacity: 0;
+      animation: fadeSlideUp 0.4s cubic-bezier(0.4,0,0.2,1) 0.65s forwards;
+    }
+    .help-footer-text {
+      font-size: 12px;
+      opacity: 0.35;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="help-page" id="help-page">
+
+      <div class="help-header">
+        <span class="help-icon">📖</span>
+        <div class="help-title" data-i18n="help_title">Help & FAQ</div>
+        <div class="help-subtitle" data-i18n="help_subtitle">Everything you need to know about Incognitus</div>
+      </div>
+
+      <div id="help-sections"></div>
+
+      <div class="help-footer">
+        <div class="help-footer-text">Incognitus — Anonymous messaging</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/telegram.js?v=16"></script>
+  <script>
+  (function() {
+    "use strict";
+    initWebApp();
+
+    // Theme detection
+    (function detectTheme() {
+      var tg = window.Telegram && window.Telegram.WebApp;
+      var bg = (tg && tg.themeParams && tg.themeParams.bg_color) || "";
+      if (bg) {
+        var hex = bg.replace("#", "");
+        var r = parseInt(hex.substring(0, 2), 16) || 0;
+        var g = parseInt(hex.substring(2, 4), 16) || 0;
+        var b = parseInt(hex.substring(4, 6), 16) || 0;
+        if ((r * 299 + g * 587 + b * 114) / 1000 > 128) document.body.classList.add("theme-light");
+      }
+    })();
+
+    // i18n
+    var I18N = {
+      en: {
+        help_title: "Help & FAQ",
+        help_subtitle: "Everything you need to know about Incognitus",
+        sec_getting_started: "Getting Started",
+        sec_commands: "Commands",
+        sec_privacy: "Privacy & Safety",
+        sec_customize: "Customize",
+        sec_faq: "FAQ",
+        gs_1_title: "Share your link",
+        gs_1_desc: "Get your anonymous link with /start and share it anywhere",
+        gs_2_title: "Receive messages",
+        gs_2_desc: "Anyone who opens your link can send you a message anonymously",
+        gs_3_title: "Reply back",
+        gs_3_desc: "Reply to any received message to chat back — they stay anonymous",
+        gs_4_title: "Disconnect",
+        gs_4_desc: "Use /disconnect when you're done chatting",
+        cmd_start: "Get your anonymous link",
+        cmd_help: "Open this help page",
+        cmd_disconnect: "End current conversation",
+        cmd_lang: "Change bot language",
+        cmd_stats: "View your statistics",
+        cmd_revoke: "New identity & link (weekly)",
+        cmd_block: "Block a sender (reply to msg)",
+        cmd_unblock: "Unblock by code",
+        cmd_blocked: "See your block list",
+        cmd_report: "Report a message (reply to it)",
+        cmd_security: "Toggle forward protection",
+        cmd_locktypes: "Choose accepted message types",
+        cmd_temp_link: "Create a temporary link",
+        cmd_activelinks: "Manage your temp links",
+        faq_1_q: "Can senders see my real identity?",
+        faq_1_a: "No. Senders only see your random nickname and emoji. Your Telegram name, username, and ID are never shared.",
+        faq_2_q: "What happens when I revoke?",
+        faq_2_a: "You get a new nickname, avatar, frame, and link. Your old link stops working. Your level and message stats are kept.",
+        faq_3_q: "How does the level system work?",
+        faq_3_a: "Every message you send or receive counts as XP. There are 1000+ unique ranks across 20 thematic eras. Keep chatting to level up!",
+        faq_4_q: "Can I block annoying senders?",
+        faq_4_a: "Yes! Reply to their message and use /block. You can also use /unblock to undo it, or /blocked to see your list.",
+        faq_5_q: "What are temporary links?",
+        faq_5_a: "Links that expire after a set time or number of uses. Create them with /temp_link for one-time shares.",
+        sec_data: "What We Store",
+        data_1_title: "Your anonymous profile",
+        data_1_desc: "Random nickname, emoji, avatar, frame, and unique anonymous link. None of this is linked to your real Telegram identity for other users.",
+        data_2_title: "Basic Telegram info",
+        data_2_desc: "Your Telegram ID, username, first/last name, and premium status — used only for delivering messages and never shared with other users.",
+        data_3_title: "Message statistics",
+        data_3_desc: "Counts of messages sent and received, registration date, last activity timestamp, and revoke count — used for your level and dashboard.",
+        data_4_title: "Block list & settings",
+        data_4_desc: "Your blocked users list, language preference, accepted message types, and forward protection setting.",
+        data_5_title: "Temporary routing data",
+        data_5_desc: "Active chat connections (pending targets) and message IDs for reply routing — automatically deleted after 5 minutes of inactivity or 24 hours.",
+        data_no_title: "We do NOT store your messages",
+        data_no_desc: "Message content is never saved on our servers. Messages are relayed in real-time and not logged, recorded, or stored anywhere. Once delivered, the content exists only in your Telegram chat."
+      },
+      ru: {
+        help_title: "Помощь и FAQ",
+        help_subtitle: "Всё, что нужно знать об Incognitus",
+        sec_getting_started: "Начало работы",
+        sec_commands: "Команды",
+        sec_privacy: "Приватность",
+        sec_customize: "Настройки",
+        sec_faq: "Частые вопросы",
+        gs_1_title: "Поделитесь ссылкой",
+        gs_1_desc: "Получите ссылку через /start и отправьте кому угодно",
+        gs_2_title: "Получайте сообщения",
+        gs_2_desc: "Любой, кто откроет вашу ссылку, может отправить анонимное сообщение",
+        gs_3_title: "Отвечайте",
+        gs_3_desc: "Ответьте на сообщение, чтобы начать диалог — отправитель остаётся анонимным",
+        gs_4_title: "Отключитесь",
+        gs_4_desc: "Используйте /disconnect когда закончите",
+        cmd_start: "Получить анонимную ссылку",
+        cmd_help: "Открыть эту страницу помощи",
+        cmd_disconnect: "Завершить текущий чат",
+        cmd_lang: "Сменить язык бота",
+        cmd_stats: "Посмотреть статистику",
+        cmd_revoke: "Новая личность и ссылка (раз в неделю)",
+        cmd_block: "Заблокировать отправителя (ответить на сообщение)",
+        cmd_unblock: "Разблокировать по коду",
+        cmd_blocked: "Список заблокированных",
+        cmd_report: "Пожаловаться (ответить на сообщение)",
+        cmd_security: "Защита от пересылки",
+        cmd_locktypes: "Выбрать типы сообщений",
+        cmd_temp_link: "Создать временную ссылку",
+        cmd_activelinks: "Управление ссылками",
+        faq_1_q: "Видят ли отправители мою личность?",
+        faq_1_a: "Нет. Отправители видят только случайный ник и эмодзи. Ваше имя, юзернейм и ID не раскрываются.",
+        faq_2_q: "Что происходит при /revoke?",
+        faq_2_a: "Вы получаете новый ник, аватар, рамку и ссылку. Старая ссылка перестаёт работать. Уровень и статистика сохраняются.",
+        faq_3_q: "Как работает система уровней?",
+        faq_3_a: "Каждое отправленное или полученное сообщение — это XP. Более 1000 уникальных рангов в 20 тематических эрах.",
+        faq_4_q: "Можно ли заблокировать отправителя?",
+        faq_4_a: "Да! Ответьте на его сообщение и используйте /block. Также можно /unblock или /blocked.",
+        faq_5_q: "Что такое временные ссылки?",
+        faq_5_a: "Ссылки с ограничением по времени или количеству использований. Создайте через /temp_link.",
+        sec_data: "Что мы храним",
+        data_1_title: "Ваш анонимный профиль",
+        data_1_desc: "Случайный ник, эмодзи, аватар, рамка и анонимная ссылка. Ничего из этого не связано с вашей реальной личностью для других пользователей.",
+        data_2_title: "Базовая информация Telegram",
+        data_2_desc: "Ваш Telegram ID, юзернейм, имя и статус Premium — используется только для доставки сообщений и никогда не передаётся другим.",
+        data_3_title: "Статистика сообщений",
+        data_3_desc: "Количество отправленных и полученных сообщений, дата регистрации, последняя активность и число сбросов — для уровня и дашборда.",
+        data_4_title: "Блокировки и настройки",
+        data_4_desc: "Список заблокированных, язык, типы сообщений и защита от пересылки.",
+        data_5_title: "Временные данные маршрутизации",
+        data_5_desc: "Активные соединения и ID сообщений для ответов — автоматически удаляются через 5 минут неактивности или 24 часа.",
+        data_no_title: "Мы НЕ храним ваши сообщения",
+        data_no_desc: "Содержание сообщений никогда не сохраняется на наших серверах. Сообщения передаются в реальном времени и не записываются. После доставки контент существует только в вашем чате Telegram."
+      },
+      fa: {
+        help_title: "راهنما و سوالات متداول",
+        help_subtitle: "هرچی باید درباره Incognitus بدونی",
+        sec_getting_started: "شروع کار",
+        sec_commands: "دستورات",
+        sec_privacy: "حریم خصوصی",
+        sec_customize: "تنظیمات",
+        sec_faq: "سوالات متداول",
+        gs_1_title: "لینکت رو به اشتراک بذار",
+        gs_1_desc: "با /start لینک ناشناست رو بگیر و هرجا بفرست",
+        gs_2_title: "پیام دریافت کن",
+        gs_2_desc: "هرکی لینکت رو باز کنه می‌تونه بهت پیام ناشناس بده",
+        gs_3_title: "جواب بده",
+        gs_3_desc: "روی پیام ریپلای کن تا چت شروع بشه — فرستنده ناشناس می‌مونه",
+        gs_4_title: "قطع اتصال",
+        gs_4_desc: "وقتی تموم شد از /disconnect استفاده کن",
+        cmd_start: "دریافت لینک ناشناس",
+        cmd_help: "باز کردن این صفحه راهنما",
+        cmd_disconnect: "پایان مکالمه فعلی",
+        cmd_lang: "تغییر زبان ربات",
+        cmd_stats: "مشاهده آمار",
+        cmd_revoke: "هویت و لینک جدید (هفتگی)",
+        cmd_block: "مسدود کردن فرستنده",
+        cmd_unblock: "رفع مسدودیت",
+        cmd_blocked: "لیست مسدودشده‌ها",
+        cmd_report: "گزارش پیام",
+        cmd_security: "حفاظت از فوروارد",
+        cmd_locktypes: "انتخاب نوع پیام‌های مجاز",
+        cmd_temp_link: "ساخت لینک موقت",
+        cmd_activelinks: "مدیریت لینک‌ها",
+        faq_1_q: "آیا فرستنده‌ها هویت واقعی من رو می‌بینن؟",
+        faq_1_a: "نه. فقط نام مستعار و ایموجی تصادفی رو می‌بینن. اسم، یوزرنیم و آیدی تلگرامت فاش نمی‌شه.",
+        faq_2_q: "وقتی /revoke می‌زنم چی می‌شه؟",
+        faq_2_a: "نام مستعار، آواتار، قاب و لینک جدید می‌گیری. لینک قبلی غیرفعال می‌شه. سطح و آمارت حفظ می‌شه.",
+        faq_3_q: "سیستم سطح‌بندی چطور کار می‌کنه؟",
+        faq_3_a: "هر پیام ارسالی یا دریافتی XP حساب می‌شه. بیش از ۱۰۰۰ رتبه منحصر به فرد در ۲۰ دوره تاریخی.",
+        faq_4_q: "می‌تونم فرستنده‌ها رو بلاک کنم؟",
+        faq_4_a: "بله! روی پیامشون ریپلای کن و /block بزن.",
+        faq_5_q: "لینک موقت چیه؟",
+        faq_5_a: "لینک‌هایی که بعد از مدت معین یا تعداد مشخص استفاده منقضی می‌شن. با /temp_link بساز.",
+        sec_data: "چه چیزهایی ذخیره می‌کنیم",
+        data_1_title: "پروفایل ناشناس شما",
+        data_1_desc: "نام مستعار تصادفی، ایموجی، آواتار، قاب و لینک ناشناس. هیچ‌کدوم برای کاربران دیگه به هویت واقعی شما مرتبط نیست.",
+        data_2_title: "اطلاعات پایه تلگرام",
+        data_2_desc: "آیدی تلگرام، یوزرنیم، نام و وضعیت Premium — فقط برای ارسال پیام استفاده می‌شه و هرگز با دیگران به اشتراک گذاشته نمی‌شه.",
+        data_3_title: "آمار پیام‌ها",
+        data_3_desc: "تعداد پیام‌های ارسالی و دریافتی، تاریخ ثبت‌نام، آخرین فعالیت و تعداد بازنشانی — برای سطح و داشبورد.",
+        data_4_title: "بلاک‌لیست و تنظیمات",
+        data_4_desc: "لیست کاربران مسدود، زبان، نوع پیام‌های مجاز و تنظیمات حفاظت از فوروارد.",
+        data_5_title: "داده‌های موقت مسیریابی",
+        data_5_desc: "اتصالات فعال چت و آیدی پیام‌ها برای پاسخ‌دهی — بعد از ۵ دقیقه بی‌فعالیتی یا ۲۴ ساعت حذف می‌شن.",
+        data_no_title: "ما پیام‌های شما رو ذخیره نمی‌کنیم",
+        data_no_desc: "محتوای پیام‌ها هرگز در سرورهای ما ذخیره نمی‌شه. پیام‌ها در لحظه ارسال می‌شن و ضبط نمی‌شن. بعد از تحویل، محتوا فقط در چت تلگرام شما وجود داره."
+      },
+      ar: {
+        help_title: "المساعدة والأسئلة",
+        help_subtitle: "كل ما تحتاج معرفته عن Incognitus",
+        sec_getting_started: "البداية",
+        sec_commands: "الأوامر",
+        sec_privacy: "الخصوصية والأمان",
+        sec_customize: "التخصيص",
+        sec_faq: "الأسئلة الشائعة",
+        gs_1_title: "شارك رابطك",
+        gs_1_desc: "احصل على رابطك المجهول عبر /start وشاركه في أي مكان",
+        gs_2_title: "استلم الرسائل",
+        gs_2_desc: "أي شخص يفتح رابطك يمكنه إرسال رسالة مجهولة لك",
+        gs_3_title: "رد على الرسائل",
+        gs_3_desc: "رد على أي رسالة مستلمة للدردشة — المرسل يبقى مجهولاً",
+        gs_4_title: "قطع الاتصال",
+        gs_4_desc: "استخدم /disconnect عندما تنتهي",
+        cmd_start: "احصل على رابطك المجهول",
+        cmd_help: "فتح هذه الصفحة",
+        cmd_disconnect: "إنهاء المحادثة الحالية",
+        cmd_lang: "تغيير لغة البوت",
+        cmd_stats: "عرض إحصائياتك",
+        cmd_revoke: "هوية ورابط جديد (أسبوعياً)",
+        cmd_block: "حظر مرسل (رد على رسالته)",
+        cmd_unblock: "إلغاء الحظر بالرمز",
+        cmd_blocked: "قائمة المحظورين",
+        cmd_report: "الإبلاغ عن رسالة",
+        cmd_security: "حماية التحويل",
+        cmd_locktypes: "اختيار أنواع الرسائل المقبولة",
+        cmd_temp_link: "إنشاء رابط مؤقت",
+        cmd_activelinks: "إدارة الروابط",
+        faq_1_q: "هل يمكن للمرسلين رؤية هويتي؟",
+        faq_1_a: "لا. المرسلون يرون فقط اسمك المستعار والإيموجي العشوائي. اسمك وحسابك ومعرفك لا يُكشف أبداً.",
+        faq_2_q: "ماذا يحدث عند /revoke؟",
+        faq_2_a: "تحصل على اسم مستعار وصورة وإطار ورابط جديد. الرابط القديم يتوقف. مستواك وإحصائياتك تبقى.",
+        faq_3_q: "كيف يعمل نظام المستويات؟",
+        faq_3_a: "كل رسالة ترسلها أو تستلمها تحسب كـ XP. أكثر من ١٠٠٠ رتبة فريدة في ٢٠ حقبة.",
+        faq_4_q: "هل يمكنني حظر المرسلين؟",
+        faq_4_a: "نعم! رد على رسالتهم واستخدم /block.",
+        faq_5_q: "ما هي الروابط المؤقتة؟",
+        faq_5_a: "روابط تنتهي بعد وقت محدد أو عدد استخدامات. أنشئها بـ /temp_link.",
+        sec_data: "ما نخزنه",
+        data_1_title: "ملفك المجهول",
+        data_1_desc: "اسم مستعار عشوائي، إيموجي، صورة، إطار ورابط مجهول. لا شيء من هذا مرتبط بهويتك الحقيقية للمستخدمين الآخرين.",
+        data_2_title: "معلومات تيليجرام الأساسية",
+        data_2_desc: "معرف تيليجرام، اسم المستخدم، الاسم وحالة Premium — تُستخدم فقط لتوصيل الرسائل ولا تُشارك مع أحد.",
+        data_3_title: "إحصائيات الرسائل",
+        data_3_desc: "عدد الرسائل المرسلة والمستلمة، تاريخ التسجيل، آخر نشاط وعدد إعادة التعيين — للمستوى ولوحة المعلومات.",
+        data_4_title: "قائمة الحظر والإعدادات",
+        data_4_desc: "المحظورون، اللغة، أنواع الرسائل المقبولة وإعداد حماية التحويل.",
+        data_5_title: "بيانات التوجيه المؤقتة",
+        data_5_desc: "الاتصالات النشطة ومعرفات الرسائل للردود — تُحذف تلقائياً بعد ٥ دقائق من عدم النشاط أو ٢٤ ساعة.",
+        data_no_title: "نحن لا نخزن رسائلك",
+        data_no_desc: "لا يتم حفظ محتوى الرسائل على خوادمنا أبداً. تُرسل الرسائل في الوقت الفعلي ولا تُسجل. بعد التوصيل، المحتوى موجود فقط في محادثتك على تيليجرام."
+      }
+    };
+
+    var currentLang = "en";
+    function t(key) {
+      var dict = I18N[currentLang] || I18N.en;
+      return dict[key] || (I18N.en[key] || key);
+    }
+
+    // Detect language from Telegram
+    var tg = window.Telegram && window.Telegram.WebApp;
+    if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+      var uLang = tg.initDataUnsafe.user.language_code || "en";
+      if (I18N[uLang]) currentLang = uLang;
+      else if (I18N[uLang.split("-")[0]]) currentLang = uLang.split("-")[0];
+    }
+
+    // RTL
+    if (currentLang === "ar" || currentLang === "fa") {
+      document.documentElement.setAttribute("dir", "rtl");
+    }
+
+    // Apply header translations
+    document.querySelector("[data-i18n='help_title']").textContent = t("help_title");
+    document.querySelector("[data-i18n='help_subtitle']").textContent = t("help_subtitle");
+
+    // Build sections
+    var sections = [
+      {
+        title: t("sec_getting_started"),
+        items: [
+          { icon: "1️⃣", title: t("gs_1_title"), desc: t("gs_1_desc") },
+          { icon: "2️⃣", title: t("gs_2_title"), desc: t("gs_2_desc") },
+          { icon: "3️⃣", title: t("gs_3_title"), desc: t("gs_3_desc") },
+          { icon: "4️⃣", title: t("gs_4_title"), desc: t("gs_4_desc") }
+        ]
+      },
+      {
+        title: t("sec_commands"),
+        items: [
+          { icon: "🔗", cmd: "/start", desc: t("cmd_start") },
+          { icon: "📖", cmd: "/help", desc: t("cmd_help") },
+          { icon: "🔌", cmd: "/disconnect", desc: t("cmd_disconnect") },
+          { icon: "🌐", cmd: "/lang", desc: t("cmd_lang") },
+          { icon: "📊", cmd: "/stats", desc: t("cmd_stats") },
+          { icon: "🔄", cmd: "/revoke", desc: t("cmd_revoke") }
+        ]
+      },
+      {
+        title: t("sec_privacy"),
+        items: [
+          { icon: "🚫", cmd: "/block", desc: t("cmd_block") },
+          { icon: "✅", cmd: "/unblock", desc: t("cmd_unblock") },
+          { icon: "📋", cmd: "/blocked", desc: t("cmd_blocked") },
+          { icon: "⚠️", cmd: "/report", desc: t("cmd_report") },
+          { icon: "🔒", cmd: "/security", desc: t("cmd_security") }
+        ]
+      },
+      {
+        title: t("sec_customize"),
+        items: [
+          { icon: "🎛️", cmd: "/locktypes", desc: t("cmd_locktypes") },
+          { icon: "🔗", cmd: "/temp_link", desc: t("cmd_temp_link") },
+          { icon: "📂", cmd: "/activelinks", desc: t("cmd_activelinks") }
+        ]
+      },
+      {
+        title: t("sec_faq"),
+        items: [
+          { icon: "❓", title: t("faq_1_q"), answer: t("faq_1_a") },
+          { icon: "❓", title: t("faq_2_q"), answer: t("faq_2_a") },
+          { icon: "❓", title: t("faq_3_q"), answer: t("faq_3_a") },
+          { icon: "❓", title: t("faq_4_q"), answer: t("faq_4_a") },
+          { icon: "❓", title: t("faq_5_q"), answer: t("faq_5_a") }
+        ]
+      },
+      {
+        title: t("sec_data"),
+        items: [
+          { icon: "👤", title: t("data_1_title"), answer: t("data_1_desc") },
+          { icon: "📱", title: t("data_2_title"), answer: t("data_2_desc") },
+          { icon: "📊", title: t("data_3_title"), answer: t("data_3_desc") },
+          { icon: "⚙️", title: t("data_4_title"), answer: t("data_4_desc") },
+          { icon: "🔄", title: t("data_5_title"), answer: t("data_5_desc") },
+          { icon: "🟢", title: t("data_no_title"), answer: t("data_no_desc") }
+        ]
+      }
+    ];
+
+    var container = document.getElementById("help-sections");
+
+    sections.forEach(function(sec) {
+      var sectionEl = document.createElement("div");
+      sectionEl.className = "help-section";
+
+      var titleEl = document.createElement("div");
+      titleEl.className = "section-title";
+      titleEl.textContent = sec.title;
+      sectionEl.appendChild(titleEl);
+
+      var card = document.createElement("div");
+      card.className = "help-card";
+
+      sec.items.forEach(function(item) {
+        var row = document.createElement("div");
+        row.className = "help-item";
+
+        var iconEl = document.createElement("div");
+        iconEl.className = "help-item-icon";
+        iconEl.textContent = item.icon;
+        row.appendChild(iconEl);
+
+        var content = document.createElement("div");
+        content.className = "help-item-content";
+
+        if (item.cmd) {
+          var cmdEl = document.createElement("div");
+          cmdEl.className = "help-item-cmd";
+          cmdEl.textContent = item.cmd;
+          content.appendChild(cmdEl);
+        }
+        if (item.title) {
+          var tEl = document.createElement("div");
+          tEl.className = "help-item-title";
+          tEl.textContent = item.title;
+          content.appendChild(tEl);
+        }
+        var dEl = document.createElement("div");
+        dEl.className = "help-item-desc";
+        dEl.textContent = item.desc || "";
+        content.appendChild(dEl);
+
+        row.appendChild(content);
+
+        if (item.answer) {
+          var chevron = document.createElement("div");
+          chevron.className = "help-item-chevron";
+          chevron.textContent = "›";
+          row.appendChild(chevron);
+
+          var answerEl = document.createElement("div");
+          answerEl.className = "help-item-answer";
+          answerEl.textContent = item.answer;
+          row.appendChild(answerEl);
+
+          row.addEventListener("click", function() {
+            row.classList.toggle("expanded");
+            hapticFeedback("impact");
+          });
+        }
+
+        card.appendChild(row);
+      });
+
+      sectionEl.appendChild(card);
+      container.appendChild(sectionEl);
+    });
+
+    // Back button
+    if (tg && tg.BackButton) {
+      tg.BackButton.show();
+      tg.BackButton.onClick(function() { tg.close(); });
+    }
+
+  })();
+  </script>
+</body>
+</html>

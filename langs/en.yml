@@ -194,37 +194,11 @@ revoke_success: |
 
   <i><emoji id="5472146462362048818">💡</emoji> Share your new link — the old one no longer works.</i>
 help_message: |
-  <emoji id="5202126386768140453">👋</emoji> <b>Anonymous Messages</b>
+  <emoji id="5202126386768140453">👋</emoji> <b>Incognitus — Help</b>
 
-  Send and receive messages without revealing your identity.
+  Send and receive anonymous messages without revealing your identity.
 
-  <b>Getting started:</b>
-  1️⃣ Share your link (get it with /start)
-  2️⃣ Someone opens it and sends you a message
-  3️⃣ Reply to their message to chat back
-  4️⃣ Use /disconnect when you're done
-
-  <b>Commands:</b>
-  /start — Get your anonymous link
-  /help — This help page
-  /disconnect — End current chat
-  /lang — Change language
-
-  <b>Privacy & Safety:</b>
-  /block — Block a sender (reply to their msg)
-  /unblock — Unblock by code
-  /blocked — See your block list
-  /report — Report a message (reply to it)
-  /security — Prevent forwarding of your messages
-
-  <b>Customize:</b>
-  /locktypes — Choose what message types you accept
-  /temp_link — Create a temporary link
-  /activelinks — Manage your temp links
-  /revoke — New identity & link (once per week)
-
-  <b>Info:</b>
-  /stats — Your statistics
+  <i>Tap the button below for the full guide, commands, FAQ, and privacy info.</i>
 security_no_user: "<emoji id=\"5202126386768140453\">👋</emoji> Tap /start first to get started."
 security_info: |
   <emoji id="5231154211000950256">🔒</emoji> <b>Message Protection</b>

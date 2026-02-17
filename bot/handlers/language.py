@@ -112,7 +112,6 @@ def register_language_handlers(app: Client) -> None:
         if lang == current_lang:
             await callback.answer(
                 (await gstr("lang_already", callback)).format(language=_get_lang_display(lang)),
-                show_alert=True
             )
             return
 

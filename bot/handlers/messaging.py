@@ -628,6 +628,15 @@ def register_messaging_handlers(app: Client) -> None:
         try:
             original_caption = message.caption or message.text or ""
 
+            # If the message quotes content from an external chat, prepend it
+            if message.quote and message.quote.text:
+                quote_text = message.quote.text
+                # Truncate long quotes
+                if len(quote_text) > 200:
+                    quote_text = quote_text[:200] + "…"
+                from html import escape as _esc
+                original_caption = f"<blockquote>{_esc(quote_text)}</blockquote>\n{original_caption}"
+
             # Build caption in the RECIPIENT's language
             # If custom emojis present, render them as <emoji> HTML tags
             custom_emoji_html = _render_text_with_custom_emoji(message)
@@ -686,6 +695,10 @@ def register_messaging_handlers(app: Client) -> None:
             # Update message stats
             await store.increment_messages_sent(uid)
             await store.increment_messages_received(target_id)
+
+            # Refresh inactivity timer for both sides
+            await store.refresh_pending_target(uid)
+            await store.refresh_pending_target(target_id)
 
             logger.info(f"Message '{primary_type}' sent from {user['nickname']} ({uid}) to {target_id}")
 
