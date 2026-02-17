@@ -4,10 +4,11 @@ import asyncio
 import logging
 
 from pyrogram import Client, filters
-from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from pyrogram.enums import ParseMode, ButtonStyle
 from pyrogram.errors import UserIsBlocked, InputUserDeactivated
 
+from ..config import config
 from ..store import get_store
 from ..strings import gstr, strings
 from ..utils import generate_token, generate_nickname
@@ -27,6 +28,16 @@ async def auto_delete_message(message: Message, delay: int = 60):
         pass
 
 
+def _detect_lang(user) -> str:
+    """Detect supported language from Telegram user, default to 'en'."""
+    user_lang = user.language_code or "en"
+    available = strings.get_available_languages()
+    if user_lang in available:
+        return user_lang
+    base = user_lang.split('-')[0] if '-' in user_lang else user_lang
+    return base if base in available else "en"
+
+
 def register_start_handlers(app: Client) -> None:
     """Register start and revoke command handlers."""
 
@@ -41,21 +52,14 @@ def register_start_handlers(app: Client) -> None:
         if store.is_banned(uid):
             return
 
+        is_new_user = False
         user_data = store.get_user(uid)
         if not user_data:
             token = generate_token()
             nickname = generate_nickname()
-
-            # Auto-detect language from user's Telegram settings
-            user_lang = user.language_code or "en"
-            available_langs = strings.get_available_languages()
-            # Check if user's language is available, otherwise default to "en"
-            if user_lang not in available_langs:
-                # Try base language (e.g., "ru" from "ru-RU")
-                base_lang = user_lang.split('-')[0] if '-' in user_lang else user_lang
-                user_lang = base_lang if base_lang in available_langs else "en"
-
+            user_lang = _detect_lang(user)
             frame = get_random_frame()
+            is_new_user = True
             await store.add_user(
                 telegram_id=uid,
                 token=token,
@@ -69,6 +73,14 @@ def register_start_handlers(app: Client) -> None:
             )
             logger.info(f"New user registered - ID: {uid}, Nickname: {nickname}, Lang: {user_lang}, Frame: {frame}")
             user_data = store.get_user(uid)
+        else:
+            # Existing user: auto-update lang if still default "en" and Telegram lang differs
+            db_lang = user_data.get("lang", "en")
+            tg_lang = _detect_lang(user)
+            if db_lang == "en" and tg_lang != "en":
+                available = strings.get_available_languages()
+                await store.set_user_language(uid, tg_lang, available)
+                logger.info(f"Auto-updated user {uid} lang: en -> {tg_lang}")
 
         args = message.text.split()
         if len(args) == 2:
@@ -155,18 +167,39 @@ def register_start_handlers(app: Client) -> None:
                 )
             return
 
-        logger.info(f"User {uid} returning existing link")
-        xp = user_data.get('messages_sent', 0) + user_data.get('messages_received', 0)
-        _, level_title = get_level(xp)
-        await message.reply(
-            (await gstr("start_no_token", message)).format(
-                bot_username=client.me.username,
-                token=user_data['token'],
-                nickname=user_data['nickname'],
-                level_title=level_title
-            ),
-            parse_mode=ParseMode.HTML,
-        )
+        if is_new_user:
+            # First-time user: welcome message + help button
+            help_url = f"{config.webapp_url}/help.html"
+            keyboard = InlineKeyboardMarkup([
+                [InlineKeyboardButton(
+                    text="📖 " + await gstr("help_button", message),
+                    web_app=WebAppInfo(url=help_url),
+                )]
+            ])
+            await message.reply(
+                (await gstr("start_first", message)).format(
+                    bot_username=client.me.username,
+                    token=user_data['token'],
+                    nickname=user_data['nickname'],
+                ),
+                reply_markup=keyboard,
+                parse_mode=ParseMode.HTML,
+            )
+            logger.info(f"New user {uid} received first-start message with help button")
+        else:
+            # Returning user: standard link message
+            logger.info(f"User {uid} returning existing link")
+            xp = user_data.get('messages_sent', 0) + user_data.get('messages_received', 0)
+            _, level_title = get_level(xp)
+            await message.reply(
+                (await gstr("start_no_token", message)).format(
+                    bot_username=client.me.username,
+                    token=user_data['token'],
+                    nickname=user_data['nickname'],
+                    level_title=level_title
+                ),
+                parse_mode=ParseMode.HTML,
+            )
 
     @app.on_message(filters.command("revoke") & filters.private)
     async def revoke_cmd(client: Client, message: Message):

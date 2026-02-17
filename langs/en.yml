@@ -1,4 +1,13 @@
 lang_name: "English"
+start_first: |
+  <emoji id="5368324170671202286">👋</emoji> <b>Welcome to Incognitus!</b>
+
+  <emoji id="5375129357373165375">🔗</emoji> Your anonymous link:
+  <code>https://t.me/{bot_username}?start={token}</code>
+
+  <emoji id="5210726994353863536">👤</emoji> You'll appear as: <b>{nickname}</b>
+
+  <i><emoji id="5472146462362048818">💡</emoji> Share this link — anyone can message you anonymously. Tap the button below to learn more!</i>
 start_no_token: |
   <emoji id="5375129357373165375">🔗</emoji> <b>Your anonymous link is ready!</b>
 
