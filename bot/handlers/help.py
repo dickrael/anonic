@@ -3,15 +3,14 @@
 import logging
 
 from pyrogram import Client, filters
-from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from pyrogram.enums import ParseMode
 
+from ..config import get_config
 from ..store import get_store
 from ..strings import gstr
 
 logger = logging.getLogger(__name__)
-
-_bot_username: str = ""
 
 
 def register_help_handlers(app: Client) -> None:
@@ -25,14 +24,13 @@ def register_help_handlers(app: Client) -> None:
         if store.is_banned(uid):
             return
 
-        global _bot_username
-        if not _bot_username:
-            _bot_username = client.me.username if client.me else "ClearSayBot"
+        cfg = get_config()
+        help_url = f"{cfg.webapp_url}/help.html"
 
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(
                 text="📖 Open Help",
-                url=f"https://t.me/{_bot_username}?startapp=help",
+                web_app=WebAppInfo(url=help_url),
             )]
         ])
 
