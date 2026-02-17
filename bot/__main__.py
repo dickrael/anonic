@@ -19,23 +19,11 @@ from .handlers import register_all_handlers
 from .webapp import app as webapp_app
 
 
-# Bot commands for the Telegram menu
-BOT_COMMANDS = [
-    BotCommand("start", "Get your anonymous link"),
-    BotCommand("help", "How to use the bot"),
-    BotCommand("stats", "Your statistics"),
-    BotCommand("disconnect", "End current chat"),
-    BotCommand("block", "Block sender (reply)"),
-    BotCommand("unblock", "Unblock by code"),
-    BotCommand("unblockall", "Unblock all users"),
-    BotCommand("blocked", "View blocked users"),
-    BotCommand("security", "Message protection"),
-    BotCommand("temp_link", "Create temporary link"),
-    BotCommand("activelinks", "Manage temp links"),
-    BotCommand("revoke", "Get new identity"),
-    BotCommand("locktypes", "Message type settings"),
-    BotCommand("report", "Report message (reply)"),
-    BotCommand("lang", "Change language"),
+# Command names in order (descriptions come from lang files)
+COMMAND_NAMES = [
+    "start", "help", "stats", "disconnect", "block", "unblock",
+    "unblockall", "blocked", "security", "temp_link", "activelinks",
+    "revoke", "locktypes", "report", "lang",
 ]
 
 # Configure logging
@@ -81,9 +69,22 @@ async def init_bot() -> None:
                 + (f" after {attempt} attempts" if attempt > 1 else "")
             )
 
-            # Set bot commands menu
-            await app.set_bot_commands(BOT_COMMANDS)
-            logger.info("Bot commands menu set")
+            # Set bot commands menu per language
+            for lang_code in strings.get_available_languages():
+                lang_strings = strings.strings.get(lang_code, {})
+                cmds = [
+                    BotCommand(name, lang_strings.get(f"cmd_{name}", name))
+                    for name in COMMAND_NAMES
+                ]
+                await app.set_bot_commands(cmds, language_code=lang_code)
+            # Also set default (English) commands without language_code
+            en_strings = strings.strings.get("en", {})
+            default_cmds = [
+                BotCommand(name, en_strings.get(f"cmd_{name}", name))
+                for name in COMMAND_NAMES
+            ]
+            await app.set_bot_commands(default_cmds)
+            logger.info("Bot commands menu set for all languages")
 
             # Start scheduler
             start_scheduler(app, store, strings.strings)
