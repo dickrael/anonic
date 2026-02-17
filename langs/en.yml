@@ -193,6 +193,7 @@ revoke_success: |
   <emoji id="5210726994353863536">👤</emoji> New nickname: <b>{nickname}</b>
 
   <i><emoji id="5472146462362048818">💡</emoji> Share your new link — the old one no longer works.</i>
+help_button: "Open Help"
 help_message: |
   <emoji id="5202126386768140453">👋</emoji> <b>Incognitus — Help</b>
 

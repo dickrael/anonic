@@ -28,7 +28,7 @@ def register_help_handlers(app: Client) -> None:
 
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(
-                text="📖 Open Help",
+                text="📖 " + await gstr("help_button", message),
                 web_app=WebAppInfo(url=help_url),
             )]
         ])
