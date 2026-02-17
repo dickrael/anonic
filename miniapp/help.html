@@ -400,10 +400,40 @@
     .sticky-btn:active { transform: scale(0.97); }
     .sticky-btn svg { width: 18px; height: 18px; }
 
-    /* ===== i18n FOUC prevention ===== */
-    body.i18n-loading [data-i18n] {
-      visibility: hidden;
+    /* ===== Bootstrap: hide page until ready ===== */
+    body.i18n-loading [data-i18n] { visibility: hidden; }
+    body.app-loading #page { display: none; }
+    body.app-loading .sticky-bottom { display: none; }
+
+    /* ===== Skeleton ===== */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
     }
+    .skeleton-block {
+      background: linear-gradient(90deg, var(--bg-card) 25%, rgba(255,255,255,0.08) 50%, var(--bg-card) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: var(--r-lg);
+    }
+    .theme-light .skeleton-block {
+      background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
+      background-size: 200% 100%;
+    }
+    #help-skeleton {
+      max-width: 480px;
+      margin: 0 auto;
+      padding: var(--sp-16) var(--sp-20) 100px;
+    }
+    .sk-header { width: 140px; height: 24px; margin: var(--sp-32) auto var(--sp-8); border-radius: 8px; }
+    .sk-sub { width: 200px; height: 14px; margin: 0 auto var(--sp-24); border-radius: 6px; }
+    .sk-cta { height: 160px; margin-bottom: var(--sp-24); }
+    .sk-label { width: 100px; height: 12px; margin-bottom: var(--sp-8); border-radius: 6px; }
+    .sk-group { height: 180px; margin-bottom: var(--sp-16); }
+    .sk-group-sm { height: 120px; margin-bottom: var(--sp-16); }
+
+    /* Pause .anim-in until app is ready */
+    body.app-loading .anim-in { animation-play-state: paused; }
 
     /* ===== RTL ===== */
     [dir="rtl"] .step-row { direction: rtl; }
@@ -412,7 +442,20 @@
     [dir="rtl"] .privacy-banner { direction: rtl; }
   </style>
 </head>
-<body class="i18n-loading">
+<body class="i18n-loading app-loading">
+  <!-- Skeleton shown while bootstrapping -->
+  <div id="help-skeleton">
+    <div class="skeleton-block sk-header"></div>
+    <div class="skeleton-block sk-sub"></div>
+    <div class="skeleton-block sk-cta"></div>
+    <div class="skeleton-block sk-label"></div>
+    <div class="skeleton-block sk-group"></div>
+    <div class="skeleton-block sk-label"></div>
+    <div class="skeleton-block sk-group"></div>
+    <div class="skeleton-block sk-label"></div>
+    <div class="skeleton-block sk-group-sm"></div>
+  </div>
+
   <div class="page" id="page">
 
     <!-- Header -->
@@ -525,7 +568,7 @@
     var t = i18n.t;
     var tg = window.Telegram && window.Telegram.WebApp;
 
-    // Load translations, apply static [data-i18n], then build dynamic content
+    // Bootstrap: load translations, build all content, then reveal in one frame
     i18n.detect().then(function() {
 
     // ===== SVG icon templates =====
@@ -677,6 +720,12 @@
       tg.BackButton.show();
       tg.BackButton.onClick(function() { tg.close(); });
     }
+
+    // ===== Reveal page in one frame =====
+    requestAnimationFrame(function() {
+      document.getElementById("help-skeleton").style.display = "none";
+      document.body.classList.remove("app-loading");
+    });
 
     }); // end i18n.detect().then()
   })();

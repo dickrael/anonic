@@ -534,6 +534,10 @@
     .empty-title { font-size: var(--fs-title3); font-weight: 700; margin-bottom: var(--sp-8); }
     .empty-hint { font-size: var(--fs-subhead); color: var(--text-secondary); line-height: 1.45; }
 
+    /* Pause anim-in until dashboard is revealed */
+    #dashboard .anim-in { animation-play-state: paused; }
+    #dashboard.ready .anim-in { animation-play-state: running; }
+
     /* ===== RTL ===== */
     [dir="rtl"] .cell { direction: rtl; }
     [dir="rtl"] .cta-top { direction: rtl; }
@@ -806,6 +810,8 @@
 
         loadingEl.style.display = "none";
         dashboardEl.style.display = "block";
+        // Trigger anim-in animations fresh from this frame
+        requestAnimationFrame(function() { dashboardEl.classList.add("ready"); });
 
         // Profile header
         var nick = data.nickname || "?";

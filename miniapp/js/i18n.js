@@ -79,10 +79,14 @@ var i18n = (function () {
    */
   function detect() {
     var code = "en";
+    var hasStored = false;
     // Prefer stored bot language (set by dashboard via /lang)
-    try { var stored = localStorage.getItem("i18n_lang"); if (stored) code = stored; } catch(e) {}
-    // Fall back to Telegram UI language
-    if (code === "en") {
+    try {
+      var stored = localStorage.getItem("i18n_lang");
+      if (stored) { code = stored; hasStored = true; }
+    } catch(e) {}
+    // Fall back to Telegram UI language only if no stored preference
+    if (!hasStored) {
       var tg = window.Telegram && window.Telegram.WebApp;
       if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
         code = (tg.initDataUnsafe.user.language_code || "en").split("-")[0];
