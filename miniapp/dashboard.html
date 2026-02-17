@@ -675,8 +675,9 @@
     </button>
   </div>
 
-  <script src="js/telegram.js?v=16"></script>
-  <script src="js/api.js?v=16"></script>
+  <script src="js/telegram.js?v=17"></script>
+  <script src="js/api.js?v=17"></script>
+  <script src="js/i18n.js?v=17"></script>
   <script>
   (function() {
     "use strict";
@@ -740,76 +741,8 @@
       }, 500);
     }
 
-    // ---- i18n ----
-    var I18N = {
-      en: {
-        received: "Received", sent: "Sent", blocked: "Blocked", revokes: "Revokes",
-        stats_label: "Statistics", info_label: "Info",
-        member_since: "Member since", days_active: "Days active", your_link: "Your link",
-        copy: "Copy", copied: "Copied!", last_seen: "Last seen", level: "Level",
-        level_hint: "Send and receive messages to level up through 1000+ ranks!",
-        last_seen_hint: "Last active: {date}. Updates with every message you send or receive.",
-        avatar_hint: "Your avatar, frame, and colors are randomly chosen. Use /revoke to get a new look!",
-        just_now: "Just now", minutes_ago: "{n}m ago", hours_ago: "{n}h ago", days_ago: "{n}d ago",
-        share_story: "Share to Story",
-        open_in_tg: "Open in Telegram", open_in_tg_hint: "This page must be opened from the Telegram app."
-      },
-      ru: {
-        received: "Получено", sent: "Отправлено", blocked: "Заблокировано", revokes: "Сбросы",
-        stats_label: "Статистика", info_label: "Информация",
-        member_since: "Участник с", days_active: "Дней активности", your_link: "Ваша ссылка",
-        copy: "Копировать", copied: "Скопировано!", last_seen: "Был(а)", level: "Уровень",
-        level_hint: "Отправляйте и получайте сообщения, чтобы пройти 1000+ рангов!",
-        last_seen_hint: "Последняя активность: {date}. Обновляется с каждым сообщением.",
-        avatar_hint: "Аватар, рамка и цвета выбраны случайно. Используйте /revoke для нового образа!",
-        just_now: "Только что", minutes_ago: "{n} мин назад", hours_ago: "{n} ч назад", days_ago: "{n} дн назад",
-        share_story: "Поделиться в истории",
-        open_in_tg: "Откройте в Telegram", open_in_tg_hint: "Эту страницу нужно открыть из приложения Telegram."
-      },
-      fa: {
-        received: "دریافت‌شده", sent: "ارسال‌شده", blocked: "مسدودشده", revokes: "بازنشانی",
-        stats_label: "آمار", info_label: "اطلاعات",
-        member_since: "عضو از", days_active: "روز فعالیت", your_link: "لینک شما",
-        copy: "کپی", copied: "کپی شد!", last_seen: "آخرین بازدید", level: "سطح",
-        level_hint: "پیام بفرست و دریافت کن تا از ۱۰۰۰+ رتبه بالا بری!",
-        last_seen_hint: "آخرین فعالیت: {date}. با هر پیام به‌روز می‌شه.",
-        avatar_hint: "آواتار، قاب و رنگ‌ها تصادفی انتخاب شدن. با /revoke ظاهر جدید بگیر!",
-        just_now: "همین الان", minutes_ago: "{n} دقیقه پیش", hours_ago: "{n} ساعت پیش", days_ago: "{n} روز پیش",
-        share_story: "اشتراک در استوری",
-        open_in_tg: "در تلگرام باز کنید", open_in_tg_hint: "این صفحه باید از اپ تلگرام باز شود."
-      },
-      ar: {
-        received: "مستلمة", sent: "مرسلة", blocked: "محظورة", revokes: "إعادة تعيين",
-        stats_label: "الإحصائيات", info_label: "المعلومات",
-        member_since: "عضو منذ", days_active: "أيام النشاط", your_link: "رابطك",
-        copy: "نسخ", copied: "تم النسخ!", last_seen: "آخر ظهور", level: "المستوى",
-        level_hint: "أرسل واستلم رسائل لتترقى عبر ١٠٠٠+ رتبة!",
-        last_seen_hint: "آخر نشاط: {date}. يتحدث مع كل رسالة ترسلها أو تستلمها.",
-        avatar_hint: "الصورة والإطار والألوان مُختارة عشوائياً. استخدم /revoke للحصول على مظهر جديد!",
-        just_now: "الآن", minutes_ago: "منذ {n} دقيقة", hours_ago: "منذ {n} ساعة", days_ago: "منذ {n} يوم",
-        share_story: "مشاركة في القصة",
-        open_in_tg: "افتح في تيليجرام", open_in_tg_hint: "يجب فتح هذه الصفحة من تطبيق تيليجرام."
-      }
-    };
-
-    var currentLang = "en";
-
-    function t(key) {
-      var dict = I18N[currentLang] || I18N.en;
-      return dict[key] || (I18N.en[key] || key);
-    }
-
-    function applyTranslations() {
-      var els = document.querySelectorAll("[data-i18n]");
-      for (var i = 0; i < els.length; i++) {
-        var key = els[i].getAttribute("data-i18n");
-        els[i].textContent = t(key);
-      }
-      // RTL support for Arabic and Persian
-      if (currentLang === "ar" || currentLang === "fa") {
-        document.documentElement.setAttribute("dir", "rtl");
-      }
-    }
+    // Use global i18n module (js/i18n.js)
+    var t = i18n.t;
 
     function showDebug() {
       var d = document.getElementById("debug-info");
@@ -862,9 +795,12 @@
       var dashboardEl = document.getElementById("dashboard");
 
       fetchDashboard(initData).then(function(data) {
-        // Set language and apply translations
-        currentLang = data.lang || "en";
-        applyTranslations();
+        // Load language from API, apply [data-i18n] elements
+        return i18n.load(data.lang || "en").then(function() {
+          i18n.apply();
+          return data;
+        });
+      }).then(function(data) {
 
         loadingEl.style.display = "none";
         dashboardEl.style.display = "block";
@@ -1005,7 +941,7 @@
           var sinceHintText = "";
           try {
             var ld = new Date(data.last_activity);
-            var loc = currentLang === "fa" ? "fa-IR" : currentLang === "ar" ? "ar-SA" : currentLang === "ru" ? "ru-RU" : "en-US";
+            var loc = i18n.lang === "fa" ? "fa-IR" : i18n.lang === "ar" ? "ar-SA" : i18n.lang === "ru" ? "ru-RU" : "en-US";
             var fullDate = ld.toLocaleString(loc, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
             sinceHintText = t("last_seen_hint").replace("{date}", fullDate);
           } catch(e) {
@@ -1069,7 +1005,7 @@
         if (data.registered_at) {
           try {
             var rd = new Date(data.registered_at);
-            var locale = currentLang === "fa" ? "fa-IR" : currentLang === "ar" ? "ar-SA" : currentLang === "ru" ? "ru-RU" : "en-US";
+            var locale = i18n.lang === "fa" ? "fa-IR" : i18n.lang === "ar" ? "ar-SA" : i18n.lang === "ru" ? "ru-RU" : "en-US";
             var dateStr = rd.toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" });
             regDisplay = dateStr + " (" + relativeTime(data.registered_at) + ")";
           } catch(e) {}
