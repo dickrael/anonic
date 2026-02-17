@@ -10,7 +10,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css?v=16">
   <style>
+    /* ===== Reset ===== */
     *, *::before, *::after {
+      box-sizing: border-box;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       -webkit-user-select: none !important;
       -moz-user-select: none !important;
@@ -20,22 +22,87 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* ===== Gradient Background ===== */
+    /* ===== 8pt Spacing Tokens ===== */
+    :root {
+      --sp-2: 2px;
+      --sp-4: 4px;
+      --sp-8: 8px;
+      --sp-12: 12px;
+      --sp-16: 16px;
+      --sp-20: 20px;
+      --sp-24: 24px;
+      --sp-32: 32px;
+      --sp-40: 40px;
+      --sp-48: 48px;
+
+      /* Typography */
+      --fs-caption: 11px;
+      --fs-footnote: 12px;
+      --fs-subhead: 13px;
+      --fs-body: 15px;
+      --fs-title3: 17px;
+      --fs-title2: 20px;
+      --fs-title1: 24px;
+
+      /* Colors — dark */
+      --bg-primary: #0f0c29;
+      --bg-card: rgba(255,255,255,0.07);
+      --bg-card-hover: rgba(255,255,255,0.11);
+      --border-card: rgba(255,255,255,0.10);
+      --text-primary: #f0f0f5;
+      --text-secondary: rgba(255,255,255,0.50);
+      --text-tertiary: rgba(255,255,255,0.30);
+      --accent: #8b5cf6;
+      --accent-soft: rgba(139,92,246,0.15);
+      --accent-glow: rgba(139,92,246,0.30);
+      --success: #34d399;
+      --success-soft: rgba(52,211,153,0.12);
+      --separator: rgba(255,255,255,0.06);
+
+      /* Radius */
+      --r-sm: 10px;
+      --r-md: 14px;
+      --r-lg: 20px;
+      --r-full: 999px;
+    }
+
+    /* ===== Light theme ===== */
+    .theme-light {
+      --bg-primary: #f2f2f7;
+      --bg-card: rgba(255,255,255,0.72);
+      --bg-card-hover: rgba(255,255,255,0.90);
+      --border-card: rgba(0,0,0,0.04);
+      --text-primary: #1c1c1e;
+      --text-secondary: rgba(0,0,0,0.45);
+      --text-tertiary: rgba(0,0,0,0.22);
+      --accent: #7c3aed;
+      --accent-soft: rgba(124,58,237,0.10);
+      --accent-glow: rgba(124,58,237,0.18);
+      --success: #059669;
+      --success-soft: rgba(5,150,105,0.08);
+      --separator: rgba(0,0,0,0.06);
+    }
+
+    /* ===== Body ===== */
     body {
       background: linear-gradient(145deg, #0f0c29, #302b63, #24243e) !important;
       min-height: 100vh;
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
-    /* Light mode: soft pastel gradient */
     body.theme-light {
       background: linear-gradient(145deg, #e8eaf6, #f3e5f5, #e0f2f1) !important;
     }
 
     .dashboard {
-      padding-top: 8px;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: var(--sp-8) var(--sp-20) 100px;
       position: relative;
     }
 
-    /* Floating gradient blobs */
+    /* ===== Floating gradient blobs ===== */
     .bg-blob {
       position: fixed;
       border-radius: 50%;
@@ -54,44 +121,47 @@
       0% { transform: translate(0, 0) scale(1); }
       100% { transform: translate(15px, -20px) scale(1.1); }
     }
-    .bg-blob-3 {
-      animation-name: blobFloat3;
-    }
+    .bg-blob-3 { animation-name: blobFloat3; }
     @keyframes blobFloat3 {
       0% { transform: translate(-50%, -50%) scale(1); }
       100% { transform: translate(-40%, -55%) scale(1.15); }
     }
 
-    /* Dark gradient bg needs light text */
-    .dashboard { color: #f0f0f5; }
-    .dashboard .profile-nickname { color: #ffffff; }
-    .dashboard .profile-member-since { color: rgba(255,255,255,0.55); }
-    .dashboard .stat-value { color: #ffffff !important; }
-    .dashboard .stat-label { color: rgba(255,255,255,0.5); }
-    .dashboard .info-label { color: rgba(255,255,255,0.5); }
-    .dashboard .info-value { color: #f0f0f5; }
-
-    /* Light mode: use dark text */
-    body.theme-light .dashboard { color: #1a1a2e; }
-    body.theme-light .dashboard .profile-nickname { color: #1a1a2e; }
-    body.theme-light .dashboard .profile-member-since { color: rgba(0,0,0,0.45); }
-    body.theme-light .dashboard .stat-value { color: #1a1a2e !important; }
-    body.theme-light .dashboard .stat-label { color: rgba(0,0,0,0.45); }
-    body.theme-light .dashboard .info-label { color: rgba(0,0,0,0.45); }
-    body.theme-light .dashboard .info-value { color: #1a1a2e; }
+    /* ===== Animations ===== */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes popBounce {
+      0% { opacity: 0; transform: scale(0.5); }
+      70% { transform: scale(1.05); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes textReveal {
+      from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
+      to { opacity: 1; transform: translateY(0); filter: blur(0); }
+    }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .anim-in {
+      opacity: 0;
+      animation: fadeUp 0.4s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
 
     /* ===== Profile Header ===== */
     .profile-header {
       text-align: center;
-      margin-bottom: 28px;
+      margin-bottom: var(--sp-24);
       opacity: 0;
-      animation: fadeSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.05s forwards;
+      animation: fadeUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.05s forwards;
     }
     .avatar-frame-wrapper {
       position: relative;
       width: 130px;
       height: 130px;
-      margin: 0 auto 14px;
+      margin: 0 auto var(--sp-12);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -127,80 +197,31 @@
       z-index: 1;
     }
     .profile-nickname {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 2px;
+      font-size: var(--fs-title2);
+      font-weight: 800;
+      margin-bottom: var(--sp-2);
       opacity: 0;
       animation: textReveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.35s forwards;
     }
     .profile-level {
-      font-size: 14px;
+      font-size: var(--fs-subhead);
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.75);
-      margin-top: 4px;
-      margin-bottom: 6px;
+      color: var(--text-secondary);
+      margin-top: var(--sp-4);
+      margin-bottom: var(--sp-4);
       opacity: 0;
       animation: textReveal 0.55s cubic-bezier(0.4, 0, 0.2, 1) 0.4s forwards;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
     .profile-level:active { opacity: 0.7; }
-    body.theme-light .profile-level { color: rgba(0, 0, 0, 0.5); }
-
-    /* ===== Hint overlay (root-level popover) ===== */
-    .hint-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9000;
-      background: rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      opacity: 0;
-      transition: opacity 0.15s ease;
-      pointer-events: none;
-    }
-    body.theme-light .hint-overlay {
-      background: rgba(255, 255, 255, 0.35);
-    }
-    .hint-overlay.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .hint-bubble {
-      position: fixed;
-      z-index: 9001;
-      background: #1e1e2e;
-      color: #f0f0f5;
-      font-size: 13px;
-      font-weight: 500;
-      padding: 12px 18px;
-      border-radius: 14px;
-      max-width: 260px;
-      text-align: center;
-      line-height: 1.5;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
-      opacity: 0;
-      transform: scale(0.92);
-      transition: opacity 0.12s ease, transform 0.12s ease;
-      pointer-events: none;
-    }
-    body.theme-light .hint-bubble {
-      background: #ffffff;
-      color: #1a1a2e;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    }
-    .hint-bubble.visible {
-      opacity: 1;
-      transform: scale(1);
-      pointer-events: auto;
-    }
 
     .level-progress-wrapper {
       width: 120px;
       height: 4px;
       background: rgba(255, 255, 255, 0.12);
       border-radius: 2px;
-      margin: 0 auto 8px;
+      margin: 0 auto var(--sp-8);
       overflow: hidden;
       opacity: 0;
       animation: textReveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.45s forwards;
@@ -209,7 +230,7 @@
     .level-progress-bar {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, var(--tg-theme-button-color, #8b5cf6), var(--tg-theme-link-color, #6d28d9));
+      background: linear-gradient(90deg, var(--accent), #6d28d9);
       border-radius: 2px;
       transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
@@ -238,193 +259,284 @@
       50% { background-position: 100% 50%; }
     }
     .profile-member-since {
-      font-size: 13px;
-      color: var(--tg-theme-hint-color);
+      font-size: var(--fs-subhead);
+      color: var(--text-secondary);
       opacity: 0;
       animation: textReveal 0.5s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
     .profile-member-since:active { opacity: 0.7; }
-    @keyframes textReveal {
-      from { opacity: 0; transform: translateY(8px); filter: blur(4px); }
-      to { opacity: 1; transform: translateY(0); filter: blur(0); }
-    }
 
-    /* ===== Stats Grid ===== */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .stat-card {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 16px;
-      padding: 18px 14px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
+    /* ===== Hint overlay (root-level popover) ===== */
+    .hint-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       opacity: 0;
-      transform: scale(0.85) translateY(16px);
-      animation: statPopIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      transition: opacity 0.15s ease;
+      pointer-events: none;
     }
-    body.theme-light .stat-card {
-      background: rgba(255, 255, 255, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    body.theme-light .hint-overlay {
+      background: rgba(255, 255, 255, 0.35);
     }
-    .stat-card::after {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%;
-      width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
-      animation: cardShine 2s ease-in-out 1s forwards;
+    .hint-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
     }
-    @keyframes cardShine {
-      to { left: 100%; }
+    .hint-bubble {
+      position: fixed;
+      z-index: 9001;
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border-card);
+      color: var(--text-primary);
+      font-size: var(--fs-subhead);
+      font-weight: 500;
+      padding: var(--sp-12) var(--sp-16);
+      border-radius: var(--r-md);
+      max-width: 260px;
+      text-align: center;
+      line-height: 1.5;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 0.12s ease, transform 0.12s ease;
+      pointer-events: none;
     }
-    .stat-card:nth-child(1) { animation-delay: 0.2s; }
-    .stat-card:nth-child(2) { animation-delay: 0.3s; }
-    .stat-card:nth-child(3) { animation-delay: 0.4s; }
-    .stat-card:nth-child(4) { animation-delay: 0.5s; }
+    body.theme-light .hint-bubble {
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+    .hint-bubble.visible {
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: auto;
+    }
 
-    @keyframes statPopIn {
-      to { opacity: 1; transform: scale(1) translateY(0); }
+    /* ===== Section Label ===== */
+    .section-label {
+      font-size: var(--fs-caption);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-secondary);
+      padding: var(--sp-24) var(--sp-4) var(--sp-8);
     }
 
-    .stat-icon { font-size: 26px; margin-bottom: 8px; display: block; }
-    .stat-value {
-      font-size: 32px;
-      font-weight: 800;
-      color: var(--tg-theme-text-color);
-      line-height: 1;
+    /* ===== Card Group ===== */
+    .card-group {
+      background: var(--bg-card);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid var(--border-card);
+      border-radius: var(--r-lg);
+      overflow: hidden;
+    }
+
+    /* ===== Cell Row ===== */
+    .cell {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-12);
+      padding: var(--sp-12) var(--sp-16);
+    }
+    .cell + .cell { border-top: 1px solid var(--separator); }
+    .cell-icon {
+      width: 32px; height: 32px;
+      border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .cell-icon svg { width: 18px; height: 18px; }
+    .cell-icon.purple { background: var(--accent-soft); color: var(--accent); }
+    .cell-icon.blue { background: rgba(59,130,246,0.12); color: #3b82f6; }
+    .cell-icon.green { background: var(--success-soft); color: var(--success); }
+    .cell-icon.orange { background: rgba(249,115,22,0.12); color: #f97316; }
+    .cell-icon.red { background: rgba(239,68,68,0.10); color: #ef4444; }
+    .cell-icon.pink { background: rgba(236,72,153,0.10); color: #ec4899; }
+    .cell-icon.teal { background: rgba(20,184,166,0.10); color: #14b8a6; }
+    .cell-icon.gray { background: rgba(107,114,128,0.10); color: #6b7280; }
+    .theme-light .cell-icon.blue { background: rgba(59,130,246,0.08); }
+    .theme-light .cell-icon.green { background: rgba(5,150,105,0.08); }
+    .theme-light .cell-icon.orange { background: rgba(249,115,22,0.08); }
+    .theme-light .cell-icon.red { background: rgba(239,68,68,0.06); }
+    .theme-light .cell-icon.pink { background: rgba(236,72,153,0.06); }
+    .theme-light .cell-icon.teal { background: rgba(20,184,166,0.06); }
+    .theme-light .cell-icon.gray { background: rgba(107,114,128,0.06); }
+    .cell-body { flex: 1; min-width: 0; }
+    .cell-label {
+      font-size: var(--fs-body);
+      font-weight: 500;
+    }
+    .cell-value {
+      font-size: var(--fs-body);
+      font-weight: 700;
       font-variant-numeric: tabular-nums;
       opacity: 0;
       filter: blur(6px);
       transition: opacity 0.4s ease, filter 0.4s ease;
+      flex-shrink: 0;
     }
-    .stat-value.revealed {
+    .cell-value.revealed {
       opacity: 1;
       filter: blur(0);
     }
-    .stat-label {
-      font-size: 11px;
-      color: var(--tg-theme-hint-color);
-      font-weight: 600;
-      margin-top: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-    }
-
-    /* ===== Info Cards ===== */
-    .info-section {
-      margin-top: 8px;
-      opacity: 0;
-      animation: fadeSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.65s forwards;
-    }
-    .info-card {
-      background: rgba(255, 255, 255, 0.08);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 14px;
-      padding: 14px 16px;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    body.theme-light .info-card {
-      background: rgba(255, 255, 255, 0.5);
-      border: 1px solid rgba(255, 255, 255, 0.7);
-      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
-    }
-    .info-icon { font-size: 22px; flex-shrink: 0; }
-    .info-content { flex: 1; min-width: 0; }
-    .info-label {
-      font-size: 12px;
-      color: var(--tg-theme-hint-color);
-      font-weight: 500;
-    }
-    .info-value {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--tg-theme-text-color);
+    .cell-detail {
+      font-size: var(--fs-subhead);
+      color: var(--text-secondary);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .info-action { flex-shrink: 0; }
-    .copy-btn {
-      background: var(--tg-theme-button-color);
-      color: var(--tg-theme-button-text-color);
+    .cell-action { flex-shrink: 0; }
+
+    /* ===== CTA Card ===== */
+    .cta-card {
+      background: linear-gradient(135deg, var(--accent), #6d28d9);
+      border-radius: var(--r-lg);
+      padding: var(--sp-20) var(--sp-16);
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.15), transparent 60%);
+      pointer-events: none;
+    }
+    .cta-top {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-12);
+      margin-bottom: var(--sp-12);
+    }
+    .cta-icon {
+      width: 36px; height: 36px;
+      border-radius: var(--r-sm);
+      background: rgba(255,255,255,0.18);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .cta-icon svg { width: 18px; height: 18px; color: #fff; }
+    .cta-label {
+      font-size: var(--fs-footnote);
+      font-weight: 600;
+      color: rgba(255,255,255,0.70);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cta-link-text {
+      font-size: var(--fs-subhead);
+      font-weight: 600;
+      color: rgba(255,255,255,0.90);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: var(--sp-12);
+      position: relative;
+      z-index: 1;
+    }
+    .cta-copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--sp-4);
+      background: rgba(255,255,255,0.20);
       border: none;
-      border-radius: 8px;
-      padding: 6px 12px;
-      font-size: 12px;
+      border-radius: var(--r-full);
+      padding: var(--sp-8) var(--sp-16);
+      font-size: var(--fs-subhead);
       font-weight: 600;
       font-family: inherit;
+      color: #fff;
       cursor: pointer;
-      transition: opacity 0.2s, transform 0.15s;
+      transition: transform 0.12s, background 0.15s;
+      position: relative;
+      z-index: 1;
     }
-    .copy-btn:active { transform: scale(0.92); }
-    .copy-btn.copied {
-      background: #34c759;
-      animation: popBounce 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    .cta-copy-btn:active { transform: scale(0.94); }
+    .cta-copy-btn svg { width: 14px; height: 14px; }
+    .cta-copy-btn.copied {
+      background: rgba(52,211,153,0.5);
     }
 
-    /* ===== Share Story Button ===== */
-    .story-btn-wrapper {
-      margin-top: 18px;
-      opacity: 0;
-      animation: fadeSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.8s forwards;
+    /* ===== Sticky bottom ===== */
+    .sticky-bottom {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: var(--sp-12) var(--sp-20);
+      padding-bottom: max(var(--sp-12), env(safe-area-inset-bottom));
+      background: linear-gradient(to top, rgba(15,12,41,0.95) 60%, transparent);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      z-index: 100;
+      display: none;
     }
-    .story-btn {
-      width: 100%;
-      padding: 15px 20px;
-      border: none;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-      color: #fff;
-      font-size: 15px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
+    .theme-light .sticky-bottom {
+      background: linear-gradient(to top, rgba(242,242,247,0.95) 60%, transparent);
+    }
+    .sticky-btn {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 10px;
-      transition: transform 0.15s, opacity 0.2s;
-      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
+      gap: var(--sp-8);
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: var(--sp-16);
+      border: none;
+      border-radius: var(--r-md);
+      background: linear-gradient(135deg, var(--accent), #6d28d9);
+      color: #fff;
+      font-size: var(--fs-body);
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.12s, opacity 0.12s;
+      box-shadow: 0 4px 20px var(--accent-glow);
     }
-    .story-btn:active { transform: scale(0.96); }
-    body.theme-light .story-btn {
-      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);
-    }
+    .sticky-btn:active { transform: scale(0.97); }
+    .sticky-btn svg { width: 18px; height: 18px; }
 
     /* ===== Skeleton ===== */
-    .skeleton-stats {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .skeleton-stat { height: 100px; border-radius: 16px; }
     .skeleton-profile {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-bottom: 28px;
+      margin-bottom: var(--sp-24);
     }
-    .skeleton-avatar-sm { width: 130px; height: 130px; border-radius: 50%; margin-bottom: 14px; }
-    .skeleton-name { width: 120px; height: 22px; margin-bottom: 6px; }
+    .skeleton-avatar-sm { width: 130px; height: 130px; border-radius: 50%; margin-bottom: var(--sp-12); }
+    .skeleton-name { width: 120px; height: 22px; margin-bottom: var(--sp-4); }
     .skeleton-sub { width: 160px; height: 14px; }
-    .skeleton-info { height: 52px; border-radius: 14px; margin-bottom: 8px; }
+    .skeleton-card-group {
+      height: 200px;
+      border-radius: var(--r-lg);
+      margin-bottom: var(--sp-16);
+    }
+    .skeleton-cta {
+      height: 100px;
+      border-radius: var(--r-lg);
+      margin-bottom: var(--sp-16);
+    }
+    .skeleton-info-group {
+      height: 100px;
+      border-radius: var(--r-lg);
+    }
+
+    /* ===== Auth error ===== */
+    .empty-state { text-align: center; padding: var(--sp-48) var(--sp-20); }
+    .empty-icon { margin-bottom: var(--sp-16); }
+    .empty-icon svg { width: 48px; height: 48px; color: var(--text-secondary); }
+    .empty-title { font-size: var(--fs-title3); font-weight: 700; margin-bottom: var(--sp-8); }
+    .empty-hint { font-size: var(--fs-subhead); color: var(--text-secondary); line-height: 1.45; }
+
+    /* ===== RTL ===== */
+    [dir="rtl"] .cell { direction: rtl; }
+    [dir="rtl"] .cta-top { direction: rtl; }
   </style>
 </head>
 <body>
@@ -436,14 +548,9 @@
         <div class="skeleton skeleton-name"></div>
         <div class="skeleton skeleton-sub"></div>
       </div>
-      <div class="skeleton-stats">
-        <div class="skeleton skeleton-stat"></div>
-        <div class="skeleton skeleton-stat"></div>
-        <div class="skeleton skeleton-stat"></div>
-        <div class="skeleton skeleton-stat"></div>
-      </div>
-      <div class="skeleton skeleton-info"></div>
-      <div class="skeleton skeleton-info"></div>
+      <div class="skeleton skeleton-card-group"></div>
+      <div class="skeleton skeleton-cta"></div>
+      <div class="skeleton skeleton-info-group"></div>
     </div>
 
     <!-- Background blobs (colored dynamically by JS) -->
@@ -469,77 +576,103 @@
         <div class="profile-member-since" id="profile-since"></div>
       </div>
 
-      <div class="stats-grid">
-        <div class="stat-card">
-          <span class="stat-icon">📨</span>
-          <div class="stat-value" id="stat-received">0</div>
-          <div class="stat-label" data-i18n="received">Received</div>
+      <!-- Stats grouped cell list -->
+      <div class="section-label anim-in" style="animation-delay:0.2s" data-i18n="stats_label">Statistics</div>
+      <div class="card-group anim-in" style="animation-delay:0.25s" id="stats-group">
+        <div class="cell">
+          <div class="cell-icon blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="8 12 12 16 16 12"/><line x1="12" y1="8" x2="12" y2="16"/></svg>
+          </div>
+          <div class="cell-body"><span class="cell-label" data-i18n="received">Received</span></div>
+          <div class="cell-value" id="stat-received">0</div>
         </div>
-        <div class="stat-card">
-          <span class="stat-icon">📤</span>
-          <div class="stat-value" id="stat-sent">0</div>
-          <div class="stat-label" data-i18n="sent">Sent</div>
+        <div class="cell">
+          <div class="cell-icon purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>
+          </div>
+          <div class="cell-body"><span class="cell-label" data-i18n="sent">Sent</span></div>
+          <div class="cell-value" id="stat-sent">0</div>
         </div>
-        <div class="stat-card">
-          <span class="stat-icon">🚫</span>
-          <div class="stat-value" id="stat-blocked">0</div>
-          <div class="stat-label" data-i18n="blocked">Blocked</div>
+        <div class="cell">
+          <div class="cell-icon red">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          </div>
+          <div class="cell-body"><span class="cell-label" data-i18n="blocked">Blocked</span></div>
+          <div class="cell-value" id="stat-blocked">0</div>
         </div>
-        <div class="stat-card">
-          <span class="stat-icon">🔄</span>
-          <div class="stat-value" id="stat-revokes">0</div>
-          <div class="stat-label" data-i18n="revokes">Revokes</div>
+        <div class="cell">
+          <div class="cell-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </div>
+          <div class="cell-body"><span class="cell-label" data-i18n="revokes">Revokes</span></div>
+          <div class="cell-value" id="stat-revokes">0</div>
         </div>
       </div>
 
-      <div class="info-section">
-        <div class="info-card">
-          <span class="info-icon">📅</span>
-          <div class="info-content">
-            <div class="info-label" data-i18n="member_since">Member since</div>
-            <div class="info-value" id="info-registered"></div>
+      <!-- Link CTA card -->
+      <div class="anim-in" style="animation-delay:0.35s;padding-top:var(--sp-16)">
+        <div class="cta-card" id="cta-card">
+          <div class="cta-top">
+            <div class="cta-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+            </div>
+            <div class="cta-label" data-i18n="your_link">Your link</div>
           </div>
-        </div>
-        <div class="info-card">
-          <span class="info-icon">⏳</span>
-          <div class="info-content">
-            <div class="info-label" data-i18n="days_active">Days active</div>
-            <div class="info-value" id="info-days"></div>
-          </div>
-        </div>
-        <div class="info-card">
-          <span class="info-icon">🔗</span>
-          <div class="info-content">
-            <div class="info-label" data-i18n="your_link">Your link</div>
-            <div class="info-value" id="info-link"></div>
-          </div>
-          <div class="info-action">
-            <button class="copy-btn" id="copy-link-btn" data-i18n="copy">Copy</button>
-          </div>
+          <div class="cta-link-text" id="cta-link-text"></div>
+          <button class="cta-copy-btn" id="copy-link-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span data-i18n="copy">Copy</span>
+          </button>
         </div>
       </div>
 
-      <div class="story-btn-wrapper">
-        <button class="story-btn" id="share-story-btn">
-          <span>📖</span>
-          <span data-i18n="share_story">Share to Story</span>
-        </button>
+      <!-- Info grouped cell list -->
+      <div class="section-label anim-in" style="animation-delay:0.42s" data-i18n="info_label">Info</div>
+      <div class="card-group anim-in" style="animation-delay:0.45s" id="info-group">
+        <div class="cell">
+          <div class="cell-icon teal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="cell-body">
+            <div class="cell-label" data-i18n="member_since">Member since</div>
+            <div class="cell-detail" id="info-registered"></div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="cell-icon orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="cell-body">
+            <div class="cell-label" data-i18n="days_active">Days active</div>
+            <div class="cell-detail" id="info-days"></div>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Auth error -->
     <div id="auth-error" style="display:none">
       <div class="empty-state">
-        <div class="empty-icon">🔒</div>
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
         <div class="empty-title" data-i18n="open_in_tg">Open in Telegram</div>
         <div class="empty-hint" id="auth-error-hint" data-i18n="open_in_tg_hint">This page must be opened from the Telegram app.</div>
-        <pre id="debug-info" style="font-size:11px;color:var(--tg-theme-hint-color);margin-top:16px;text-align:left;word-break:break-all;white-space:pre-wrap"></pre>
+        <pre id="debug-info" style="font-size:11px;color:var(--text-secondary);margin-top:16px;text-align:left;word-break:break-all;white-space:pre-wrap"></pre>
       </div>
     </div>
 
     <!-- Root-level hint overlay -->
     <div class="hint-overlay" id="hint-overlay"></div>
     <div class="hint-bubble" id="hint-bubble"></div>
+  </div>
+
+  <!-- Sticky share story button -->
+  <div class="sticky-bottom" id="sticky-story">
+    <button class="sticky-btn" id="share-story-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      <span data-i18n="share_story">Share to Story</span>
+    </button>
   </div>
 
   <script src="js/telegram.js?v=16"></script>
@@ -573,7 +706,6 @@
     (function detectTheme() {
       var tg = window.Telegram && window.Telegram.WebApp;
       var bg = (tg && tg.themeParams && tg.themeParams.bg_color) || "";
-      // Parse hex color brightness
       if (bg) {
         var hex = bg.replace("#", "");
         var r = parseInt(hex.substring(0, 2), 16) || 0;
@@ -612,6 +744,7 @@
     var I18N = {
       en: {
         received: "Received", sent: "Sent", blocked: "Blocked", revokes: "Revokes",
+        stats_label: "Statistics", info_label: "Info",
         member_since: "Member since", days_active: "Days active", your_link: "Your link",
         copy: "Copy", copied: "Copied!", last_seen: "Last seen", level: "Level",
         level_hint: "Send and receive messages to level up through 1000+ ranks!",
@@ -623,6 +756,7 @@
       },
       ru: {
         received: "Получено", sent: "Отправлено", blocked: "Заблокировано", revokes: "Сбросы",
+        stats_label: "Статистика", info_label: "Информация",
         member_since: "Участник с", days_active: "Дней активности", your_link: "Ваша ссылка",
         copy: "Копировать", copied: "Скопировано!", last_seen: "Был(а)", level: "Уровень",
         level_hint: "Отправляйте и получайте сообщения, чтобы пройти 1000+ рангов!",
@@ -634,6 +768,7 @@
       },
       fa: {
         received: "دریافت‌شده", sent: "ارسال‌شده", blocked: "مسدودشده", revokes: "بازنشانی",
+        stats_label: "آمار", info_label: "اطلاعات",
         member_since: "عضو از", days_active: "روز فعالیت", your_link: "لینک شما",
         copy: "کپی", copied: "کپی شد!", last_seen: "آخرین بازدید", level: "سطح",
         level_hint: "پیام بفرست و دریافت کن تا از ۱۰۰۰+ رتبه بالا بری!",
@@ -645,6 +780,7 @@
       },
       ar: {
         received: "مستلمة", sent: "مرسلة", blocked: "محظورة", revokes: "إعادة تعيين",
+        stats_label: "الإحصائيات", info_label: "المعلومات",
         member_since: "عضو منذ", days_active: "أيام النشاط", your_link: "رابطك",
         copy: "نسخ", copied: "تم النسخ!", last_seen: "آخر ظهور", level: "المستوى",
         level_hint: "أرسل واستلم رسائل لتترقى عبر ١٠٠٠+ رتبة!",
@@ -887,28 +1023,10 @@
         animateValue(document.getElementById("stat-blocked"), data.blocked_count || 0, 800, 600);
         animateValue(document.getElementById("stat-revokes"), data.revoke_count || 0, 700, 750);
 
-        // Info cards — member since with date + relative time in parens
-        var regDisplay = "—";
-        if (data.registered_at) {
-          try {
-            var rd = new Date(data.registered_at);
-            var locale = currentLang === "fa" ? "fa-IR" : currentLang === "ar" ? "ar-SA" : currentLang === "ru" ? "ru-RU" : "en-US";
-            var dateStr = rd.toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" });
-            regDisplay = dateStr + " (" + relativeTime(data.registered_at) + ")";
-          } catch(e) {}
-        }
-        document.getElementById("info-registered").textContent = regDisplay;
-
-        // Days active — computed from registration
-        var daysActive = 0;
-        if (data.registered_at) {
-          try { daysActive = Math.floor((Date.now() - new Date(data.registered_at).getTime()) / 86400000); } catch(e) {}
-        }
-        document.getElementById("info-days").textContent = daysActive;
-
+        // Link CTA card
         var botUser = data.bot_username || "ClearSayBot";
         var fullLink = "https://t.me/" + botUser + "?start=" + (data.link_token || "");
-        document.getElementById("info-link").textContent = fullLink;
+        document.getElementById("cta-link-text").textContent = fullLink;
 
         // Copy button
         var copyBtn = document.getElementById("copy-link-btn");
@@ -937,18 +1055,40 @@
 
         function onCopied() {
           hapticFeedback("success");
-          copyBtn.textContent = t("copied");
+          var spans = copyBtn.querySelectorAll("span");
+          if (spans.length) spans[0].textContent = t("copied");
           copyBtn.classList.add("copied");
           setTimeout(function() {
-            copyBtn.textContent = t("copy");
+            if (spans.length) spans[0].textContent = t("copy");
             copyBtn.classList.remove("copied");
           }, 2000);
         }
 
+        // Info cards — member since with date + relative time in parens
+        var regDisplay = "—";
+        if (data.registered_at) {
+          try {
+            var rd = new Date(data.registered_at);
+            var locale = currentLang === "fa" ? "fa-IR" : currentLang === "ar" ? "ar-SA" : currentLang === "ru" ? "ru-RU" : "en-US";
+            var dateStr = rd.toLocaleDateString(locale, { year: "numeric", month: "short", day: "numeric" });
+            regDisplay = dateStr + " (" + relativeTime(data.registered_at) + ")";
+          } catch(e) {}
+        }
+        document.getElementById("info-registered").textContent = regDisplay;
+
+        // Days active — computed from registration
+        var daysActive = 0;
+        if (data.registered_at) {
+          try { daysActive = Math.floor((Date.now() - new Date(data.registered_at).getTime()) / 86400000); } catch(e) {}
+        }
+        document.getElementById("info-days").textContent = daysActive;
+
         // ---- Share to Story ----
         var storyBtn = document.getElementById("share-story-btn");
+        var stickyStory = document.getElementById("sticky-story");
         var tg = window.Telegram && window.Telegram.WebApp;
         if (tg && typeof tg.shareToStory === "function") {
+          stickyStory.style.display = "block";
           storyBtn.addEventListener("click", function() {
             hapticFeedback("impact");
             var cardUrl = API_BASE + "/api/story-card/" + encodeURIComponent(data.link_token);
@@ -956,8 +1096,6 @@
               text: "Send me an anonymous message! \u2709\uFE0F\n" + fullLink
             });
           });
-        } else {
-          storyBtn.style.display = "none";
         }
 
       }).catch(function(err) {
