@@ -6,7 +6,7 @@ from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from pyrogram.enums import ParseMode
 
-from ..config import get_config
+from ..config import config
 from ..store import get_store
 from ..strings import gstr
 
@@ -24,8 +24,7 @@ def register_help_handlers(app: Client) -> None:
         if store.is_banned(uid):
             return
 
-        cfg = get_config()
-        help_url = f"{cfg.webapp_url}/help.html"
+        help_url = f"{config.webapp_url}/help.html"
 
         keyboard = InlineKeyboardMarkup([
             [InlineKeyboardButton(
