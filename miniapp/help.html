@@ -400,6 +400,11 @@
     .sticky-btn:active { transform: scale(0.97); }
     .sticky-btn svg { width: 18px; height: 18px; }
 
+    /* ===== i18n FOUC prevention ===== */
+    body.i18n-loading [data-i18n] {
+      visibility: hidden;
+    }
+
     /* ===== RTL ===== */
     [dir="rtl"] .step-row { direction: rtl; }
     [dir="rtl"] .cell { direction: rtl; }
@@ -407,7 +412,7 @@
     [dir="rtl"] .privacy-banner { direction: rtl; }
   </style>
 </head>
-<body>
+<body class="i18n-loading">
   <div class="page" id="page">
 
     <!-- Header -->
@@ -415,55 +420,55 @@
       <div class="page-header-icon">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       </div>
-      <h1 id="h-title" data-i18n="h_title">Help</h1>
-      <p id="h-subtitle" data-i18n="h_subtitle">Everything about Incognitus</p>
+      <h1 id="h-title" data-i18n="h_title"></h1>
+      <p id="h-subtitle" data-i18n="h_subtitle"></p>
     </div>
 
     <!-- CTA: How it works -->
     <div class="anim-in" style="animation-delay:0.12s">
       <div class="cta-card">
-        <div class="cta-label" id="cta-label" data-i18n="cta_label">How it works</div>
-        <div class="cta-title" id="cta-title" data-i18n="cta_title">Anonymous messages</div>
-        <div class="cta-desc" id="cta-desc" data-i18n="cta_desc">Share your link, receive anonymous messages, and reply without revealing identity.</div>
+        <div class="cta-label" id="cta-label" data-i18n="cta_label"></div>
+        <div class="cta-title" id="cta-title" data-i18n="cta_title"></div>
+        <div class="cta-desc" id="cta-desc" data-i18n="cta_desc"></div>
         <div class="cta-steps">
           <div class="cta-step">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            <span id="cta-s1" data-i18n="cta_s1">Share</span>
+            <span id="cta-s1" data-i18n="cta_s1"></span>
           </div>
           <div class="cta-dot"></div>
           <div class="cta-step">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <span id="cta-s2" data-i18n="cta_s2">Receive</span>
+            <span id="cta-s2" data-i18n="cta_s2"></span>
           </div>
           <div class="cta-dot"></div>
           <div class="cta-step">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>
-            <span id="cta-s3" data-i18n="cta_s3">Reply</span>
+            <span id="cta-s3" data-i18n="cta_s3"></span>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Getting Started stepper -->
-    <div class="section-label anim-in" style="animation-delay:0.18s" id="sec-start" data-i18n="sec_start">Getting Started</div>
+    <div class="section-label anim-in" style="animation-delay:0.18s" id="sec-start" data-i18n="sec_start"></div>
     <div class="card-group anim-in" style="animation-delay:0.20s">
       <div class="stepper" id="stepper"></div>
     </div>
 
     <!-- Commands: Essential -->
-    <div class="section-label anim-in" style="animation-delay:0.26s" id="sec-cmds" data-i18n="sec_cmds">Commands</div>
+    <div class="section-label anim-in" style="animation-delay:0.26s" id="sec-cmds" data-i18n="sec_cmds"></div>
     <div class="card-group anim-in" style="animation-delay:0.28s" id="cmd-group"></div>
 
     <!-- Commands: Privacy & Safety -->
-    <div class="section-label anim-in" style="animation-delay:0.34s" id="sec-privacy" data-i18n="sec_privacy">Privacy & Safety</div>
+    <div class="section-label anim-in" style="animation-delay:0.34s" id="sec-privacy" data-i18n="sec_privacy"></div>
     <div class="card-group anim-in" style="animation-delay:0.36s" id="privacy-group"></div>
 
     <!-- Commands: Advanced -->
-    <div class="section-label anim-in" style="animation-delay:0.40s" id="sec-advanced" data-i18n="sec_advanced">Advanced</div>
+    <div class="section-label anim-in" style="animation-delay:0.40s" id="sec-advanced" data-i18n="sec_advanced"></div>
     <div class="card-group anim-in" style="animation-delay:0.42s" id="advanced-group"></div>
 
     <!-- FAQ -->
-    <div class="section-label anim-in" style="animation-delay:0.46s" id="sec-faq" data-i18n="sec_faq">FAQ</div>
+    <div class="section-label anim-in" style="animation-delay:0.46s" id="sec-faq" data-i18n="sec_faq"></div>
     <div class="card-group anim-in" style="animation-delay:0.48s" id="faq-group"></div>
 
     <!-- Privacy Banner -->
@@ -473,14 +478,14 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
         <div>
-          <div class="privacy-banner-title" id="banner-title" data-i18n="banner_title">Messages are never stored</div>
-          <div class="privacy-banner-desc" id="banner-desc" data-i18n="banner_desc">Content is relayed in real-time and never saved. After delivery, it exists only in your Telegram chat.</div>
+          <div class="privacy-banner-title" id="banner-title" data-i18n="banner_title"></div>
+          <div class="privacy-banner-desc" id="banner-desc" data-i18n="banner_desc"></div>
         </div>
       </div>
     </div>
 
     <!-- Data storage accordion -->
-    <div class="section-label anim-in" style="animation-delay:0.56s" id="sec-data" data-i18n="sec_data">What we store</div>
+    <div class="section-label anim-in" style="animation-delay:0.56s" id="sec-data" data-i18n="sec_data"></div>
     <div class="card-group anim-in" style="animation-delay:0.58s" id="data-group"></div>
 
     <div class="page-footer anim-in" style="animation-delay:0.62s">
@@ -492,7 +497,7 @@
   <div class="sticky-bottom">
     <button class="sticky-btn" id="sticky-btn">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-      <span id="sticky-text" data-i18n="sticky_text">Get your anonymous link</span>
+      <span id="sticky-text" data-i18n="sticky_text"></span>
     </button>
   </div>
 

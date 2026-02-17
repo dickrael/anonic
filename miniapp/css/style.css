@@ -15,6 +15,11 @@
   --tg-theme-destructive-text-color: #ff3b30;
 }
 
+/* ===== i18n FOUC prevention ===== */
+body.i18n-loading [data-i18n] {
+  visibility: hidden;
+}
+
 /* ===== Reset & Base ===== */
 *, *::before, *::after {
   box-sizing: border-box;

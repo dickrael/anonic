@@ -62,13 +62,14 @@ var i18n = (function () {
     return (current && current[key]) || (fallback && fallback[key]) || key;
   }
 
-  /** Apply translations to all [data-i18n] elements in the DOM. */
+  /** Apply translations to all [data-i18n] elements in the DOM, then reveal. */
   function apply() {
     var els = document.querySelectorAll("[data-i18n]");
     for (var i = 0; i < els.length; i++) {
       var key = els[i].getAttribute("data-i18n");
       els[i].textContent = t(key);
     }
+    document.body.classList.remove("i18n-loading");
   }
 
   /**
