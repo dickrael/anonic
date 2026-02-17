@@ -538,9 +538,15 @@
     #dashboard .anim-in { animation-play-state: paused; }
     #dashboard.ready .anim-in { animation-play-state: running; }
 
+    /* ===== About collapse ===== */
+    .cell-chevron { flex-shrink: 0; display: flex; align-items: center; }
+    [dir="rtl"] #about-chevron svg,
+    [dir="rtl"] .cell-chevron svg[style*="polyline"] { /* handled inline */ }
+
     /* ===== RTL ===== */
     [dir="rtl"] .cell { direction: rtl; }
     [dir="rtl"] .cta-top { direction: rtl; }
+    [dir="rtl"] .cell-chevron svg[style*="polyline"] { transform: scaleX(-1); }
   </style>
 </head>
 <body class="i18n-loading">
@@ -649,6 +655,60 @@
           <div class="cell-body">
             <div class="cell-label" data-i18n="days_active"></div>
             <div class="cell-detail" id="info-days"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- About section (collapsed by default) -->
+      <div class="section-label anim-in" style="animation-delay:0.52s" data-i18n="about_label"></div>
+      <div class="card-group anim-in" style="animation-delay:0.55s;cursor:pointer" id="about-group">
+        <div class="cell">
+          <div class="cell-icon gray">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </div>
+          <div class="cell-body"><span class="cell-label" data-i18n="about_label"></span></div>
+          <div class="cell-chevron" id="about-chevron">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--text-tertiary);transition:transform 0.25s ease"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <div id="about-details" style="display:none">
+          <div class="cell">
+            <div class="cell-icon purple">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+            </div>
+            <div class="cell-body"><span class="cell-label" data-i18n="about_version"></span></div>
+            <div class="cell-value revealed" id="about-version"></div>
+          </div>
+          <div class="cell">
+            <div class="cell-icon teal">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="cell-body"><span class="cell-label" data-i18n="about_updated"></span></div>
+            <div class="cell-value revealed" id="about-updated"></div>
+          </div>
+          <div class="cell" id="about-channel-cell" style="cursor:pointer">
+            <div class="cell-icon blue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="cell-body">
+              <span class="cell-label" data-i18n="about_channel"></span>
+              <div class="cell-detail">@ClearSayMe</div>
+            </div>
+            <div class="cell-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--text-tertiary)"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+          <div class="cell" id="about-support-cell" style="cursor:pointer">
+            <div class="cell-icon green">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div class="cell-body">
+              <span class="cell-label" data-i18n="about_support"></span>
+              <div class="cell-detail">@eagerbot</div>
+            </div>
+            <div class="cell-chevron">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--text-tertiary)"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
           </div>
         </div>
       </div>
@@ -1041,6 +1101,43 @@
             });
           });
         }
+
+        // ---- About section ----
+        document.getElementById("about-version").textContent = "1.0.0";
+        document.getElementById("about-updated").textContent = "2026-02-18";
+
+        var aboutGroup = document.getElementById("about-group");
+        var aboutDetails = document.getElementById("about-details");
+        var aboutChevron = document.getElementById("about-chevron").querySelector("svg");
+        var aboutOpen = false;
+
+        // Toggle expand/collapse on the header cell click
+        aboutGroup.querySelector(".cell").addEventListener("click", function(e) {
+          aboutOpen = !aboutOpen;
+          aboutDetails.style.display = aboutOpen ? "block" : "none";
+          aboutChevron.style.transform = aboutOpen ? "rotate(180deg)" : "rotate(0)";
+          hapticFeedback("impact");
+        });
+
+        // Channel & support open Telegram links
+        document.getElementById("about-channel-cell").addEventListener("click", function(e) {
+          e.stopPropagation();
+          var tgApp = window.Telegram && window.Telegram.WebApp;
+          if (tgApp && tgApp.openTelegramLink) {
+            tgApp.openTelegramLink("https://t.me/ClearSayMe");
+          } else {
+            window.open("https://t.me/ClearSayMe", "_blank");
+          }
+        });
+        document.getElementById("about-support-cell").addEventListener("click", function(e) {
+          e.stopPropagation();
+          var tgApp = window.Telegram && window.Telegram.WebApp;
+          if (tgApp && tgApp.openTelegramLink) {
+            tgApp.openTelegramLink("https://t.me/eagerbot");
+          } else {
+            window.open("https://t.me/eagerbot", "_blank");
+          }
+        });
 
       }).catch(function(err) {
         // Ensure i18n is loaded before showing error UI

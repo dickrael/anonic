@@ -81,5 +81,11 @@
   "d5d": "Active chat connections and message IDs for reply routing — auto-deleted after 5 min inactivity or 24 hours.",
   "banner_title": "Messages are never stored",
   "banner_desc": "Content is relayed in real-time and never saved. After delivery, it exists only in your Telegram chat.",
-  "sticky_text": "Get your anonymous link"
+  "sticky_text": "Get your anonymous link",
+
+  "about_label": "About",
+  "about_version": "Version",
+  "about_updated": "Last updated",
+  "about_channel": "Bot channel",
+  "about_support": "Support"
 }
