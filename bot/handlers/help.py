@@ -4,11 +4,10 @@ import logging
 
 from pyrogram import Client, filters
 from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.enums import ParseMode, WebAppInfo
+from pyrogram.enums import ParseMode
 
 from ..store import get_store
 from ..strings import gstr
-from ..client import get_client
 
 logger = logging.getLogger(__name__)
 
