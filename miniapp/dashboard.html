@@ -506,8 +506,8 @@
       display: block;
       width: 100%;
       max-width: 480px;
-      margin: var(--sp-8) auto 0;
-      padding: var(--sp-12);
+      margin: 0 auto;
+      padding: 0;
       border: none;
       border-radius: var(--r-md);
       background: linear-gradient(135deg, var(--accent), #6d28d9);
@@ -519,10 +519,8 @@
       box-shadow: 0 4px 20px var(--accent-glow);
       overflow: hidden;
       max-height: 0;
-      padding: 0;
-      margin-top: 0;
       opacity: 0;
-      transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease, opacity 0.25s ease, transform 0.12s;
+      transition: max-height 0.3s ease, padding 0.3s ease, margin-top 0.3s ease, opacity 0.25s ease, transform 0.12s;
     }
     .profile-save-btn.visible {
       max-height: 60px;
@@ -530,28 +528,48 @@
       margin-top: var(--sp-8);
       opacity: 1;
     }
+    .profile-save-btn.loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
     .profile-save-btn:active { transform: scale(0.97); }
 
     .profile-info-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 20px; height: 20px;
+      width: 18px; height: 18px;
       border-radius: 50%;
       background: var(--hint);
       color: var(--bg);
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 700;
       font-family: inherit;
       border: none;
       cursor: pointer;
       margin-left: 6px;
-      opacity: 0.5;
+      opacity: 0.45;
       transition: opacity 0.2s;
       vertical-align: middle;
       flex-shrink: 0;
     }
-    .profile-info-btn:active { opacity: 0.8; }
+    .profile-info-btn:active { opacity: 0.7; }
+
+    .profile-hint {
+      overflow: hidden;
+      max-height: 0;
+      opacity: 0;
+      transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
+      padding: 0 var(--sp-16);
+      font-size: var(--fs-detail);
+      color: var(--hint);
+      line-height: 1.45;
+    }
+    .profile-hint.open {
+      max-height: 120px;
+      opacity: 1;
+      padding: var(--sp-8) var(--sp-16) var(--sp-12);
+    }
 
     .toast {
       position: fixed;
@@ -762,6 +780,7 @@
           <div class="cell-body"><span class="cell-label" data-i18n="profile_public"></span><button class="profile-info-btn" id="profile-info-btn" type="button">?</button></div>
           <label class="toggle-switch"><input type="checkbox" id="toggle-profile-public"><span class="toggle-slider"></span></label>
         </div>
+        <div class="profile-hint" id="profile-hint" data-i18n="profile_public_hint"></div>
         <div id="profile-sub-toggles" style="display:none">
           <div class="cell">
             <div class="cell-icon orange" style="margin-left:16px">
@@ -1318,28 +1337,33 @@
           }
         }
 
+        var profileSaving = false;
         profileSaveBtn.addEventListener("click", function() {
+          if (profileSaving) return;
+          profileSaving = true;
           var s = getProfileState();
-          profileSaveBtn.classList.remove("visible");
+          profileSaveBtn.classList.add("loading");
           updateProfileSettings(initData, s).then(function() {
             profileSaved = s;
+            profileSaveBtn.classList.remove("loading");
+            profileSaveBtn.classList.remove("visible");
             hapticFeedback("success");
             showToast("\u2705 " + t("profile_saved"));
+            profileSaving = false;
           }).catch(function(e) {
             console.error("Profile settings error:", e);
+            profileSaveBtn.classList.remove("loading");
             profileSaveBtn.classList.add("visible");
+            profileSaving = false;
           });
         });
 
-        // Info button for public profile
+        // Inline hint toggle for public profile info
+        var profileHint = document.getElementById("profile-hint");
         document.getElementById("profile-info-btn").addEventListener("click", function(e) {
           e.stopPropagation();
           hapticFeedback("impact");
-          if (typeof tg !== "undefined" && tg.showAlert) {
-            tg.showAlert(t("profile_public_hint"));
-          } else {
-            alert(t("profile_public_hint"));
-          }
+          profileHint.classList.toggle("open");
         });
 
         profilePublicToggle.addEventListener("change", function() {

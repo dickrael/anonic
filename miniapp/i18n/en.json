@@ -103,5 +103,5 @@
   "profile_last_seen": "Last Seen",
   "profile_save": "Save",
   "profile_saved": "Settings saved",
-  "profile_public_hint": "When enabled, a button with your nickname appears on messages you send. Recipients can tap it to see your public profile — including your avatar, level, and activity stats based on what you choose to show."
+  "profile_public_hint": "A button with your nickname will appear on messages you send. Recipients can tap it to view your profile. You can disable this anytime."
 }
