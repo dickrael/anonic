@@ -1403,8 +1403,8 @@
         });
 
         // ---- About section ----
-        document.getElementById("about-version").textContent = "1.0.0";
-        document.getElementById("about-updated").textContent = "2026-02-18";
+        document.getElementById("about-version").textContent = data.app_version || "1.0.0";
+        document.getElementById("about-updated").textContent = data.app_updated || "";
 
         var aboutGroup = document.getElementById("about-group");
         var aboutDetails = document.getElementById("about-details");

@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import random
+import subprocess
 from urllib.parse import parse_qs, unquote
 
 from fastapi import FastAPI, HTTPException, Request
@@ -26,6 +27,27 @@ logger = logging.getLogger(__name__)
 
 _bot_username: str = ""
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+def _read_git_info() -> dict:
+    """Read version (commit count) and last commit date from git once."""
+    info = {"version": "1.0.0", "last_updated": ""}
+    try:
+        count = subprocess.check_output(
+            ["git", "rev-list", "--count", "HEAD"],
+            cwd=_PROJECT_ROOT, stderr=subprocess.DEVNULL, text=True,
+        ).strip()
+        info["version"] = f"1.0.{count}"
+        info["last_updated"] = subprocess.check_output(
+            ["git", "log", "-1", "--format=%cs"],
+            cwd=_PROJECT_ROOT, stderr=subprocess.DEVNULL, text=True,
+        ).strip()
+    except Exception:
+        pass
+    return info
+
+
+_git_info = _read_git_info()
 _WEB_ROOT = "/var/www/html"
 _AVATARS_DIR = os.path.join(_WEB_ROOT, "avatars") if os.path.isdir(_WEB_ROOT) else os.path.join(_PROJECT_ROOT, "avatars")
 _EMOJIS_DIR = os.path.join(_WEB_ROOT, "emojis") if os.path.isdir(_WEB_ROOT) else os.path.join(_PROJECT_ROOT, "emojis")
@@ -277,6 +299,10 @@ async def get_dashboard(request: Request):
     xp = (stats.get("messages_sent", 0) or 0) + (stats.get("messages_received", 0) or 0)
     level_info = get_level_progress(xp)
     stats.update(level_info)
+
+    # App version from git
+    stats["app_version"] = _git_info["version"]
+    stats["app_updated"] = _git_info["last_updated"]
 
     return stats
 
