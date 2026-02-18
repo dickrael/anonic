@@ -529,46 +529,32 @@
       opacity: 1;
     }
     .profile-save-btn.loading {
-      opacity: 0.6;
+      opacity: 0.55;
       pointer-events: none;
     }
     .profile-save-btn:active { transform: scale(0.97); }
 
-    .profile-info-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 18px; height: 18px;
-      border-radius: 50%;
-      background: var(--hint);
-      color: var(--bg);
-      font-size: 11px;
-      font-weight: 700;
-      font-family: inherit;
-      border: none;
-      cursor: pointer;
-      margin-left: 6px;
-      opacity: 0.45;
+    .profile-status {
+      font-size: var(--fs-subhead);
+      color: var(--hint);
+      margin-top: 2px;
       transition: opacity 0.2s;
-      vertical-align: middle;
-      flex-shrink: 0;
     }
-    .profile-info-btn:active { opacity: 0.7; }
 
     .profile-hint {
       overflow: hidden;
       max-height: 0;
       opacity: 0;
-      transition: max-height 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
+      transition: max-height 0.2s ease, opacity 0.2s ease, padding 0.2s ease;
       padding: 0 var(--sp-16);
-      font-size: var(--fs-detail);
+      font-size: var(--fs-subhead);
       color: var(--hint);
-      line-height: 1.45;
+      line-height: 1.4;
     }
     .profile-hint.open {
-      max-height: 120px;
+      max-height: 60px;
       opacity: 1;
-      padding: var(--sp-8) var(--sp-16) var(--sp-12);
+      padding: 6px var(--sp-16) 10px;
     }
 
     .toast {
@@ -576,13 +562,15 @@
       bottom: 80px;
       left: 50%;
       transform: translateX(-50%) translateY(20px);
-      background: var(--card);
-      color: var(--text);
+      background: rgba(0,0,0,0.82);
+      color: #fff;
       padding: 10px 20px;
       border-radius: 12px;
-      font-size: var(--fs-detail);
+      font-size: 13px;
       font-weight: 600;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s ease, transform 0.3s ease;
@@ -773,11 +761,14 @@
       <!-- Profile toggles -->
       <div class="section-label anim-in" style="animation-delay:0.38s" data-i18n="profile_label"></div>
       <div class="card-group anim-in" style="animation-delay:0.40s" id="profile-group">
-        <div class="cell">
+        <div class="cell" id="profile-public-cell" style="cursor:pointer">
           <div class="cell-icon purple">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
-          <div class="cell-body"><span class="cell-label" data-i18n="profile_public"></span><button class="profile-info-btn" id="profile-info-btn" type="button">?</button></div>
+          <div class="cell-body">
+            <span class="cell-label" data-i18n="profile_public"></span>
+            <div class="profile-status" id="profile-status"></div>
+          </div>
           <label class="toggle-switch"><input type="checkbox" id="toggle-profile-public"><span class="toggle-slider"></span></label>
         </div>
         <div class="profile-hint" id="profile-hint" data-i18n="profile_public_hint"></div>
@@ -919,7 +910,7 @@
 
   <script src="js/telegram.js?v=19"></script>
   <script src="js/api.js?v=19"></script>
-  <script src="js/i18n.js?v=20"></script>
+  <script src="js/i18n.js?v=21"></script>
   <script>
   (function() {
     "use strict";
@@ -1296,8 +1287,8 @@
         profileRegistered.checked = data.profile_show_registered !== false;
         profileSubToggles.style.display = profilePublicToggle.checked ? "block" : "none";
 
-        // Track saved state for smart dirty detection
-        var profileSaved = {
+        // Server state baseline — save appears only when UI differs from this
+        var profileServer = {
           profile_public: profilePublicToggle.checked,
           profile_show_last_seen: profileLastSeen.checked,
           profile_show_level: profileLevel.checked,
@@ -1306,6 +1297,9 @@
         };
 
         var profileSaveBtn = document.getElementById("profile-save-btn");
+        var profileStatusEl = document.getElementById("profile-status");
+        var profileHint = document.getElementById("profile-hint");
+        var hintTimer = null;
 
         function showToast(msg) {
           var el = document.getElementById("toast");
@@ -1324,11 +1318,20 @@
           };
         }
 
-        function checkProfileDirty() {
+        // Update subtitle to reflect current toggle state
+        function updateProfileStatus() {
+          profileStatusEl.textContent = profilePublicToggle.checked
+            ? t("profile_status_on")
+            : t("profile_status_off");
+        }
+        updateProfileStatus();
+
+        // State-based dirty check: UI vs server
+        function syncSaveButton() {
           var cur = getProfileState();
           var dirty = false;
-          for (var k in profileSaved) {
-            if (cur[k] !== profileSaved[k]) { dirty = true; break; }
+          for (var k in profileServer) {
+            if (cur[k] !== profileServer[k]) { dirty = true; break; }
           }
           if (dirty) {
             profileSaveBtn.classList.add("visible");
@@ -1337,6 +1340,7 @@
           }
         }
 
+        // Save handler with loading state
         var profileSaving = false;
         profileSaveBtn.addEventListener("click", function() {
           if (profileSaving) return;
@@ -1344,48 +1348,58 @@
           var s = getProfileState();
           profileSaveBtn.classList.add("loading");
           updateProfileSettings(initData, s).then(function() {
-            profileSaved = s;
+            profileServer = s;
             profileSaveBtn.classList.remove("loading");
             profileSaveBtn.classList.remove("visible");
             hapticFeedback("success");
-            showToast("\u2705 " + t("profile_saved"));
+            showToast(t("profile_saved"));
             profileSaving = false;
           }).catch(function(e) {
             console.error("Profile settings error:", e);
             profileSaveBtn.classList.remove("loading");
-            profileSaveBtn.classList.add("visible");
+            syncSaveButton();
             profileSaving = false;
           });
         });
 
-        // Inline hint toggle for public profile info
-        var profileHint = document.getElementById("profile-hint");
-        document.getElementById("profile-info-btn").addEventListener("click", function(e) {
-          e.stopPropagation();
+        // Tap cell row → expand/collapse inline hint, auto-close after 3s
+        function closeHint() {
+          profileHint.classList.remove("open");
+          if (hintTimer) { clearTimeout(hintTimer); hintTimer = null; }
+        }
+        document.getElementById("profile-public-cell").addEventListener("click", function(e) {
+          if (e.target.closest(".toggle-switch")) return;
           hapticFeedback("impact");
-          profileHint.classList.toggle("open");
+          if (profileHint.classList.contains("open")) {
+            closeHint();
+          } else {
+            profileHint.classList.add("open");
+            hintTimer = setTimeout(closeHint, 3000);
+          }
         });
 
         profilePublicToggle.addEventListener("change", function() {
           hapticFeedback("impact");
           profileSubToggles.style.display = this.checked ? "block" : "none";
-          checkProfileDirty();
+          updateProfileStatus();
+          closeHint();
+          syncSaveButton();
         });
         profileLastSeen.addEventListener("change", function() {
           hapticFeedback("impact");
-          checkProfileDirty();
+          syncSaveButton();
         });
         profileLevel.addEventListener("change", function() {
           hapticFeedback("impact");
-          checkProfileDirty();
+          syncSaveButton();
         });
         profileActiveDays.addEventListener("change", function() {
           hapticFeedback("impact");
-          checkProfileDirty();
+          syncSaveButton();
         });
         profileRegistered.addEventListener("change", function() {
           hapticFeedback("impact");
-          checkProfileDirty();
+          syncSaveButton();
         });
 
         // ---- About section ----

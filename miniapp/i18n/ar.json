@@ -103,5 +103,7 @@
   "profile_last_seen": "آخر ظهور",
   "profile_save": "حفظ",
   "profile_saved": "تم حفظ الإعدادات",
-  "profile_public_hint": "سيظهر زر باسمك المستعار على رسائلك. يمكن للمستلم فتح ملفك الشخصي. يمكنك إيقافه في أي وقت."
+  "profile_public_hint": "زر اسمك المستعار سيظهر تحت رسائلك.",
+  "profile_status_on": "مرئي في رسائلك",
+  "profile_status_off": "مخفي عن الرسائل"
 }
