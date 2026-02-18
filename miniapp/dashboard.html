@@ -503,7 +503,7 @@
     .sticky-btn svg { width: 18px; height: 18px; }
 
     .profile-save-btn {
-      display: none;
+      display: block;
       width: 100%;
       max-width: 480px;
       margin: var(--sp-8) auto 0;
@@ -516,10 +516,65 @@
       font-weight: 700;
       font-family: inherit;
       cursor: pointer;
-      transition: transform 0.12s, opacity 0.12s;
       box-shadow: 0 4px 20px var(--accent-glow);
+      overflow: hidden;
+      max-height: 0;
+      padding: 0;
+      margin-top: 0;
+      opacity: 0;
+      transition: max-height 0.3s ease, padding 0.3s ease, margin 0.3s ease, opacity 0.25s ease, transform 0.12s;
+    }
+    .profile-save-btn.visible {
+      max-height: 60px;
+      padding: var(--sp-12);
+      margin-top: var(--sp-8);
+      opacity: 1;
     }
     .profile-save-btn:active { transform: scale(0.97); }
+
+    .profile-info-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--hint);
+      color: var(--bg);
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      border: none;
+      cursor: pointer;
+      margin-left: 6px;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+    .profile-info-btn:active { opacity: 0.8; }
+
+    .toast {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--card);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-size: var(--fs-detail);
+      font-weight: 600;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
 
     /* ===== Skeleton ===== */
     .skeleton-profile {
@@ -704,7 +759,7 @@
           <div class="cell-icon purple">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           </div>
-          <div class="cell-body"><span class="cell-label" data-i18n="profile_public"></span></div>
+          <div class="cell-body"><span class="cell-label" data-i18n="profile_public"></span><button class="profile-info-btn" id="profile-info-btn" type="button">?</button></div>
           <label class="toggle-switch"><input type="checkbox" id="toggle-profile-public"><span class="toggle-slider"></span></label>
         </div>
         <div id="profile-sub-toggles" style="display:none">
@@ -1222,54 +1277,91 @@
         profileRegistered.checked = data.profile_show_registered !== false;
         profileSubToggles.style.display = profilePublicToggle.checked ? "block" : "none";
 
-        var profileSaveBtn = document.getElementById("profile-save-btn");
-        var profileDirty = false;
+        // Track saved state for smart dirty detection
+        var profileSaved = {
+          profile_public: profilePublicToggle.checked,
+          profile_show_last_seen: profileLastSeen.checked,
+          profile_show_level: profileLevel.checked,
+          profile_show_active_days: profileActiveDays.checked,
+          profile_show_registered: profileRegistered.checked
+        };
 
-        function markProfileDirty() {
-          profileDirty = true;
-          profileSaveBtn.style.display = "block";
+        var profileSaveBtn = document.getElementById("profile-save-btn");
+
+        function showToast(msg) {
+          var el = document.getElementById("toast");
+          el.textContent = msg;
+          el.classList.add("show");
+          setTimeout(function() { el.classList.remove("show"); }, 2000);
         }
 
-        profileSaveBtn.addEventListener("click", function() {
-          var s = {
+        function getProfileState() {
+          return {
             profile_public: profilePublicToggle.checked,
             profile_show_last_seen: profileLastSeen.checked,
             profile_show_level: profileLevel.checked,
             profile_show_active_days: profileActiveDays.checked,
             profile_show_registered: profileRegistered.checked
           };
+        }
+
+        function checkProfileDirty() {
+          var cur = getProfileState();
+          var dirty = false;
+          for (var k in profileSaved) {
+            if (cur[k] !== profileSaved[k]) { dirty = true; break; }
+          }
+          if (dirty) {
+            profileSaveBtn.classList.add("visible");
+          } else {
+            profileSaveBtn.classList.remove("visible");
+          }
+        }
+
+        profileSaveBtn.addEventListener("click", function() {
+          var s = getProfileState();
+          profileSaveBtn.classList.remove("visible");
           updateProfileSettings(initData, s).then(function() {
-            profileDirty = false;
-            profileSaveBtn.style.display = "none";
-            var pg = document.getElementById("profile-group");
-            pg.style.transition = "box-shadow 0.3s ease";
-            pg.style.boxShadow = "0 0 0 2px var(--success)";
-            setTimeout(function() { pg.style.boxShadow = ""; }, 600);
+            profileSaved = s;
+            hapticFeedback("success");
+            showToast("\u2705 " + t("profile_saved"));
           }).catch(function(e) {
             console.error("Profile settings error:", e);
+            profileSaveBtn.classList.add("visible");
           });
+        });
+
+        // Info button for public profile
+        document.getElementById("profile-info-btn").addEventListener("click", function(e) {
+          e.stopPropagation();
+          hapticFeedback("impact");
+          if (typeof tg !== "undefined" && tg.showAlert) {
+            tg.showAlert(t("profile_public_hint"));
+          } else {
+            alert(t("profile_public_hint"));
+          }
         });
 
         profilePublicToggle.addEventListener("change", function() {
           hapticFeedback("impact");
           profileSubToggles.style.display = this.checked ? "block" : "none";
-          markProfileDirty();
+          checkProfileDirty();
         });
         profileLastSeen.addEventListener("change", function() {
           hapticFeedback("impact");
-          markProfileDirty();
+          checkProfileDirty();
         });
         profileLevel.addEventListener("change", function() {
           hapticFeedback("impact");
-          markProfileDirty();
+          checkProfileDirty();
         });
         profileActiveDays.addEventListener("change", function() {
           hapticFeedback("impact");
-          markProfileDirty();
+          checkProfileDirty();
         });
         profileRegistered.addEventListener("change", function() {
           hapticFeedback("impact");
-          markProfileDirty();
+          checkProfileDirty();
         });
 
         // ---- About section ----
@@ -1329,5 +1421,6 @@
     boot();
   })();
   </script>
+  <div class="toast" id="toast"></div>
 </body>
 </html>

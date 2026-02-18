@@ -101,5 +101,7 @@
   "profile_active_days": "Active Days",
   "profile_registered": "Registered",
   "profile_last_seen": "Last Seen",
-  "profile_save": "Save"
+  "profile_save": "Save",
+  "profile_saved": "Settings saved",
+  "profile_public_hint": "When enabled, a button with your nickname appears on messages you send. Recipients can tap it to see your public profile — including your avatar, level, and activity stats based on what you choose to show."
 }
