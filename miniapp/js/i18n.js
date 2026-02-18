@@ -21,7 +21,7 @@ var i18n = (function () {
   /** Fetch a JSON translation file (with simple in-memory cache). */
   function fetchLang(code) {
     if (cache[code]) return Promise.resolve(cache[code]);
-    return fetch("i18n/" + code + ".json?v=19")
+    return fetch("i18n/" + code + ".json?v=20")
       .then(function (res) {
         if (!res.ok) throw new Error(res.status);
         return res.json();
