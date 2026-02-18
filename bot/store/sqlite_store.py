@@ -89,6 +89,12 @@ class SQLiteStore:
         except Exception:
             pass
 
+        # Create profile_token index (after migration adds the column)
+        await self._write_conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_profile_token ON users(profile_token);"
+        )
+        await self._write_conn.commit()
+
         # Open sync connection for reads (read-only via WAL)
         self._read_conn = sqlite3.connect(self.path)
         self._read_conn.row_factory = sqlite3.Row
