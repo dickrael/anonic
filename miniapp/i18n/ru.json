@@ -100,5 +100,6 @@
   "profile_not_found": "Профиль не найден",
   "profile_active_days": "Дни активности",
   "profile_registered": "Регистрация",
-  "profile_last_seen": "Последний визит"
+  "profile_last_seen": "Последний визит",
+  "profile_save": "Сохранить"
 }

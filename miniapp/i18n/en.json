@@ -100,5 +100,6 @@
   "profile_not_found": "Profile not found",
   "profile_active_days": "Active Days",
   "profile_registered": "Registered",
-  "profile_last_seen": "Last Seen"
+  "profile_last_seen": "Last Seen",
+  "profile_save": "Save"
 }

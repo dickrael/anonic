@@ -502,6 +502,25 @@
     .sticky-btn:active { transform: scale(0.97); }
     .sticky-btn svg { width: 18px; height: 18px; }
 
+    .profile-save-btn {
+      display: none;
+      width: 100%;
+      max-width: 480px;
+      margin: var(--sp-8) auto 0;
+      padding: var(--sp-12);
+      border: none;
+      border-radius: var(--r-md);
+      background: linear-gradient(135deg, var(--accent), #6d28d9);
+      color: #fff;
+      font-size: var(--fs-body);
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: transform 0.12s, opacity 0.12s;
+      box-shadow: 0 4px 20px var(--accent-glow);
+    }
+    .profile-save-btn:active { transform: scale(0.97); }
+
     /* ===== Skeleton ===== */
     .skeleton-profile {
       display: flex;
@@ -719,6 +738,7 @@
           </div>
         </div>
       </div>
+      <button class="profile-save-btn anim-in" style="animation-delay:0.42s" id="profile-save-btn" data-i18n="profile_save">Save</button>
 
       <!-- Info grouped cell list -->
       <div class="section-label anim-in" style="animation-delay:0.48s" data-i18n="info_label"></div>
@@ -1202,10 +1222,25 @@
         profileRegistered.checked = data.profile_show_registered !== false;
         profileSubToggles.style.display = profilePublicToggle.checked ? "block" : "none";
 
-        function saveProfileSetting(key, value) {
-          var s = {};
-          s[key] = value;
+        var profileSaveBtn = document.getElementById("profile-save-btn");
+        var profileDirty = false;
+
+        function markProfileDirty() {
+          profileDirty = true;
+          profileSaveBtn.style.display = "block";
+        }
+
+        profileSaveBtn.addEventListener("click", function() {
+          var s = {
+            profile_public: profilePublicToggle.checked,
+            profile_show_last_seen: profileLastSeen.checked,
+            profile_show_level: profileLevel.checked,
+            profile_show_active_days: profileActiveDays.checked,
+            profile_show_registered: profileRegistered.checked
+          };
           updateProfileSettings(initData, s).then(function() {
+            profileDirty = false;
+            profileSaveBtn.style.display = "none";
             var pg = document.getElementById("profile-group");
             pg.style.transition = "box-shadow 0.3s ease";
             pg.style.boxShadow = "0 0 0 2px var(--success)";
@@ -1213,28 +1248,28 @@
           }).catch(function(e) {
             console.error("Profile settings error:", e);
           });
-        }
+        });
 
         profilePublicToggle.addEventListener("change", function() {
           hapticFeedback("impact");
           profileSubToggles.style.display = this.checked ? "block" : "none";
-          saveProfileSetting("profile_public", this.checked);
+          markProfileDirty();
         });
         profileLastSeen.addEventListener("change", function() {
           hapticFeedback("impact");
-          saveProfileSetting("profile_show_last_seen", this.checked);
+          markProfileDirty();
         });
         profileLevel.addEventListener("change", function() {
           hapticFeedback("impact");
-          saveProfileSetting("profile_show_level", this.checked);
+          markProfileDirty();
         });
         profileActiveDays.addEventListener("change", function() {
           hapticFeedback("impact");
-          saveProfileSetting("profile_show_active_days", this.checked);
+          markProfileDirty();
         });
         profileRegistered.addEventListener("change", function() {
           hapticFeedback("impact");
-          saveProfileSetting("profile_show_registered", this.checked);
+          markProfileDirty();
         });
 
         // ---- About section ----

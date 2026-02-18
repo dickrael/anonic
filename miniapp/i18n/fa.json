@@ -100,5 +100,6 @@
   "profile_not_found": "پروفایل یافت نشد",
   "profile_active_days": "روزهای فعالیت",
   "profile_registered": "ثبت‌نام",
-  "profile_last_seen": "آخرین بازدید"
+  "profile_last_seen": "آخرین بازدید",
+  "profile_save": "ذخیره"
 }

@@ -100,5 +100,6 @@
   "profile_not_found": "الملف الشخصي غير موجود",
   "profile_active_days": "أيام النشاط",
   "profile_registered": "التسجيل",
-  "profile_last_seen": "آخر ظهور"
+  "profile_last_seen": "آخر ظهور",
+  "profile_save": "حفظ"
 }
