@@ -87,5 +87,18 @@
   "about_version": "نسخه",
   "about_updated": "آخرین بروزرسانی",
   "about_channel": "کانال ربات",
-  "about_support": "پشتیبانی"
+  "about_support": "پشتیبانی",
+
+  "profile_label": "پروفایل",
+  "profile_public": "پروفایل عمومی",
+  "profile_show_last_seen": "آخرین بازدید",
+  "profile_show_level": "سطح",
+  "profile_show_active_days": "روزهای فعالیت",
+  "profile_show_registered": "ثبت‌نام",
+  "profile_private_title": "پروفایل خصوصی",
+  "profile_private_desc": "پروفایل این کاربر خصوصی است.",
+  "profile_not_found": "پروفایل یافت نشد",
+  "profile_active_days": "روزهای فعالیت",
+  "profile_registered": "ثبت‌نام",
+  "profile_last_seen": "آخرین بازدید"
 }

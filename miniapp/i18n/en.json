@@ -87,5 +87,18 @@
   "about_version": "Version",
   "about_updated": "Last updated",
   "about_channel": "Bot channel",
-  "about_support": "Support"
+  "about_support": "Support",
+
+  "profile_label": "Profile",
+  "profile_public": "Public Profile",
+  "profile_show_last_seen": "Last Seen",
+  "profile_show_level": "Level",
+  "profile_show_active_days": "Active Days",
+  "profile_show_registered": "Registered",
+  "profile_private_title": "Private Profile",
+  "profile_private_desc": "This user's profile is private.",
+  "profile_not_found": "Profile not found",
+  "profile_active_days": "Active Days",
+  "profile_registered": "Registered",
+  "profile_last_seen": "Last Seen"
 }

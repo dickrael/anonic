@@ -157,6 +157,14 @@ class SendMessageRequest(BaseModel):
     text: str
 
 
+class ProfileSettingsRequest(BaseModel):
+    profile_public: bool | None = None
+    profile_show_last_seen: bool | None = None
+    profile_show_level: bool | None = None
+    profile_show_active_days: bool | None = None
+    profile_show_registered: bool | None = None
+
+
 # ---- Endpoints ----
 
 @app.get("/api/health")
@@ -271,6 +279,90 @@ async def get_dashboard(request: Request):
     stats.update(level_info)
 
     return stats
+
+
+@app.get("/api/profile/{profile_token}")
+async def get_profile(profile_token: str):
+    """Get a user's public profile by profile_token (no auth required)."""
+    store = get_store()
+    user = store.get_user_by_profile_token(profile_token)
+    if not user:
+        raise HTTPException(status_code=404, detail="Profile not found")
+
+    if not user.get("profile_public"):
+        return {"private": True}
+
+    nickname = user.get("nickname", "")
+    result: dict = {"nickname": nickname}
+
+    # Avatar / emoji / frame URLs
+    user_id = user.get("telegram_id")
+    avatar_path = os.path.join(_AVATARS_DIR, f"{user_id}.png")
+    if os.path.isfile(avatar_path):
+        result["avatar_url"] = f"/avatars/{user_id}.png?t={int(os.path.getmtime(avatar_path))}"
+    emoji_file = _get_emoji_file(nickname) if nickname else None
+    if emoji_file:
+        result["emoji_url"] = f"https://lazez.uz/emojis/{emoji_file[0]}/{emoji_file[1]}"
+    user_frame = user.get("frame")
+    if not user_frame and _FRAME_FILES and nickname:
+        user_frame = _FRAME_FILES[_nick_hash(nickname) % len(_FRAME_FILES)]
+    if user_frame:
+        result["frame_url"] = f"https://lazez.uz/addons/frames/{user_frame}"
+
+    # Conditional fields based on toggle settings
+    xp = (user.get("messages_sent", 0) or 0) + (user.get("messages_received", 0) or 0)
+
+    if user.get("profile_show_level"):
+        level_info = get_level_progress(xp)
+        result["level_title"] = level_info.get("level_title", "")
+        result["level_progress"] = level_info.get("level_progress", 0)
+
+    if user.get("profile_show_active_days"):
+        reg_str = user.get("registered_at", "")
+        if reg_str:
+            from datetime import datetime, timezone
+            try:
+                reg_dt = datetime.fromisoformat(reg_str.replace("Z", "+00:00"))
+                result["active_days"] = (datetime.now(timezone.utc) - reg_dt).days
+            except Exception:
+                result["active_days"] = 0
+        else:
+            result["active_days"] = 0
+
+    if user.get("profile_show_registered"):
+        reg_str = user.get("registered_at", "")
+        if reg_str:
+            from datetime import datetime, timezone
+            try:
+                reg_dt = datetime.fromisoformat(reg_str.replace("Z", "+00:00"))
+                result["registered_days_ago"] = (datetime.now(timezone.utc) - reg_dt).days
+            except Exception:
+                result["registered_days_ago"] = 0
+        else:
+            result["registered_days_ago"] = 0
+
+    if user.get("profile_show_last_seen"):
+        la = user.get("last_activity", "")
+        if la and not la.endswith("Z") and "+" not in la:
+            la = la + "+00:00"
+        result["last_activity"] = la
+
+    return result
+
+
+@app.post("/api/profile/settings")
+async def update_profile_settings(body: ProfileSettingsRequest, request: Request):
+    """Update profile toggle settings (authenticated)."""
+    tg_user = get_user_from_init_data(request)
+    user_id = tg_user["id"]
+    store = get_store()
+    settings = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not settings:
+        raise HTTPException(status_code=400, detail="No settings provided")
+    ok = await store.set_profile_settings(user_id, settings)
+    if not ok:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"ok": True}
 
 
 @app.get("/api/story-card/{token}")

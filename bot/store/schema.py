@@ -89,6 +89,7 @@ INDEXES_SQL = [
     "CREATE INDEX IF NOT EXISTS idx_users_token ON users(token);",
     "CREATE INDEX IF NOT EXISTS idx_users_nickname ON users(nickname);",
     "CREATE INDEX IF NOT EXISTS idx_users_special_code ON users(special_code);",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_profile_token ON users(profile_token);",
     "CREATE INDEX IF NOT EXISTS idx_blocks_recipient ON blocks(recipient_id);",
     "CREATE INDEX IF NOT EXISTS idx_messages_timestamp ON messages(timestamp);",
     "CREATE INDEX IF NOT EXISTS idx_pending_targets_created ON pending_targets(created_at);",

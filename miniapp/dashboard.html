@@ -543,10 +543,52 @@
     [dir="rtl"] #about-chevron svg,
     [dir="rtl"] .cell-chevron svg[style*="polyline"] { /* handled inline */ }
 
+    /* ===== Toggle Switch ===== */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 26px;
+      flex-shrink: 0;
+    }
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: var(--text-tertiary);
+      border-radius: 26px;
+      transition: background 0.25s ease;
+    }
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 2px;
+      bottom: 2px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.25s ease;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--accent);
+    }
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(18px);
+    }
+
     /* ===== RTL ===== */
     [dir="rtl"] .cell { direction: rtl; }
     [dir="rtl"] .cta-top { direction: rtl; }
     [dir="rtl"] .cell-chevron svg[style*="polyline"] { transform: scaleX(-1); }
+    [dir="rtl"] .toggle-slider::before { left: auto; right: 2px; }
+    [dir="rtl"] .toggle-switch input:checked + .toggle-slider::before { transform: translateX(-18px); }
+    [dir="rtl"] #profile-sub-toggles .cell-icon { margin-left: 0 !important; margin-right: 16px; }
   </style>
 </head>
 <body class="i18n-loading">
@@ -636,9 +678,51 @@
         </div>
       </div>
 
+      <!-- Profile toggles -->
+      <div class="section-label anim-in" style="animation-delay:0.38s" data-i18n="profile_label"></div>
+      <div class="card-group anim-in" style="animation-delay:0.40s" id="profile-group">
+        <div class="cell">
+          <div class="cell-icon purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="cell-body"><span class="cell-label" data-i18n="profile_public"></span></div>
+          <label class="toggle-switch"><input type="checkbox" id="toggle-profile-public"><span class="toggle-slider"></span></label>
+        </div>
+        <div id="profile-sub-toggles" style="display:none">
+          <div class="cell">
+            <div class="cell-icon orange" style="margin-left:16px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div class="cell-body"><span class="cell-label" data-i18n="profile_show_last_seen"></span></div>
+            <label class="toggle-switch"><input type="checkbox" id="toggle-profile-last-seen"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="cell">
+            <div class="cell-icon green" style="margin-left:16px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <div class="cell-body"><span class="cell-label" data-i18n="profile_show_level"></span></div>
+            <label class="toggle-switch"><input type="checkbox" id="toggle-profile-level"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="cell">
+            <div class="cell-icon blue" style="margin-left:16px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <div class="cell-body"><span class="cell-label" data-i18n="profile_show_active_days"></span></div>
+            <label class="toggle-switch"><input type="checkbox" id="toggle-profile-active-days"><span class="toggle-slider"></span></label>
+          </div>
+          <div class="cell">
+            <div class="cell-icon teal" style="margin-left:16px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            </div>
+            <div class="cell-body"><span class="cell-label" data-i18n="profile_show_registered"></span></div>
+            <label class="toggle-switch"><input type="checkbox" id="toggle-profile-registered"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
+      </div>
+
       <!-- Info grouped cell list -->
-      <div class="section-label anim-in" style="animation-delay:0.42s" data-i18n="info_label"></div>
-      <div class="card-group anim-in" style="animation-delay:0.45s" id="info-group">
+      <div class="section-label anim-in" style="animation-delay:0.48s" data-i18n="info_label"></div>
+      <div class="card-group anim-in" style="animation-delay:0.50s" id="info-group">
         <div class="cell">
           <div class="cell-icon teal">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -660,8 +744,8 @@
       </div>
 
       <!-- About section (collapsed by default) -->
-      <div class="section-label anim-in" style="animation-delay:0.52s" data-i18n="about_label"></div>
-      <div class="card-group anim-in" style="animation-delay:0.55s;cursor:pointer" id="about-group">
+      <div class="section-label anim-in" style="animation-delay:0.56s" data-i18n="about_label"></div>
+      <div class="card-group anim-in" style="animation-delay:0.58s;cursor:pointer" id="about-group">
         <div class="cell">
           <div class="cell-icon gray">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
@@ -1101,6 +1185,52 @@
             });
           });
         }
+
+        // ---- Profile toggles ----
+        var profilePublicToggle = document.getElementById("toggle-profile-public");
+        var profileSubToggles = document.getElementById("profile-sub-toggles");
+        var profileLastSeen = document.getElementById("toggle-profile-last-seen");
+        var profileLevel = document.getElementById("toggle-profile-level");
+        var profileActiveDays = document.getElementById("toggle-profile-active-days");
+        var profileRegistered = document.getElementById("toggle-profile-registered");
+
+        // Set initial state from API data
+        profilePublicToggle.checked = !!data.profile_public;
+        profileLastSeen.checked = !!data.profile_show_last_seen;
+        profileLevel.checked = data.profile_show_level !== false;
+        profileActiveDays.checked = data.profile_show_active_days !== false;
+        profileRegistered.checked = data.profile_show_registered !== false;
+        profileSubToggles.style.display = profilePublicToggle.checked ? "block" : "none";
+
+        function saveProfileSetting(key, value) {
+          var s = {};
+          s[key] = value;
+          updateProfileSettings(initData, s).catch(function(e) {
+            console.error("Profile settings error:", e);
+          });
+        }
+
+        profilePublicToggle.addEventListener("change", function() {
+          hapticFeedback("impact");
+          profileSubToggles.style.display = this.checked ? "block" : "none";
+          saveProfileSetting("profile_public", this.checked);
+        });
+        profileLastSeen.addEventListener("change", function() {
+          hapticFeedback("impact");
+          saveProfileSetting("profile_show_last_seen", this.checked);
+        });
+        profileLevel.addEventListener("change", function() {
+          hapticFeedback("impact");
+          saveProfileSetting("profile_show_level", this.checked);
+        });
+        profileActiveDays.addEventListener("change", function() {
+          hapticFeedback("impact");
+          saveProfileSetting("profile_show_active_days", this.checked);
+        });
+        profileRegistered.addEventListener("change", function() {
+          hapticFeedback("impact");
+          saveProfileSetting("profile_show_registered", this.checked);
+        });
 
         // ---- About section ----
         document.getElementById("about-version").textContent = "1.0.0";

@@ -87,5 +87,18 @@
   "about_version": "الإصدار",
   "about_updated": "آخر تحديث",
   "about_channel": "قناة البوت",
-  "about_support": "الدعم"
+  "about_support": "الدعم",
+
+  "profile_label": "الملف الشخصي",
+  "profile_public": "ملف شخصي عام",
+  "profile_show_last_seen": "آخر ظهور",
+  "profile_show_level": "المستوى",
+  "profile_show_active_days": "أيام النشاط",
+  "profile_show_registered": "التسجيل",
+  "profile_private_title": "ملف شخصي خاص",
+  "profile_private_desc": "الملف الشخصي لهذا المستخدم خاص.",
+  "profile_not_found": "الملف الشخصي غير موجود",
+  "profile_active_days": "أيام النشاط",
+  "profile_registered": "التسجيل",
+  "profile_last_seen": "آخر ظهور"
 }

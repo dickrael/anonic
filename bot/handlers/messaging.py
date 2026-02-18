@@ -21,7 +21,7 @@ import re
 from datetime import timedelta
 
 from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from pyrogram.enums import ParseMode, MessageEntityType
 from pyrogram.errors import UserIsBlocked, FloodWait, PeerIdInvalid, InputUserDeactivated
 
@@ -249,14 +249,16 @@ async def send_message_to_target(
     message: Message,
     msg_type: str,
     caption: str,
-    protect_content: bool = False
+    protect_content: bool = False,
+    reply_markup=None,
 ) -> Message:
     """Send message to target user based on type. Returns the sent message."""
     sent_msg = None
 
     if msg_type in ("text", "link"):
         sent_msg = await client.send_message(
-            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+            target_id, caption, parse_mode=ParseMode.HTML,
+            protect_content=protect_content, reply_markup=reply_markup,
         )
 
     elif msg_type == "audio":
@@ -265,7 +267,8 @@ async def send_message_to_target(
             message.audio.file_id,
             caption=caption,
             parse_mode=ParseMode.HTML,
-            protect_content=protect_content
+            protect_content=protect_content,
+            reply_markup=reply_markup,
         )
 
     elif msg_type == "photo":
@@ -274,7 +277,8 @@ async def send_message_to_target(
             message.photo.file_id,
             caption=caption,
             parse_mode=ParseMode.HTML,
-            protect_content=protect_content
+            protect_content=protect_content,
+            reply_markup=reply_markup,
         )
 
     elif msg_type == "document":
@@ -283,13 +287,15 @@ async def send_message_to_target(
             message.document.file_id,
             caption=caption,
             parse_mode=ParseMode.HTML,
-            protect_content=protect_content
+            protect_content=protect_content,
+            reply_markup=reply_markup,
         )
 
     elif msg_type == "forward":
         await message.forward(target_id, protect_content=protect_content)
         sent_msg = await client.send_message(
-            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+            target_id, caption, parse_mode=ParseMode.HTML,
+            protect_content=protect_content, reply_markup=reply_markup,
         )
 
     elif msg_type == "gif":
@@ -298,7 +304,8 @@ async def send_message_to_target(
             message.animation.file_id,
             caption=caption,
             parse_mode=ParseMode.HTML,
-            protect_content=protect_content
+            protect_content=protect_content,
+            reply_markup=reply_markup,
         )
 
     elif msg_type == "location":
@@ -306,10 +313,11 @@ async def send_message_to_target(
             target_id,
             message.location.latitude,
             message.location.longitude,
-            protect_content=protect_content
+            protect_content=protect_content,
         )
         sent_msg = await client.send_message(
-            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+            target_id, caption, parse_mode=ParseMode.HTML,
+            protect_content=protect_content, reply_markup=reply_markup,
         )
 
     elif msg_type == "poll":
@@ -317,10 +325,11 @@ async def send_message_to_target(
             target_id,
             message.poll.question,
             [option.text for option in message.poll.options],
-            protect_content=protect_content
+            protect_content=protect_content,
         )
         sent_msg = await client.send_message(
-            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+            target_id, caption, parse_mode=ParseMode.HTML,
+            protect_content=protect_content, reply_markup=reply_markup,
         )
 
     elif msg_type == "video":
@@ -329,7 +338,8 @@ async def send_message_to_target(
             message.video.file_id,
             caption=caption,
             parse_mode=ParseMode.HTML,
-            protect_content=protect_content
+            protect_content=protect_content,
+            reply_markup=reply_markup,
         )
 
     elif msg_type == "videonote":
@@ -337,7 +347,8 @@ async def send_message_to_target(
             target_id, message.video_note.file_id, protect_content=protect_content
         )
         sent_msg = await client.send_message(
-            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+            target_id, caption, parse_mode=ParseMode.HTML,
+            protect_content=protect_content, reply_markup=reply_markup,
         )
 
     elif msg_type == "voice":
@@ -346,24 +357,28 @@ async def send_message_to_target(
             message.voice.file_id,
             caption=caption,
             parse_mode=ParseMode.HTML,
-            protect_content=protect_content
+            protect_content=protect_content,
+            reply_markup=reply_markup,
         )
 
     elif msg_type == "sticker":
         await client.send_sticker(target_id, message.sticker.file_id, protect_content=protect_content)
         sent_msg = await client.send_message(
-            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+            target_id, caption, parse_mode=ParseMode.HTML,
+            protect_content=protect_content, reply_markup=reply_markup,
         )
 
     elif msg_type == "emojigame":
         await client.send_dice(target_id, emoji=message.dice.emoji, protect_content=protect_content)
         sent_msg = await client.send_message(
-            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+            target_id, caption, parse_mode=ParseMode.HTML,
+            protect_content=protect_content, reply_markup=reply_markup,
         )
 
     elif msg_type == "game":
         sent_msg = await client.send_message(
-            target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+            target_id, caption, parse_mode=ParseMode.HTML,
+            protect_content=protect_content, reply_markup=reply_markup,
         )
 
     else:
@@ -374,7 +389,8 @@ async def send_message_to_target(
                 message.photo.file_id,
                 caption=caption,
                 parse_mode=ParseMode.HTML,
-                protect_content=protect_content
+                protect_content=protect_content,
+                reply_markup=reply_markup,
             )
         elif message.video:
             sent_msg = await client.send_video(
@@ -382,7 +398,8 @@ async def send_message_to_target(
                 message.video.file_id,
                 caption=caption,
                 parse_mode=ParseMode.HTML,
-                protect_content=protect_content
+                protect_content=protect_content,
+                reply_markup=reply_markup,
             )
         elif message.document:
             sent_msg = await client.send_document(
@@ -390,11 +407,13 @@ async def send_message_to_target(
                 message.document.file_id,
                 caption=caption,
                 parse_mode=ParseMode.HTML,
-                protect_content=protect_content
+                protect_content=protect_content,
+                reply_markup=reply_markup,
             )
         else:
             sent_msg = await client.send_message(
-                target_id, caption, parse_mode=ParseMode.HTML, protect_content=protect_content
+                target_id, caption, parse_mode=ParseMode.HTML,
+                protect_content=protect_content, reply_markup=reply_markup,
             )
 
     return sent_msg
@@ -675,10 +694,22 @@ def register_messaging_handlers(app: Client) -> None:
             # Get sender's protect_content setting
             sender_protect_content = store.get_protect_content(uid)
 
+            # Build profile button if sender has a public profile
+            profile_markup = None
+            if user.get("profile_public") and user.get("profile_token"):
+                profile_url = f"{config.webapp_url}/profile.html?token={user['profile_token']}"
+                profile_markup = InlineKeyboardMarkup([[
+                    InlineKeyboardButton(
+                        text=f"\U0001f464 {user['nickname']}",
+                        web_app=WebAppInfo(url=profile_url),
+                    )
+                ]])
+
             # Send message to target
             sent_msg = await send_message_to_target(
                 client, target_id, message, primary_type, caption,
-                protect_content=sender_protect_content
+                protect_content=sender_protect_content,
+                reply_markup=profile_markup,
             )
 
             # Store message for reply routing (so target can reply back)

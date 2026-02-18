@@ -87,5 +87,18 @@
   "about_version": "Версия",
   "about_updated": "Обновлено",
   "about_channel": "Канал бота",
-  "about_support": "Поддержка"
+  "about_support": "Поддержка",
+
+  "profile_label": "Профиль",
+  "profile_public": "Публичный профиль",
+  "profile_show_last_seen": "Последний визит",
+  "profile_show_level": "Уровень",
+  "profile_show_active_days": "Дни активности",
+  "profile_show_registered": "Регистрация",
+  "profile_private_title": "Приватный профиль",
+  "profile_private_desc": "Профиль этого пользователя скрыт.",
+  "profile_not_found": "Профиль не найден",
+  "profile_active_days": "Дни активности",
+  "profile_registered": "Регистрация",
+  "profile_last_seen": "Последний визит"
 }

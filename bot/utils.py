@@ -3,6 +3,7 @@
 import json
 import os
 import random
+import secrets
 import string
 import sys
 import logging
@@ -34,6 +35,11 @@ def generate_token() -> str:
     """Generate a random token for user identification."""
     salt = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
     return random.choice(string.ascii_letters) + salt
+
+
+def generate_profile_token() -> str:
+    """Generate a URL-safe profile token (~12 chars, independent from link token)."""
+    return secrets.token_urlsafe(9)
 
 
 def generate_nickname() -> str:

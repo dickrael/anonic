@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import aiosqlite
 
+from ..utils import generate_profile_token
 from .schema import INDEXES_SQL, SCHEMA_SQL
 
 logger = logging.getLogger(__name__)
@@ -63,12 +64,30 @@ class SQLiteStore:
         await self._write_conn.commit()
 
         # Migrations
-        for col in ("avatar TEXT", "frame TEXT"):
+        for col in (
+            "avatar TEXT",
+            "frame TEXT",
+            "profile_token TEXT",
+            "profile_public INTEGER DEFAULT 0",
+            "profile_show_last_seen INTEGER DEFAULT 0",
+            "profile_show_level INTEGER DEFAULT 1",
+            "profile_show_active_days INTEGER DEFAULT 1",
+            "profile_show_registered INTEGER DEFAULT 1",
+        ):
             try:
                 await self._write_conn.execute(f"ALTER TABLE users ADD COLUMN {col}")
                 await self._write_conn.commit()
             except Exception:
                 pass  # column already exists
+
+        # Backfill profile_token for existing users
+        try:
+            await self._write_conn.execute(
+                "UPDATE users SET profile_token = hex(randomblob(6)) WHERE profile_token IS NULL"
+            )
+            await self._write_conn.commit()
+        except Exception:
+            pass
 
         # Open sync connection for reads (read-only via WAL)
         self._read_conn = sqlite3.connect(self.path)
@@ -92,6 +111,11 @@ class SQLiteStore:
         d["banned"] = bool(d["banned"])
         d["is_premium"] = bool(d["is_premium"])
         d["protect_content"] = bool(d["protect_content"])
+        d["profile_public"] = bool(d.get("profile_public"))
+        d["profile_show_last_seen"] = bool(d.get("profile_show_last_seen"))
+        d["profile_show_level"] = bool(d.get("profile_show_level", 1))
+        d["profile_show_active_days"] = bool(d.get("profile_show_active_days", 1))
+        d["profile_show_registered"] = bool(d.get("profile_show_registered", 1))
         d["message_timestamps"] = {}  # rate-limit timestamps live in separate table
         return d
 
@@ -118,15 +142,16 @@ class SQLiteStore:
         now = datetime.now(timezone.utc).isoformat()
         special_code = generate_special_code(telegram_id)
         allowed = json.dumps(self.DEFAULT_ALLOWED)
+        profile_token = generate_profile_token()
         await self._write_conn.execute(
             """INSERT OR IGNORE INTO users
                (telegram_id, token, nickname, special_code, registered_at,
                 last_activity, lang, username, first_name, last_name,
-                is_premium, allowed_types, frame)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                is_premium, allowed_types, frame, profile_token)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (telegram_id, token, nickname, special_code, now, now,
              language_code or "en", username, first_name, last_name,
-             int(is_premium), allowed, frame),
+             int(is_premium), allowed, frame, profile_token),
         )
         await self._write_conn.commit()
 
@@ -150,6 +175,7 @@ class SQLiteStore:
                 pass
 
         now = datetime.now(timezone.utc).isoformat()
+        new_profile_token = generate_profile_token()
         await self._write_conn.execute(
             """INSERT INTO revoke_history
                (user_id, old_token, old_nickname, registered_at, revoked_at)
@@ -159,9 +185,10 @@ class SQLiteStore:
         )
         await self._write_conn.execute(
             """UPDATE users SET token = ?, nickname = ?, last_revoke = ?,
-               revoke_count = revoke_count + 1, frame = ?
+               revoke_count = revoke_count + 1, frame = ?,
+               profile_token = ?
                WHERE telegram_id = ?""",
-            (new_token, new_nickname, now, new_frame, telegram_id),
+            (new_token, new_nickname, now, new_frame, new_profile_token, telegram_id),
         )
         await self._write_conn.execute(
             "DELETE FROM temp_links WHERE user_id = ?", (telegram_id,)
@@ -963,7 +990,44 @@ class SQLiteStore:
             "link_token": user.get("token", ""),
             "avatar": user.get("avatar"),
             "frame": user.get("frame"),
+            "profile_token": user.get("profile_token", ""),
+            "profile_public": user.get("profile_public", False),
+            "profile_show_last_seen": user.get("profile_show_last_seen", False),
+            "profile_show_level": user.get("profile_show_level", True),
+            "profile_show_active_days": user.get("profile_show_active_days", True),
+            "profile_show_registered": user.get("profile_show_registered", True),
         }
+
+    # ---- Profile ----
+
+    def get_user_by_profile_token(self, profile_token: str) -> Optional[Dict[str, Any]]:
+        """Look up a user by their profile_token. Returns user dict or None."""
+        cur = self._read_conn.execute(
+            "SELECT * FROM users WHERE profile_token = ?", (profile_token,)
+        )
+        row = cur.fetchone()
+        return self._row_to_user_dict(row) if row else None
+
+    async def set_profile_settings(self, telegram_id: int, settings: Dict[str, Any]) -> bool:
+        """Update profile toggle settings. Only known keys are accepted."""
+        allowed_keys = {
+            "profile_public", "profile_show_last_seen", "profile_show_level",
+            "profile_show_active_days", "profile_show_registered",
+        }
+        sets = []
+        params = []
+        for key, value in settings.items():
+            if key in allowed_keys:
+                sets.append(f"{key} = ?")
+                params.append(int(bool(value)))
+        if not sets:
+            return False
+        params.append(telegram_id)
+        cur = await self._write_conn.execute(
+            f"UPDATE users SET {', '.join(sets)} WHERE telegram_id = ?", params
+        )
+        await self._write_conn.commit()
+        return cur.rowcount > 0
 
     async def cleanup_expired_temp_links(self) -> int:
         now = datetime.now(timezone.utc).isoformat()
