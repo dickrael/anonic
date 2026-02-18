@@ -52,6 +52,7 @@ async function fetchProfile(profileToken) {
 async function updateProfileSettings(initData, settings) {
   const res = await fetch(`${API_BASE}/api/profile/settings`, {
     method: "POST",
+    keepalive: true,
     headers: {
       "Content-Type": "application/json",
       "X-Init-Data": initData,

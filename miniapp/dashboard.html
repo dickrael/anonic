@@ -1205,7 +1205,12 @@
         function saveProfileSetting(key, value) {
           var s = {};
           s[key] = value;
-          updateProfileSettings(initData, s).catch(function(e) {
+          updateProfileSettings(initData, s).then(function() {
+            var pg = document.getElementById("profile-group");
+            pg.style.transition = "box-shadow 0.3s ease";
+            pg.style.boxShadow = "0 0 0 2px var(--success)";
+            setTimeout(function() { pg.style.boxShadow = ""; }, 600);
+          }).catch(function(e) {
             console.error("Profile settings error:", e);
           });
         }
